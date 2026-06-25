@@ -1,58 +1,120 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { getQuestionsForQuest, quests } from '../data';
+import { useAppState } from '../store';
 
-// A simple quiz page component. It presents a single question
-// with four options. The user receives immediate feedback on
-// whether the selected answer is correct. In a real application
-// questions would be fetched from a backend and progress would
-// be tracked across multiple questions.
 const Quiz: React.FC = () => {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const question = {
-    text: '2 + 3 เท่ากับเท่าไหร่?',
-    options: [
-      { value: '4', label: '4' },
-      { value: '5', label: '5' },
-      { value: '6', label: '6' },
-      { value: '7', label: '7' },
-    ],
-    correct: '5',
+  const { questId = quests[0].id } = useParams();
+  const { completeQuest } = useAppState();
+  const quest = quests.find((item) => item.id === questId) || quests[0];
+  const quizQuestions = useMemo(() => getQuestionsForQuest(quest.id), [quest.id]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [selected, setSelected] = useState('');
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [showHint, setShowHint] = useState(false);
+  const [result, setResult] = useState<{ score: number; earnedCoins: number } | null>(null);
+
+  const currentQuestion = quizQuestions[currentIndex];
+  const progress = Math.round(((currentIndex + 1) / quizQuestions.length) * 100);
+
+  const startOver = () => {
+    setCurrentIndex(0);
+    setSelected('');
+    setAnswers({});
+    setShowHint(false);
+    setResult(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (selected === null) {
-      setFeedback('กรุณาเลือกคำตอบ');
-    } else if (selected === question.correct) {
-      setFeedback('ถูกต้อง! คุณได้รับ 10 เหรียญ');
-    } else {
-      setFeedback('ยังไม่ถูกต้อง ลองใหม่อีกครั้ง');
+  const handleNext = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!selected || !currentQuestion) {
+      return;
     }
+
+    const nextAnswers = { ...answers, [currentQuestion.id]: selected };
+    setAnswers(nextAnswers);
+    setShowHint(false);
+
+    if (currentIndex < quizQuestions.length - 1) {
+      setCurrentIndex((index) => index + 1);
+      setSelected('');
+      return;
+    }
+
+    const score = quizQuestions.filter((question) => nextAnswers[question.id] === question.answer).length;
+    const earnedCoins = completeQuest(quest.id, score, quizQuestions.length);
+    setResult({ score, earnedCoins });
   };
+
+  if (result) {
+    const perfect = result.score === quizQuestions.length;
+    return (
+      <section className="page-stack">
+        <article className="result-panel">
+          <p className="eyebrow">{perfect ? 'Perfect clear' : 'Quest complete'}</p>
+          <h1>{perfect ? 'สุดยอด นักล่าทำได้ครบ!' : 'จบภารกิจแล้ว'}</h1>
+          <p>
+            คะแนน {result.score}/{quizQuestions.length} · ได้รับ {result.earnedCoins} coins
+          </p>
+          <div className="result-actions">
+            <button className="secondary-button" type="button" onClick={startOver}>
+              เล่นซ้ำ
+            </button>
+            <Link className="primary-button" to="/wallet">
+              ดูกระเป๋าเหรียญ
+            </Link>
+          </div>
+        </article>
+      </section>
+    );
+  }
 
   return (
-    <div>
-      <h1>แบบทดสอบ</h1>
-      <p>{question.text}</p>
-      <form onSubmit={handleSubmit}>
-        {question.options.map((opt) => (
-          <div key={opt.value} style={{ marginBottom: '0.5rem' }}>
-            <label>
-              <input
-                type="radio"
-                name="answer"
-                value={opt.value}
-                checked={selected === opt.value}
-                onChange={() => setSelected(opt.value)}
-              />{' '}
-              {opt.label}
-            </label>
+    <section className="page-stack">
+      <div className="page-heading">
+        <p className="eyebrow">{quest.topic}</p>
+        <h1>{quest.title}</h1>
+        <p>{quest.description}</p>
+      </div>
+
+      <article className="quiz-panel">
+        <div className="quiz-progress">
+          <span>ข้อ {currentIndex + 1}/{quizQuestions.length}</span>
+          <div className="progress-track" aria-label={`Progress ${progress}%`}>
+            <div style={{ width: `${progress}%` }} />
           </div>
-        ))}
-        <button type="submit">ส่งคำตอบ</button>
-      </form>
-      {feedback && <p style={{ marginTop: '1rem' }}>{feedback}</p>}
-    </div>
+        </div>
+
+        <form onSubmit={handleNext}>
+          <h2>{currentQuestion.prompt}</h2>
+          <div className="answer-grid">
+            {currentQuestion.options.map((option) => (
+              <label className={`answer-option ${selected === option ? 'selected' : ''}`} key={option}>
+                <input
+                  type="radio"
+                  name="answer"
+                  value={option}
+                  checked={selected === option}
+                  onChange={() => setSelected(option)}
+                />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
+
+          {showHint && <p className="hint-box">{currentQuestion.hint}</p>}
+
+          <div className="quiz-actions">
+            <button className="ghost-button" type="button" onClick={() => setShowHint((value) => !value)}>
+              {showHint ? 'ซ่อนคำใบ้' : 'ขอคำใบ้'}
+            </button>
+            <button className="primary-button" type="submit" disabled={!selected}>
+              {currentIndex === quizQuestions.length - 1 ? 'ส่งคำตอบ' : 'ข้อต่อไป'}
+            </button>
+          </div>
+        </form>
+      </article>
+    </section>
   );
 };
 

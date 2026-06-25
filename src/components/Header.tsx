@@ -1,26 +1,52 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { useAppState } from '../store';
 
-// Simple header component providing top navigation. Shows links
-// appropriate for the current location. When the user is on
-// login page the header is hidden. In a real app this could
-// include user profile, settings, etc.
 const Header: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { state, isLoggedIn, logout } = useAppState();
+
   if (location.pathname === '/login') {
     return null;
   }
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
+  const navItems = [
+    { to: '/home', label: 'แดชบอร์ด' },
+    { to: '/quest', label: 'ภารกิจ' },
+    { to: '/wallet', label: 'กระเป๋า' },
+    { to: '/rewards', label: 'รางวัล' },
+    { to: '/parent-report', label: 'รายงาน' },
+  ];
+
   return (
-    <header style={{ padding: '1rem', borderBottom: '1px solid #ddd' }}>
-      <nav style={{ display: 'flex', gap: '1rem' }}>
-        <Link to="/home">หน้าหลัก</Link>
-        <Link to="/quest">ภารกิจ</Link>
-        <Link to="/quiz">แบบทดสอบ</Link>
-        <Link to="/wallet">กระเป๋าเหรียญ</Link>
-        <Link to="/rewards">ของรางวัล</Link>
-        <Link to="/parent-report">รายงานผู้ปกครอง</Link>
+    <header className="topbar">
+      <button className="brand" type="button" onClick={() => navigate('/home')}>
+        <span className="brand-mark">E</span>
+        <span className="brand-copy">
+          <strong>Eimaths Bounty Hunter</strong>
+          <span>{state.childName || 'นักล่าคณิต'} · {state.coins} coins</span>
+        </span>
+      </button>
+
+      <nav className="topnav" aria-label="Main navigation">
+        {navItems.map((item) => (
+          <NavLink key={item.to} to={item.to} className={({ isActive }) => (isActive ? 'active' : '')}>
+            {item.label}
+          </NavLink>
+        ))}
       </nav>
+
+      {isLoggedIn && (
+        <button className="ghost-button" type="button" onClick={handleLogout}>
+          ออกจากระบบ
+        </button>
+      )}
     </header>
   );
 };

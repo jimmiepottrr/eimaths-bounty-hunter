@@ -1,31 +1,39 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { grades } from '../data';
+import { useAppState } from '../store';
 
-// Grade selection page allows users to choose the appropriate difficulty
-// or grade level for their child. In this demo it simply navigates
-// to the home page once a grade is selected.
 const Grade: React.FC = () => {
   const navigate = useNavigate();
+  const { state, selectGrade } = useAppState();
 
-  const handleSelect = (grade: string) => {
-    // In a real app we would store the selected grade in state or
-    // send it to the server. For this demo we just navigate to home.
+  const handleSelect = (gradeId: string) => {
+    selectGrade(gradeId);
     navigate('/home');
   };
 
-  const grades = ['อนุบาล 1', 'อนุบาล 2', 'ป.1', 'ป.2', 'ป.3', 'ป.4', 'ป.5', 'ป.6'];
   return (
-    <div>
-      <h1>เลือกระดับชั้น</h1>
-      <p>เลือกระดับที่เหมาะสมสำหรับบุตรหลานของคุณ</p>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {grades.map((g) => (
-          <li key={g} style={{ marginBottom: '0.5rem' }}>
-            <button onClick={() => handleSelect(g)}>{g}</button>
-          </li>
+    <section className="page-stack">
+      <div className="page-heading">
+        <p className="eyebrow">Profile setup</p>
+        <h1>เลือกระดับชั้นของ {state.childName}</h1>
+        <p>ระบบจะใช้ระดับชั้นนี้เพื่อแนะนำภารกิจและคำแนะนำในรายงานผู้ปกครอง</p>
+      </div>
+
+      <div className="grade-grid">
+        {grades.map((grade) => (
+          <button
+            className={`grade-card ${state.gradeId === grade.id ? 'selected' : ''}`}
+            key={grade.id}
+            type="button"
+            onClick={() => handleSelect(grade.id)}
+          >
+            <strong>{grade.label}</strong>
+            <span>{grade.range}</span>
+          </button>
         ))}
-      </ul>
-    </div>
+      </div>
+    </section>
   );
 };
 

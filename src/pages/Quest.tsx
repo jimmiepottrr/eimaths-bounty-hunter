@@ -1,30 +1,43 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { quests } from '../data';
+import { useAppState } from '../store';
 
-// Quest page lists available missions or learning quests. In a
-// production system these would be fetched from a server and
-// include details like topics, difficulty and rewards. Here
-// we display placeholder quests with links to a quiz.
 const Quest: React.FC = () => {
-  const quests = [
-    { id: 1, title: 'ฝึกบวกเลขง่าย ๆ', description: 'ภารกิจบวกเลขสำหรับเด็กประถม' },
-    { id: 2, title: 'ฝึกลบเลขพื้นฐาน', description: 'ภารกิจลบเลขสำหรับเด็กประถม' },
-    { id: 3, title: 'โจทย์คูณง่าย ๆ', description: 'ภารกิจคูณเลขระดับเริ่มต้น' },
-  ];
+  const { state } = useAppState();
+
   return (
-    <div>
-      <h1>ภารกิจ</h1>
-      <p>เลือกภารกิจที่ต้องการทำเพื่อสะสมเหรียญและพัฒนาทักษะทางคณิตศาสตร์</p>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {quests.map((q) => (
-          <li key={q.id} style={{ marginBottom: '1rem', border: '1px solid #ccc', padding: '0.5rem' }}>
-            <h3>{q.title}</h3>
-            <p>{q.description}</p>
-            <Link to="/quiz">เริ่มภารกิจ</Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <section className="page-stack">
+      <div className="page-heading">
+        <p className="eyebrow">Quest board</p>
+        <h1>เลือกภารกิจคณิต</h1>
+        <p>ทำโจทย์ให้ครบ รับเหรียญ และปลดล็อกรายงานความก้าวหน้าของนักเรียน</p>
+      </div>
+
+      <div className="quest-grid">
+        {quests.map((quest) => {
+          const completed = state.completedQuestIds.includes(quest.id);
+          return (
+            <article className={`quest-card ${completed ? 'completed' : ''}`} key={quest.id}>
+              <div className="quest-card-header">
+                <span>{quest.topic}</span>
+                <strong>{quest.reward} coins</strong>
+              </div>
+              <h2>{quest.title}</h2>
+              <p>{quest.description}</p>
+              <div className="quest-meta">
+                <span>{quest.level}</span>
+                <span>{quest.estimatedMinutes} นาที</span>
+                <span>{quest.questionIds.length} ข้อ</span>
+              </div>
+              <Link className={completed ? 'secondary-button' : 'primary-button'} to={`/quiz/${quest.id}`}>
+                {completed ? 'เล่นซ้ำ' : 'เริ่มภารกิจ'}
+              </Link>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 };
 

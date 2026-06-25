@@ -1,29 +1,59 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppState } from '../store';
 
-// A simple login page with mock form. In a real application this
-// would handle user authentication, but here we just navigate to
-// the grade selection screen when the form is submitted.
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // For this demo we don't perform authentication. Navigate to grade page.
+  const { login } = useAppState();
+  const [parentName, setParentName] = useState('ผู้ปกครอง');
+  const [childName, setChildName] = useState('น้องอีมาย');
+  const [email, setEmail] = useState('parent@example.com');
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    login({ parentName, childName, email });
     navigate('/grade');
   };
 
   return (
-    <div>
-      <h1>เข้าสู่ระบบ</h1>
-      <p>กรุณาใส่รหัสผู้ปกครองหรืออีเมลเพื่อล็อกอิน</p>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', maxWidth: 320 }}>
-        <label htmlFor="email">อีเมล / รหัสผู้ปกครอง</label>
-        <input id="email" type="text" placeholder="example@domain.com" required />
-        <label htmlFor="password" style={{ marginTop: '1rem' }}>รหัสผ่าน</label>
-        <input id="password" type="password" required />
-        <button type="submit" style={{ marginTop: '1.5rem' }}>เข้าสู่ระบบ</button>
+    <section className="login-page">
+      <div className="login-hero">
+        <p className="eyebrow">Math quest dashboard</p>
+        <h1>Eimaths Bounty Hunter</h1>
+        <p>
+          เกมฝึกคณิตสำหรับเด็ก พร้อมเหรียญ ภารกิจ ของรางวัล และรายงานสำหรับผู้ปกครองในเครื่องเดียว
+        </p>
+        <div className="hero-stats" aria-label="Product highlights">
+          <span>3 ภารกิจ</span>
+          <span>9 คำถาม</span>
+          <span>4 รางวัล</span>
+        </div>
+      </div>
+
+      <form className="login-panel" onSubmit={handleSubmit}>
+        <h2>เริ่มใช้งาน</h2>
+        <label>
+          ชื่อผู้ปกครอง
+          <input value={parentName} onChange={(event) => setParentName(event.target.value)} required />
+        </label>
+        <label>
+          ชื่อนักเรียน
+          <input value={childName} onChange={(event) => setChildName(event.target.value)} required />
+        </label>
+        <label>
+          อีเมล
+          <input
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
+        </label>
+        <button className="primary-button" type="submit">
+          เข้าสู่เกม
+        </button>
       </form>
-    </div>
+    </section>
   );
 };
 

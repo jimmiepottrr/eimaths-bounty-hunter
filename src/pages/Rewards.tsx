@@ -1,30 +1,56 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { rewards } from '../data';
+import { useAppState } from '../store';
 
-// Rewards page lists items that users can redeem with their coins.
-// In this mock version we just display static items. A real
-// implementation would fetch these from a backend and handle
-// redemption logic.
 const Rewards: React.FC = () => {
-  const rewards = [
-    { id: 1, name: 'สมุดระบายสี', cost: 50 },
-    { id: 2, name: 'ดินสอชุดใหญ่', cost: 100 },
-    { id: 3, name: 'ของเล่นตัวต่อ', cost: 200 },
-  ];
+  const { state, redeemReward } = useAppState();
+  const [message, setMessage] = useState('');
+
+  const handleRedeem = (rewardId: string) => {
+    const result = redeemReward(rewardId);
+    setMessage(result.message);
+  };
 
   return (
-    <div>
-      <h1>ของรางวัล</h1>
-      <p>ใช้เหรียญสะสมแลกของรางวัลพิเศษ</p>
-      <ul style={{ listStyle: 'none', padding: 0 }}>
-        {rewards.map((r) => (
-          <li key={r.id} style={{ marginBottom: '1rem', border: '1px solid #ccc', padding: '0.5rem' }}>
-            <strong>{r.name}</strong>
-            <p>ราคา {r.cost} เหรียญ</p>
-            <button disabled>แลกของรางวัล (ตัวอย่าง)</button>
-          </li>
-        ))}
-      </ul>
-    </div>
+    <section className="page-stack">
+      <div className="page-heading">
+        <p className="eyebrow">Reward shop</p>
+        <h1>ร้านของรางวัล</h1>
+        <p>ใช้เหรียญที่ได้จากการฝึกคณิตแลกสิทธิพิเศษและของสะสม</p>
+      </div>
+
+      <div className="wallet-strip">
+        <strong>{state.coins} coins</strong>
+        <span>{state.redeemedRewardIds.length} rewards redeemed</span>
+      </div>
+
+      {message && <p className="toast-message">{message}</p>}
+
+      <div className="reward-grid">
+        {rewards.map((reward) => {
+          const redeemed = state.redeemedRewardIds.includes(reward.id);
+          const affordable = state.coins >= reward.cost;
+          return (
+            <article className={`reward-card ${redeemed ? 'redeemed' : ''}`} key={reward.id}>
+              <span>{reward.category}</span>
+              <h2>{reward.name}</h2>
+              <p>{reward.description}</p>
+              <div className="reward-footer">
+                <strong>{reward.cost} coins</strong>
+                <button
+                  className={affordable && !redeemed ? 'primary-button' : 'secondary-button'}
+                  type="button"
+                  disabled={redeemed}
+                  onClick={() => handleRedeem(reward.id)}
+                >
+                  {redeemed ? 'แลกแล้ว' : affordable ? 'แลกเลย' : 'เหรียญไม่พอ'}
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
   );
 };
 
