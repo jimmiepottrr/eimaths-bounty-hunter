@@ -2,42 +2,52 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { quests } from '../data';
 import { useAppState } from '../store';
+import { AppScreen, Mascot, ProgressBar, ScreenHeader } from '../ui';
 
 const Quest: React.FC = () => {
   const { state } = useAppState();
 
   return (
-    <section className="page-stack">
-      <div className="page-heading">
-        <p className="eyebrow">Quest board</p>
-        <h1>เลือกภารกิจคณิต</h1>
-        <p>ทำโจทย์ให้ครบ รับเหรียญ และปลดล็อกรายงานความก้าวหน้าของนักเรียน</p>
+    <AppScreen className="quest-screen">
+      <ScreenHeader title="Today's Missions" subtitle="Check quests, build your streak, and claim rewards." showBack />
+
+      <div className="streak-card">
+        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => (
+          <span key={day} className={index < Math.min(state.streak, 7) ? 'done' : ''}>
+            {index < Math.min(state.streak, 7) ? '✓' : index + 1}
+            <small>{day}</small>
+          </span>
+        ))}
       </div>
 
-      <div className="quest-grid">
+      <div className="mission-list">
         {quests.map((quest) => {
           const completed = state.completedQuestIds.includes(quest.id);
           return (
-            <article className={`quest-card ${completed ? 'completed' : ''}`} key={quest.id}>
-              <div className="quest-card-header">
-                <span>{quest.topic}</span>
-                <strong>{quest.reward} coins</strong>
+            <article className={`mission-card ${completed ? 'completed' : ''}`} key={quest.id}>
+              <span className="mission-icon">{quest.icon}</span>
+              <div>
+                <h2>{quest.title}</h2>
+                <p>{quest.description}</p>
+                <ProgressBar value={completed ? 100 : 34} tone={completed ? 'green' : 'blue'} />
               </div>
-              <h2>{quest.title}</h2>
-              <p>{quest.description}</p>
-              <div className="quest-meta">
-                <span>{quest.level}</span>
-                <span>{quest.estimatedMinutes} นาที</span>
-                <span>{quest.questionIds.length} ข้อ</span>
+              <div className="reward-badge">
+                <small>Rewards</small>
+                <strong>🪙 {quest.reward}</strong>
               </div>
-              <Link className={completed ? 'secondary-button' : 'primary-button'} to={`/quiz/${quest.id}`}>
-                {completed ? 'เล่นซ้ำ' : 'เริ่มภารกิจ'}
-              </Link>
+              <Link to={`/quiz/${quest.id}`}>{completed ? 'Replay' : 'Start'}</Link>
             </article>
           );
         })}
       </div>
-    </section>
+
+      <div className="claim-card">
+        <button className="primary-button wide" type="button">
+          Claim All Rewards!
+        </button>
+        <Mascot compact />
+      </div>
+    </AppScreen>
   );
 };
 

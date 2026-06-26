@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { grades } from '../data';
 import { useAppState } from '../store';
+import { AppScreen, Mascot, ScreenHeader } from '../ui';
 
 const Grade: React.FC = () => {
   const navigate = useNavigate();
@@ -13,27 +14,29 @@ const Grade: React.FC = () => {
   };
 
   return (
-    <section className="page-stack">
-      <div className="page-heading">
-        <p className="eyebrow">Profile setup</p>
-        <h1>เลือกระดับชั้นของ {state.childName}</h1>
-        <p>ระบบจะใช้ระดับชั้นนี้เพื่อแนะนำภารกิจและคำแนะนำในรายงานผู้ปกครอง</p>
+    <AppScreen className="map-bg">
+      <ScreenHeader title="Choose Your Grade" subtitle="Pick your grade to start your math adventure!" showBack />
+      <div className="peek-mascot">
+        <Mascot mood="happy" />
       </div>
-
-      <div className="grade-grid">
-        {grades.map((grade) => (
+      <div className="grade-list">
+        {grades.map((grade, index) => (
           <button
-            className={`grade-card ${state.gradeId === grade.id ? 'selected' : ''}`}
+            className={`grade-card ${state.gradeId === grade.id ? 'selected' : ''} tone-${index + 1}`}
             key={grade.id}
             type="button"
             onClick={() => handleSelect(grade.id)}
           >
-            <strong>{grade.label}</strong>
-            <span>{grade.range}</span>
+            <strong>{grade.shortLabel}</strong>
+            <span>
+              <b>{grade.label}</b>
+              <small>{grade.range}</small>
+            </span>
+            <em>{grade.scene === 'island' ? '🏝️' : grade.scene === 'temple' ? '🏜️' : '🏛️'}</em>
           </button>
         ))}
       </div>
-    </section>
+    </AppScreen>
   );
 };
 

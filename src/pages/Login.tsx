@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../store';
+import { AppScreen, Logo, Mascot } from '../ui';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login } = useAppState();
-  const [parentName, setParentName] = useState('ผู้ปกครอง');
-  const [childName, setChildName] = useState('น้องอีมาย');
+  const { login, playSound } = useAppState();
+  const [parentName, setParentName] = useState('Parent');
+  const [childName, setChildName] = useState('Hunter');
   const [email, setEmail] = useState('parent@example.com');
 
   const handleSubmit = (event: React.FormEvent) => {
@@ -16,44 +17,41 @@ const Login: React.FC = () => {
   };
 
   return (
-    <section className="login-page">
-      <div className="login-hero">
-        <p className="eyebrow">Math quest dashboard</p>
-        <h1>Eimaths Bounty Hunter</h1>
-        <p>
-          เกมฝึกคณิตสำหรับเด็ก พร้อมเหรียญ ภารกิจ ของรางวัล และรายงานสำหรับผู้ปกครองในเครื่องเดียว
-        </p>
-        <div className="hero-stats" aria-label="Product highlights">
-          <span>3 ภารกิจ</span>
-          <span>9 คำถาม</span>
-          <span>4 รางวัล</span>
+    <AppScreen className="login-art">
+      <div className="splash-panel">
+        <Logo />
+        <div className="island-scene">
+          <div className="sun" />
+          <div className="cloud c1" />
+          <div className="cloud c2" />
+          <Mascot />
+          <div className="treasure">🪙</div>
         </div>
       </div>
 
-      <form className="login-panel" onSubmit={handleSubmit}>
-        <h2>เริ่มใช้งาน</h2>
+      <form className="login-card" onSubmit={handleSubmit}>
+        <div className="speech-bubble">Let's learn math and earn awesome rewards!</div>
+        <h1>Welcome, Young Bounty Hunter!</h1>
         <label>
-          ชื่อผู้ปกครอง
-          <input value={parentName} onChange={(event) => setParentName(event.target.value)} required />
-        </label>
-        <label>
-          ชื่อนักเรียน
+          Student Code
           <input value={childName} onChange={(event) => setChildName(event.target.value)} required />
         </label>
         <label>
-          อีเมล
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            required
-          />
+          Parent Name
+          <input value={parentName} onChange={(event) => setParentName(event.target.value)} required />
         </label>
-        <button className="primary-button" type="submit">
-          เข้าสู่เกม
+        <label>
+          Email
+          <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
+        </label>
+        <button className="primary-button wide" type="submit" onClick={() => playSound('tap')}>
+          Login →
+        </button>
+        <button className="outline-button wide" type="button" onClick={() => playSound('tap')}>
+          Scan QR Code
         </button>
       </form>
-    </section>
+    </AppScreen>
   );
 };
 

@@ -1,92 +1,67 @@
 import React from 'react';
 import { grades, quests } from '../data';
 import { useAppState } from '../store';
+import { AppScreen, Mascot, ProgressBar, ScreenHeader, StatPill } from '../ui';
 
 const ParentReport: React.FC = () => {
-  const { state, accuracy, resetProgress } = useAppState();
+  const { state, accuracy, resetProgress, level } = useAppState();
   const grade = grades.find((item) => item.id === state.gradeId);
   const completed = state.completedQuestIds.length;
-  const latestResult = state.quizResults[0];
-  const nextQuest = quests.find((quest) => !state.completedQuestIds.includes(quest.id));
-  const recommendation =
-    accuracy >= 85
-      ? 'ผลลัพธ์ดีมาก สามารถเพิ่มภารกิจระดับท้าทายหรือโจทย์จับเวลาได้'
-      : accuracy >= 60
-        ? 'ควรฝึกซ้ำในข้อที่ตอบพลาด และให้เด็กอธิบายวิธีคิดด้วยคำพูดของตัวเอง'
-        : 'แนะนำให้เริ่มจากภารกิจบวก-ลบพื้นฐาน พร้อมใช้ภาพหรือของจริงช่วยนับ';
+  const lessons = Math.max(12, state.quizResults.length * 3);
 
   return (
-    <section className="page-stack">
-      <div className="page-heading">
-        <p className="eyebrow">Parent report</p>
-        <h1>รายงานของ {state.childName}</h1>
-        <p>
-          ผู้ปกครอง: {state.parentName} · ระดับ {grade?.label || 'ไม่ระบุ'} · เป้าหมาย {grade?.range}
-        </p>
-      </div>
+    <AppScreen className="report-screen">
+      <ScreenHeader title="Parent Report" subtitle="Track your child's progress and learning insights." showBack />
 
-      <div className="metric-grid">
-        <article className="metric-card">
-          <span>ภารกิจสำเร็จ</span>
-          <strong>{completed}/{quests.length}</strong>
-          <small>นับภารกิจที่เคยผ่านอย่างน้อย 1 ครั้ง</small>
-        </article>
-        <article className="metric-card">
-          <span>ความแม่นยำรวม</span>
-          <strong>{accuracy}%</strong>
-          <small>จากคำตอบทั้งหมดในเครื่องนี้</small>
-        </article>
-        <article className="metric-card">
-          <span>Streak</span>
-          <strong>{state.streak}</strong>
-          <small>จำนวนรอบที่ทำคะแนนได้ต่อเนื่อง</small>
-        </article>
-        <article className="metric-card">
-          <span>รางวัลที่แลก</span>
-          <strong>{state.redeemedRewardIds.length}</strong>
-          <small>ช่วยสะท้อนแรงจูงใจ</small>
-        </article>
-      </div>
-
-      <div className="content-grid">
-        <article className="panel">
-          <div className="section-title">
-            <h2>คำแนะนำ</h2>
-          </div>
-          <p>{recommendation}</p>
-          {nextQuest ? (
-            <p className="muted">ภารกิจถัดไปที่เหมาะสม: {nextQuest.title}</p>
-          ) : (
-            <p className="muted">ทำครบทุกภารกิจแล้ว เหมาะสำหรับเล่นซ้ำเพื่อเพิ่มความเร็ว</p>
-          )}
-        </article>
-
-        <article className="panel">
-          <div className="section-title">
-            <h2>ผลล่าสุด</h2>
-          </div>
-          {latestResult ? (
-            <div className="latest-result">
-              <strong>{latestResult.score}/{latestResult.total}</strong>
-              <span>ได้ {latestResult.earnedCoins} coins</span>
-              <small>{new Date(latestResult.completedAt).toLocaleString('th-TH')}</small>
-            </div>
-          ) : (
-            <p className="muted">ยังไม่มีผลล่าสุด</p>
-          )}
-        </article>
-      </div>
-
-      <article className="panel danger-zone">
+      <article className="report-hero">
         <div>
-          <h2>รีเซ็ตข้อมูลทดลอง</h2>
-          <p>ล้างเหรียญ คะแนน ภารกิจ และรางวัล แต่คงชื่อผู้ใช้กับระดับชั้นไว้</p>
+          <h1>{state.childName || 'Hunter'}</h1>
+          <p>{grade?.label || 'Primary'} · Level {level}</p>
         </div>
-        <button className="secondary-button" type="button" onClick={resetProgress}>
-          รีเซ็ต progress
-        </button>
+        <Mascot compact />
       </article>
-    </section>
+
+      <div className="date-chip">May 12 - May 18, 2026 📅</div>
+
+      <article className="overview-card">
+        <h2>This Week Overview</h2>
+        <div className="report-stats">
+          <StatPill icon="📘" label="Lessons" value={lessons} />
+          <StatPill icon="🪙" label="Coins" value={state.coins.toLocaleString()} />
+          <StatPill icon="⏱️" label="Study Time" value="4h 35m" />
+          <StatPill icon="🔥" label="Streak" value={`${state.streak} days`} />
+        </div>
+      </article>
+
+      <article className="performance-card">
+        <div className="section-title compact">
+          <h2>Subject Performance</h2>
+          <span>View All</span>
+        </div>
+        {[
+          ['Numbers', Math.max(85, accuracy)],
+          ['Algebra', 70],
+          ['Geometry', 78],
+          ['Data & Graphs', 65],
+        ].map(([label, value]) => (
+          <div className="topic-row" key={label as string}>
+            <span>{label}</span>
+            <ProgressBar value={value as number} tone={(value as number) > 80 ? 'green' : 'blue'} />
+            <strong>{value}%</strong>
+          </div>
+        ))}
+      </article>
+
+      <article className="overview-card">
+        <h2>Next Goal</h2>
+        <p>Complete {Math.max(0, quests.length - completed)} more quest(s) and improve accuracy in word problems.</p>
+        <ProgressBar value={(completed / quests.length) * 100} tone="orange" />
+      </article>
+
+      <button className="outline-button wide" type="button" onClick={resetProgress}>
+        Reset demo progress
+      </button>
+    </AppScreen>
   );
 };
 

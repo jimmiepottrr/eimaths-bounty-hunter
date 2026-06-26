@@ -2,16 +2,20 @@ import React, { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getQuestionsForQuest, quests } from '../data';
 import { useAppState } from '../store';
+import { AppScreen, Mascot, ProgressBar, ScreenHeader } from '../ui';
+
+type AnswerFeedback = 'correct' | 'wrong' | null;
 
 const Quiz: React.FC = () => {
   const { questId = quests[0].id } = useParams();
-  const { completeQuest } = useAppState();
+  const { completeQuest, playSound } = useAppState();
   const quest = quests.find((item) => item.id === questId) || quests[0];
   const quizQuestions = useMemo(() => getQuestionsForQuest(quest.id), [quest.id]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selected, setSelected] = useState('');
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [showHint, setShowHint] = useState(false);
+  const [feedback, setFeedback] = useState<AnswerFeedback>(null);
   const [result, setResult] = useState<{ score: number; earnedCoins: number } | null>(null);
 
   const currentQuestion = quizQuestions[currentIndex];
@@ -22,22 +26,36 @@ const Quiz: React.FC = () => {
     setSelected('');
     setAnswers({});
     setShowHint(false);
+    setFeedback(null);
     setResult(null);
+    playSound('tap');
   };
 
-  const handleNext = (event: React.FormEvent) => {
+  const handleCheck = (event: React.FormEvent) => {
     event.preventDefault();
+    if (!selected || !currentQuestion) {
+      return;
+    }
+
+    const isCorrect = selected === currentQuestion.answer;
+    setFeedback(isCorrect ? 'correct' : 'wrong');
+    playSound(isCorrect ? 'success' : 'error');
+  };
+
+  const handleNext = () => {
     if (!selected || !currentQuestion) {
       return;
     }
 
     const nextAnswers = { ...answers, [currentQuestion.id]: selected };
     setAnswers(nextAnswers);
+    setFeedback(null);
     setShowHint(false);
 
     if (currentIndex < quizQuestions.length - 1) {
       setCurrentIndex((index) => index + 1);
       setSelected('');
+      playSound('tap');
       return;
     }
 
@@ -49,72 +67,105 @@ const Quiz: React.FC = () => {
   if (result) {
     const perfect = result.score === quizQuestions.length;
     return (
-      <section className="page-stack">
-        <article className="result-panel">
-          <p className="eyebrow">{perfect ? 'Perfect clear' : 'Quest complete'}</p>
-          <h1>{perfect ? 'สุดยอด นักล่าทำได้ครบ!' : 'จบภารกิจแล้ว'}</h1>
-          <p>
-            คะแนน {result.score}/{quizQuestions.length} · ได้รับ {result.earnedCoins} coins
-          </p>
-          <div className="result-actions">
-            <button className="secondary-button" type="button" onClick={startOver}>
-              เล่นซ้ำ
-            </button>
-            <Link className="primary-button" to="/wallet">
-              ดูกระเป๋าเหรียญ
-            </Link>
+      <AppScreen className="result-screen">
+        <div className="celebration">
+          <div className="stars">⭐ ⭐ ⭐</div>
+          <Mascot mood={perfect ? 'wow' : 'happy'} />
+          <h1>{perfect ? 'Great Job!' : 'Quest Complete!'}</h1>
+          <p>{perfect ? 'You got it right!' : 'Keep learning and try again for full rewards.'}</p>
+        </div>
+        <article className="earned-card">
+          <h2>You Earned</h2>
+          <div className="stat-strip flat">
+            <span>🪙 Coins <b>+{result.earnedCoins}</b></span>
+            <span>⭐ EXP <b>+{Math.max(10, result.score * 25)}</b></span>
           </div>
         </article>
-      </section>
+        <article className="explain-card">
+          <h2>Result</h2>
+          <p>Score {result.score}/{quizQuestions.length}. Review hints any time to learn from each question.</p>
+        </article>
+        <div className="result-actions">
+          <button className="outline-button" type="button" onClick={startOver}>
+            Try Again
+          </button>
+          <Link className="primary-button" to="/home">
+            Continue →
+          </Link>
+        </div>
+      </AppScreen>
     );
   }
 
   return (
-    <section className="page-stack">
-      <div className="page-heading">
-        <p className="eyebrow">{quest.topic}</p>
-        <h1>{quest.title}</h1>
-        <p>{quest.description}</p>
+    <AppScreen className="quiz-screen">
+      <ScreenHeader
+        title={`Question ${currentIndex + 1} of ${quizQuestions.length}`}
+        subtitle={quest.topic}
+        showBack
+        right={<span className="timer">⏱ 00:{25 - currentIndex * 4}</span>}
+      />
+      <ProgressBar value={progress} />
+
+      <div className="quiz-coach">
+        <Mascot compact mood={feedback === 'wrong' ? 'oops' : 'focus'} />
+        <p>{feedback === 'wrong' ? "Oops! Let's figure it out together." : "Focus and think! You've got this!"}</p>
       </div>
 
-      <article className="quiz-panel">
-        <div className="quiz-progress">
-          <span>ข้อ {currentIndex + 1}/{quizQuestions.length}</span>
-          <div className="progress-track" aria-label={`Progress ${progress}%`}>
-            <div style={{ width: `${progress}%` }} />
-          </div>
+      <form className={`question-card ${feedback || ''}`} onSubmit={handleCheck}>
+        <h1>{currentQuestion.prompt}</h1>
+        <div className="answer-list">
+          {currentQuestion.options.map((option, index) => (
+            <label className={`answer-option ${selected === option ? 'selected' : ''}`} key={option}>
+              <input
+                type="radio"
+                name="answer"
+                value={option}
+                checked={selected === option}
+                disabled={feedback !== null}
+                onChange={() => {
+                  setSelected(option);
+                  playSound('tap');
+                }}
+              />
+              <b>{String.fromCharCode(65 + index)}</b>
+              <span>{option}</span>
+            </label>
+          ))}
         </div>
 
-        <form onSubmit={handleNext}>
-          <h2>{currentQuestion.prompt}</h2>
-          <div className="answer-grid">
-            {currentQuestion.options.map((option) => (
-              <label className={`answer-option ${selected === option ? 'selected' : ''}`} key={option}>
-                <input
-                  type="radio"
-                  name="answer"
-                  value={option}
-                  checked={selected === option}
-                  onChange={() => setSelected(option)}
-                />
-                <span>{option}</span>
-              </label>
-            ))}
+        {feedback === 'wrong' && (
+          <div className="wrong-box">
+            <h2>The correct answer is {currentQuestion.answer}.</h2>
+            <p>You selected {selected}. {currentQuestion.explanation}</p>
           </div>
+        )}
 
-          {showHint && <p className="hint-box">{currentQuestion.hint}</p>}
+        {feedback === 'correct' && (
+          <div className="correct-box">
+            <h2>Correct!</h2>
+            <p>{currentQuestion.explanation}</p>
+          </div>
+        )}
 
-          <div className="quiz-actions">
-            <button className="ghost-button" type="button" onClick={() => setShowHint((value) => !value)}>
-              {showHint ? 'ซ่อนคำใบ้' : 'ขอคำใบ้'}
+        {showHint && <p className="hint-box">💡 {currentQuestion.hint}</p>}
+
+        <div className="quiz-actions">
+          <button className="outline-button" type="button" onClick={() => setShowHint((value) => !value)}>
+            Hint
+          </button>
+          {feedback ? (
+            <button className="primary-button" type="button" onClick={handleNext}>
+              {currentIndex === quizQuestions.length - 1 ? 'Finish' : 'Continue'}
             </button>
+          ) : (
             <button className="primary-button" type="submit" disabled={!selected}>
-              {currentIndex === quizQuestions.length - 1 ? 'ส่งคำตอบ' : 'ข้อต่อไป'}
+              Check
             </button>
-          </div>
-        </form>
-      </article>
-    </section>
+          )}
+        </div>
+      </form>
+    </AppScreen>
   );
 };
 
