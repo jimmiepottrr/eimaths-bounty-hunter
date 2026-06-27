@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Eimaths Bounty Hunter Poster</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    figure {
+      margin: 0;
+    }
+
+    html,
+    body {
+      width: 1280px;
+      height: 720px;
+      margin: 0;
+      overflow: hidden;
+      font-family: "Trebuchet MS", "Arial Rounded MT Bold", Arial, sans-serif;
+      color: #071754;
+      background: #dff3ff;
+    }
+
+    .poster {
+      position: relative;
+      width: 1600px;
+      height: 900px;
+      transform: scale(0.8);
+      transform-origin: top left;
+      overflow: hidden;
+      background:
+        linear-gradient(110deg, rgba(246, 252, 255, 0.97) 0%, rgba(246, 252, 255, 0.9) 38%, rgba(233, 247, 255, 0.7) 100%),
+        url("../assets/adventure-map-3d.png") center / cover;
+    }
+
+    .poster::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      border: 14px solid rgba(255, 255, 255, 0.7);
+      box-shadow: inset 0 0 80px rgba(9, 74, 153, 0.18);
+    }
+
+    .header {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 400px minmax(0, 1fr) 420px;
+      align-items: center;
+      height: 166px;
+      padding: 24px 58px 12px;
+    }
+
+    .brand {
+      position: relative;
+      transform: rotate(-2deg);
+      filter: drop-shadow(0 6px 0 rgba(103, 53, 0, 0.2));
+    }
+
+    .brand-small {
+      margin-left: 70px;
+      color: #0868d8;
+      font-size: 31px;
+      font-weight: 900;
+      line-height: 1;
+      text-shadow: 0 2px 0 white;
+    }
+
+    .brand-main {
+      color: #ffb80a;
+      font-family: Impact, "Arial Black", sans-serif;
+      font-size: 62px;
+      line-height: 0.83;
+      letter-spacing: 0;
+      text-transform: uppercase;
+      -webkit-text-stroke: 3px #7f3800;
+      text-shadow:
+        0 5px 0 #f06b00,
+        0 9px 0 #783200,
+        0 11px 18px rgba(61, 30, 0, 0.25);
+    }
+
+    .headline {
+      min-width: 0;
+      padding-left: 16px;
+    }
+
+    .headline h1 {
+      margin: 0 0 10px;
+      font-size: 37px;
+      line-height: 1;
+      letter-spacing: 0;
+      color: #071754;
+    }
+
+    .headline p {
+      max-width: 580px;
+      margin: 0;
+      color: #294475;
+      font-size: 17px;
+      line-height: 1.35;
+    }
+
+    .feature-row {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 7px;
+      padding: 10px;
+      border: 1px solid rgba(58, 105, 163, 0.2);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: 0 10px 28px rgba(29, 70, 126, 0.12);
+    }
+
+    .feature {
+      min-width: 0;
+      padding: 0 6px;
+      text-align: center;
+      border-right: 1px dashed rgba(27, 67, 127, 0.24);
+    }
+
+    .feature:last-child {
+      border-right: 0;
+    }
+
+    .feature-icon {
+      display: block;
+      font-size: 28px;
+      line-height: 1.1;
+    }
+
+    .feature strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .feature span:last-child {
+      display: block;
+      margin-top: 2px;
+      color: #466082;
+      font-size: 9px;
+      white-space: nowrap;
+    }
+
+    .showcase {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1.6fr 0.9fr;
+      gap: 22px;
+      height: 604px;
+      padding: 0 58px;
+    }
+
+    .main-shot,
+    .small-shot {
+      position: relative;
+      overflow: hidden;
+      border: 6px solid #fff;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow:
+        0 10px 0 rgba(18, 74, 137, 0.18),
+        0 20px 38px rgba(16, 55, 108, 0.2);
+    }
+
+    .main-shot {
+      height: 100%;
+    }
+
+    .main-shot img,
+    .small-shot img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+      object-position: center top;
+    }
+
+    .main-shot img {
+      object-position: 50% 14%;
+    }
+
+    .shot-label {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      padding: 10px 15px;
+      border-radius: 8px;
+      color: white;
+      background: #084fbe;
+      box-shadow: 0 5px 0 #06367d;
+      font-size: 17px;
+      font-weight: 900;
+    }
+
+    .side-shots {
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 22px;
+      min-width: 0;
+    }
+
+    .small-shot .shot-label {
+      left: 12px;
+      bottom: 12px;
+      padding: 7px 11px;
+      background: #ff7a00;
+      box-shadow: 0 4px 0 #a84700;
+      font-size: 13px;
+    }
+
+    .small-shot.quiz img {
+      object-position: 48% top;
+    }
+
+    .small-shot.grade img {
+      object-position: 42% top;
+    }
+
+    .footer {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      height: 130px;
+      margin-top: 0;
+      padding: 18px 58px 24px;
+    }
+
+    .promise {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(150px, 1fr));
+      gap: 20px;
+    }
+
+    .promise-item {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      padding-right: 18px;
+      border-right: 1px dashed rgba(22, 68, 125, 0.24);
+    }
+
+    .promise-item:last-child {
+      border-right: 0;
+    }
+
+    .promise-badge {
+      display: grid;
+      width: 42px;
+      height: 42px;
+      place-items: center;
+      border-radius: 50%;
+      color: white;
+      background: #1379de;
+      box-shadow: 0 4px 0 #07509e;
+      font-size: 23px;
+    }
+
+    .promise-item:nth-child(2) .promise-badge {
+      background: #ff7a00;
+      box-shadow: 0 4px 0 #a84700;
+    }
+
+    .promise-item:nth-child(3) .promise-badge {
+      background: #31a85c;
+      box-shadow: 0 4px 0 #19723a;
+    }
+
+    .promise-item:nth-child(4) .promise-badge {
+      background: #ffb900;
+      box-shadow: 0 4px 0 #b36f00;
+    }
+
+    .promise-item strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .promise-item span {
+      display: block;
+      margin-top: 2px;
+      color: #526887;
+      font-size: 10px;
+    }
+
+    .tagline {
+      max-width: 330px;
+      margin-left: 26px;
+      color: #084fbe;
+      font-family: Impact, "Arial Black", sans-serif;
+      font-size: 25px;
+      line-height: 1.05;
+      letter-spacing: 0;
+      text-align: right;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <main class="poster">
+    <header class="header">
+      <div class="brand" aria-label="Eimaths Bounty Hunter">
+        <div class="brand-small">Eimaths</div>
+        <div class="brand-main">Bounty<br />Hunter</div>
+      </div>
+
+      <div class="headline">
+        <h1>Math Adventure Awaits!</h1>
+        <p>Explore vibrant worlds, solve exciting challenges, earn rewards and grow stronger with every quest.</p>
+      </div>
+
+      <div class="feature-row">
+        <div class="feature">
+          <span class="feature-icon">🗺️</span>
+          <strong>Explore</strong>
+          <span>Discover worlds</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">🧠</span>
+          <strong>Learn</strong>
+          <span>Master skills</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">🏆</span>
+          <strong>Earn</strong>
+          <span>Unlock rewards</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon">🔥</span>
+          <strong>Grow</strong>
+          <span>Build streaks</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="showcase">
+      <figure class="main-shot">
+        <img src="map.png" alt="Eimaths adventure world map" />
+        <figcaption class="shot-label">Explore the Adventure Map</figcaption>
+      </figure>
+
+      <div class="side-shots">
+        <figure class="small-shot quiz">
+          <img src="quiz.png" alt="Eimaths math quest" />
+          <figcaption class="shot-label">Solve Math Quests</figcaption>
+        </figure>
+        <figure class="small-shot grade">
+          <img src="intro.png" alt="Eimaths grade journey" />
+          <figcaption class="shot-label">Choose Your Journey</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <div class="promise">
+        <div class="promise-item">
+          <span class="promise-badge">🎯</span>
+          <div><strong>Curriculum Aligned</strong><span>Practice with purpose</span></div>
+        </div>
+        <div class="promise-item">
+          <span class="promise-badge">⭐</span>
+          <div><strong>Rewarding</strong><span>Every effort counts</span></div>
+        </div>
+        <div class="promise-item">
+          <span class="promise-badge">🛡️</span>
+          <div><strong>Supportive</strong><span>Learn with confidence</span></div>
+        </div>
+        <div class="promise-item">
+          <span class="promise-badge">📈</span>
+          <div><strong>Progressive</strong><span>Grow every day</span></div>
+        </div>
+      </div>
+      <div class="tagline">Learn. Explore.<br />Become a Legend.</div>
+    </footer>
+  </main>
+</body>
+</html>
