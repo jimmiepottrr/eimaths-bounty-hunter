@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getQuestionsForQuest, quests } from '../data';
 import { useAppState } from '../store';
@@ -17,9 +17,29 @@ const Quiz: React.FC = () => {
   const [showHint, setShowHint] = useState(false);
   const [feedback, setFeedback] = useState<AnswerFeedback>(null);
   const [result, setResult] = useState<{ score: number; earnedCoins: number } | null>(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
   const currentQuestion = quizQuestions[currentIndex];
   const progress = Math.round(((currentIndex + 1) / quizQuestions.length) * 100);
+  const formattedTime = `${String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:${String(
+    elapsedSeconds % 60,
+  ).padStart(2, '0')}`;
+
+  useEffect(() => {
+    setElapsedSeconds(0);
+  }, [currentIndex]);
+
+  useEffect(() => {
+    if (feedback || result) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setElapsedSeconds((seconds) => seconds + 1);
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [currentIndex, feedback, result]);
 
   const startOver = () => {
     setCurrentIndex(0);
@@ -28,7 +48,6 @@ const Quiz: React.FC = () => {
     setShowHint(false);
     setFeedback(null);
     setResult(null);
-    playSound('tap');
   };
 
   const handleCheck = (event: React.FormEvent) => {
@@ -55,7 +74,6 @@ const Quiz: React.FC = () => {
     if (currentIndex < quizQuestions.length - 1) {
       setCurrentIndex((index) => index + 1);
       setSelected('');
-      playSound('tap');
       return;
     }
 
@@ -103,7 +121,7 @@ const Quiz: React.FC = () => {
         title={`Question ${currentIndex + 1} of ${quizQuestions.length}`}
         subtitle={quest.topic}
         showBack
-        right={<span className="timer">⏱ 00:{25 - currentIndex * 4}</span>}
+        right={<span className="timer" aria-label={`Time on question ${formattedTime}`}>⏱ {formattedTime}</span>}
       />
       <ProgressBar value={progress} />
 

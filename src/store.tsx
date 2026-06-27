@@ -37,6 +37,8 @@ type AppContextValue = {
   resetProgress: () => void;
   toggleSound: () => void;
   playSound: (name: SoundName) => void;
+  playIntroSound: () => void;
+  stopIntroSound: () => void;
   accuracy: number;
   totalEarnedCoins: number;
   level: number;
@@ -65,6 +67,7 @@ const initialState: PlayerState = {
 };
 
 let audioContext: AudioContext | null = null;
+let introSources: OscillatorNode[] = [];
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
@@ -102,6 +105,139 @@ const playTone = (name: SoundName, enabled: boolean) => {
     oscillator.connect(gain);
     oscillator.start(now + index * 0.07);
     oscillator.stop(now + index * 0.07 + 0.08);
+  });
+};
+
+const stopIntroScore = () => {
+  introSources.forEach((source) => {
+    try {
+      source.stop();
+    } catch {
+      // The source may already have completed.
+    }
+  });
+  introSources = [];
+};
+
+const playIntroScore = (enabled: boolean) => {
+  if (!enabled) {
+    return;
+  }
+
+  const AudioCtor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioCtor) {
+    return;
+  }
+
+  stopIntroScore();
+  audioContext = audioContext || new AudioCtor();
+  const context = audioContext;
+  void context.resume();
+  const now = context.currentTime;
+  const master = context.createGain();
+  master.connect(context.destination);
+  master.gain.setValueAtTime(0.0001, now);
+  master.gain.exponentialRampToValueAtTime(0.12, now + 0.6);
+  master.gain.setValueAtTime(0.12, now + 14.5);
+  master.gain.exponentialRampToValueAtTime(0.0001, now + 17.5);
+
+  const beat = 60 / 138;
+  const whistleMelody = [659.25, 783.99, 880, 783.99, 659.25, 587.33, 659.25, 523.25];
+  const banjoPattern = [261.63, 329.63, 392, 523.25, 293.66, 369.99, 440, 587.33];
+  const bass = [130.81, 146.83, 110, 123.47];
+
+  const scheduleNote = (
+    frequency: number,
+    start: number,
+    duration: number,
+    volume: number,
+    type: OscillatorType,
+  ) => {
+    const oscillator = context.createOscillator();
+    const noteGain = context.createGain();
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, start);
+    noteGain.gain.setValueAtTime(0.0001, start);
+    noteGain.gain.exponentialRampToValueAtTime(volume, start + 0.025);
+    noteGain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+    oscillator.connect(noteGain);
+    noteGain.connect(master);
+    oscillator.start(start);
+    oscillator.stop(start + duration + 0.02);
+    introSources.push(oscillator);
+  };
+
+  for (let step = 0; step < 40; step += 1) {
+    const start = now + step * beat;
+    const phrase = Math.floor(step / 8);
+    if (step % 2 === 0) {
+      scheduleNote(
+        whistleMelody[(step / 2 + phrase * 2) % whistleMelody.length],
+        start,
+        beat * 1.65,
+        0.11,
+        'sine',
+      );
+    }
+
+    scheduleNote(
+      bass[Math.floor(step / 4) % bass.length],
+      start,
+      beat * 0.75,
+      step % 4 === 0 ? 0.13 : 0.08,
+      'triangle',
+    );
+
+    scheduleNote(
+      banjoPattern[(step + phrase) % banjoPattern.length] * 2,
+      start,
+      beat * 0.2,
+      0.07,
+      'square',
+    );
+    scheduleNote(
+      banjoPattern[(step + phrase + 2) % banjoPattern.length] * 2,
+      start + beat * 0.5,
+      beat * 0.17,
+      0.055,
+      'square',
+    );
+
+    const kick = context.createOscillator();
+    const kickGain = context.createGain();
+    kick.type = 'sine';
+    kick.frequency.setValueAtTime(step % 4 === 0 ? 118 : 92, start);
+    kick.frequency.exponentialRampToValueAtTime(46, start + 0.16);
+    kickGain.gain.setValueAtTime(step % 4 === 0 ? 0.25 : 0.15, start);
+    kickGain.gain.exponentialRampToValueAtTime(0.0001, start + 0.2);
+    kick.connect(kickGain);
+    kickGain.connect(master);
+    kick.start(start);
+    kick.stop(start + 0.22);
+    introSources.push(kick);
+
+    if (step % 4 === 2) {
+      scheduleNote(196, start, 0.1, 0.07, 'sawtooth');
+    }
+
+    if (step % 8 === 0) {
+      const chordRoot = bass[Math.floor(step / 8) % bass.length] * 2;
+      [1, 1.25, 1.5].forEach((ratio) => {
+        scheduleNote(chordRoot * ratio, start, beat * 6.8, 0.035, 'sawtooth');
+      });
+    }
+  }
+
+  [0, 5.2, 10.8].forEach((offset, fanfareIndex) => {
+    [392, 523.25, 659.25, 783.99].forEach((frequency, noteIndex) => {
+      scheduleNote(
+        frequency * (fanfareIndex === 2 ? 1.12 : 1),
+        now + offset + noteIndex * 0.12,
+        0.9,
+        0.11,
+        'sawtooth',
+      );
+    });
   });
 };
 
@@ -233,6 +369,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         playTone('tap', !state.soundEnabled);
       },
       playSound: (name) => playTone(name, state.soundEnabled),
+      playIntroSound: () => playIntroScore(state.soundEnabled),
+      stopIntroSound: stopIntroScore,
       accuracy: answered === 0 ? 87 : Math.round((correct / answered) * 100),
       totalEarnedCoins,
       level,

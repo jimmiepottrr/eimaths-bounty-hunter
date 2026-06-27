@@ -1,13 +1,19 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { grades, quests } from '../data';
 import { useAppState } from '../store';
 import { AppScreen, Mascot, ProgressBar, ScreenHeader, StatPill } from '../ui';
 
 const ParentReport: React.FC = () => {
-  const { state, accuracy, resetProgress, level } = useAppState();
+  const navigate = useNavigate();
+  const { state, accuracy, resetProgress, logout, level } = useAppState();
   const grade = grades.find((item) => item.id === state.gradeId);
   const completed = state.completedQuestIds.length;
   const lessons = Math.max(12, state.quizResults.length * 3);
+  const handleLogout = () => {
+    logout();
+    navigate('/login', { replace: true });
+  };
 
   return (
     <AppScreen className="report-screen">
@@ -58,9 +64,15 @@ const ParentReport: React.FC = () => {
         <ProgressBar value={(completed / quests.length) * 100} tone="orange" />
       </article>
 
-      <button className="outline-button wide" type="button" onClick={resetProgress}>
-        Reset demo progress
-      </button>
+      <div className="profile-actions">
+        <button className="outline-button wide" type="button" onClick={resetProgress}>
+          Reset demo progress
+        </button>
+        <button className="logout-button wide" type="button" onClick={handleLogout}>
+          <span aria-hidden="true">↪</span>
+          Log out
+        </button>
+      </div>
     </AppScreen>
   );
 };

@@ -28,6 +28,36 @@ a {
   -webkit-tap-highlight-color: transparent;
 }
 
+button,
+.primary-button,
+.outline-button,
+.action-grid a,
+.mission-card a,
+.bottom-nav a,
+.map-node {
+  transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+}
+
+button:not(:disabled):hover,
+.primary-button:hover,
+.outline-button:hover,
+.action-grid a:hover,
+.mission-card a:hover,
+.map-node:hover {
+  filter: brightness(1.04) saturate(1.05);
+  transform: translateY(-2px);
+}
+
+button:not(:disabled):active,
+.primary-button:active,
+.outline-button:active,
+.action-grid a:active,
+.mission-card a:active,
+.bottom-nav a:active,
+.map-node:active {
+  transform: translateY(5px) scale(0.985);
+}
+
 a {
   color: inherit;
   text-decoration: none;
@@ -149,6 +179,23 @@ a {
   transform: scale(1.65);
 }
 
+.mascot-journey {
+  width: 240px;
+  height: 360px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.mascot-journey img {
+  object-position: center;
+  transform: none;
+  -webkit-mask-image: radial-gradient(ellipse 78% 80% at 50% 48%, #000 62%, transparent 100%);
+  mask-image: radial-gradient(ellipse 78% 80% at 50% 48%, #000 62%, transparent 100%);
+}
+
 .primary-button,
 .outline-button,
 .icon-button {
@@ -166,7 +213,17 @@ a {
   border: 0;
   background: linear-gradient(180deg, #ff961c 0%, #ff650f 100%);
   color: #ffffff;
-  box-shadow: 0 8px 16px rgba(255, 100, 15, 0.28);
+  box-shadow:
+    0 7px 0 #bd3e08,
+    0 11px 18px rgba(255, 100, 15, 0.3),
+    inset 0 2px 0 rgba(255, 255, 255, 0.36);
+}
+
+.primary-button:not(:disabled):active {
+  box-shadow:
+    0 2px 0 #bd3e08,
+    0 5px 9px rgba(255, 100, 15, 0.24),
+    inset 0 2px 0 rgba(255, 255, 255, 0.2);
 }
 
 .primary-button:disabled,
@@ -177,8 +234,18 @@ a {
 
 .outline-button {
   border: 2px solid #1b73e8;
-  background: #ffffff;
+  background: linear-gradient(180deg, #ffffff, #edf6ff);
   color: #1262d5;
+  box-shadow:
+    0 6px 0 #a8c9ec,
+    0 10px 16px rgba(21, 79, 148, 0.16),
+    inset 0 2px 0 #ffffff;
+}
+
+.outline-button:not(:disabled):active {
+  box-shadow:
+    0 1px 0 #a8c9ec,
+    0 4px 8px rgba(21, 79, 148, 0.14);
 }
 
 .wide {
@@ -376,6 +443,23 @@ a {
   margin-bottom: -18px;
 }
 
+.map-bg .phone-frame::before {
+  position: absolute;
+  inset: -24px;
+  background:
+    linear-gradient(rgba(255, 252, 242, 0.72), rgba(245, 251, 255, 0.84)),
+    url("/assets/adventure-map-3d.png") center / cover no-repeat;
+  content: "";
+  filter: blur(7px) saturate(0.92);
+  opacity: 0.62;
+  transform: scale(1.04);
+}
+
+.map-bg .phone-frame > * {
+  position: relative;
+  z-index: 1;
+}
+
 .grade-list {
   display: grid;
   gap: 10px;
@@ -394,6 +478,16 @@ a {
   background: #ffffff;
   cursor: pointer;
   text-align: left;
+  box-shadow:
+    0 7px 0 #d2dfed,
+    0 12px 18px rgba(24, 65, 119, 0.1),
+    inset 0 2px 0 #ffffff;
+}
+
+.grade-card:not(:disabled):active {
+  box-shadow:
+    0 2px 0 #b8cbe0,
+    0 5px 8px rgba(24, 65, 119, 0.1);
 }
 
 .grade-card strong {
@@ -443,13 +537,33 @@ a {
 }
 
 .blue-hero {
+  position: relative;
   display: grid;
   gap: 14px;
   margin: -36px -14px 0;
   padding: 44px 14px 20px;
   border-radius: 0 0 24px 24px;
-  background: linear-gradient(135deg, #086ee9, #043ca9);
+  background:
+    linear-gradient(112deg, rgba(7, 110, 233, 0.95), rgba(3, 55, 157, 0.92)),
+    url("/assets/adventure-map-3d.png") center 44% / cover no-repeat;
   color: #ffffff;
+}
+
+.blue-hero::before {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(circle at 14% 28%, transparent 0 26px, rgba(255, 211, 62, 0.22) 27px 29px, transparent 30px),
+    radial-gradient(circle at 82% 24%, transparent 0 38px, rgba(109, 221, 255, 0.2) 39px 42px, transparent 43px),
+    repeating-linear-gradient(125deg, transparent 0 42px, rgba(255, 255, 255, 0.045) 43px 45px, transparent 46px 88px);
+  content: "";
+  pointer-events: none;
+}
+
+.blue-hero > * {
+  position: relative;
+  z-index: 1;
 }
 
 .blue-hero .screen-header h1,
@@ -626,7 +740,16 @@ a {
   background: #f2f8ff;
   color: #07175f;
   font-weight: 900;
-  box-shadow: inset 0 0 0 1px #e0ebf8;
+  box-shadow:
+    0 6px 0 #bed6ec,
+    0 10px 15px rgba(31, 76, 130, 0.12),
+    inset 0 2px 0 #ffffff;
+}
+
+.action-grid a:active {
+  box-shadow:
+    0 1px 0 #bed6ec,
+    0 4px 8px rgba(31, 76, 130, 0.1);
 }
 
 .action-grid a:nth-child(4),
@@ -711,6 +834,10 @@ a {
   background: #0a70ed;
   color: #ffffff;
   font-weight: 900;
+  box-shadow:
+    0 5px 0 #064caa,
+    0 8px 12px rgba(10, 83, 171, 0.2),
+    inset 0 2px 0 rgba(255, 255, 255, 0.24);
 }
 
 .mission-card.completed {
@@ -1003,6 +1130,16 @@ a {
   background: #ffffff;
   cursor: pointer;
   text-align: left;
+  box-shadow:
+    0 5px 0 #d4e0ed,
+    0 8px 12px rgba(27, 66, 114, 0.08),
+    inset 0 2px 0 #ffffff;
+}
+
+.coupon-row:not(:disabled):active {
+  box-shadow:
+    0 1px 0 #d4e0ed,
+    0 3px 6px rgba(27, 66, 114, 0.08);
 }
 
 .coupon-row.selected {
@@ -1075,6 +1212,360 @@ a {
   font-weight: 850;
 }
 
+.intro-cinematic {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #03102a;
+  color: #ffffff;
+  z-index: 100;
+}
+
+.intro-scene {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-items: end;
+  padding: clamp(24px, 6vw, 78px);
+  opacity: 0;
+  background-position: center;
+  background-size: cover;
+  transition: opacity 900ms ease;
+  pointer-events: none;
+}
+
+.intro-scene::before {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(1, 10, 31, 0.82) 0%, rgba(2, 16, 42, 0.34) 46%, transparent 72%),
+    linear-gradient(0deg, rgba(1, 8, 25, 0.84) 0%, transparent 52%);
+  content: "";
+}
+
+.intro-scene.active {
+  opacity: 1;
+  animation: cinematic-pan 5.8s linear both;
+  pointer-events: auto;
+}
+
+.intro-copy {
+  position: relative;
+  display: grid;
+  width: min(620px, 74vw);
+  gap: 10px;
+  padding-bottom: 72px;
+  text-shadow: 0 3px 14px rgba(0, 0, 0, 0.8);
+  z-index: 1;
+}
+
+.intro-copy span {
+  color: #ffd34d;
+  font-size: 0.88rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.intro-copy h1,
+.intro-copy p {
+  margin: 0;
+}
+
+.intro-copy h1 {
+  max-width: 13ch;
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  font-size: clamp(2rem, 6vw, 4.8rem);
+  line-height: 0.98;
+}
+
+.intro-copy p {
+  max-width: 56ch;
+  color: #e8f4ff;
+  font-size: clamp(0.95rem, 1.7vw, 1.2rem);
+  font-weight: 800;
+}
+
+.intro-controls {
+  position: absolute;
+  right: clamp(18px, 4vw, 58px);
+  bottom: clamp(22px, 4vw, 50px);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 4;
+}
+
+.cinema-button {
+  min-height: 44px;
+  padding: 9px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  border-radius: 10px;
+  background: rgba(4, 18, 47, 0.78);
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 900;
+  backdrop-filter: blur(12px);
+  box-shadow:
+    0 5px 0 rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.cinema-button:active {
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.55);
+}
+
+.intro-dots {
+  display: flex;
+  gap: 7px;
+}
+
+.intro-dots span {
+  width: 26px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.intro-dots span.active {
+  background: #ffd337;
+}
+
+.intro-progress {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #ffd83f, #ff7a18);
+  animation: intro-progress 5.5s linear both;
+  z-index: 5;
+}
+
+.grade-story-panel {
+  position: relative;
+  min-height: 250px;
+  overflow: hidden;
+  border: 1px solid #d4e3f0;
+  border-radius: 18px;
+  background:
+    linear-gradient(90deg, rgba(5, 34, 85, 0.95) 0%, rgba(5, 45, 102, 0.82) 48%, rgba(4, 35, 75, 0.2) 72%),
+    url("/assets/adventure-map-3d.png") center / cover no-repeat;
+  box-shadow: 0 12px 26px rgba(11, 47, 94, 0.18);
+  color: #ffffff;
+}
+
+.grade-story-copy {
+  display: grid;
+  width: min(520px, 60%);
+  gap: 8px;
+  padding: 24px;
+}
+
+.grade-story-copy > span {
+  color: #ffd34d;
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.grade-story-copy h2,
+.grade-story-copy p {
+  margin: 0;
+}
+
+.grade-story-copy h2 {
+  font-size: 1.5rem;
+  line-height: 1.05;
+}
+
+.grade-story-copy p {
+  color: #e3f2ff;
+  font-size: 0.86rem;
+}
+
+.grade-story-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.grade-story-stats b {
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.68rem;
+}
+
+.grade-story-copy .primary-button {
+  width: fit-content;
+  min-width: 190px;
+  margin-top: 5px;
+  padding: 0 18px;
+}
+
+.story-replay-link {
+  width: fit-content;
+  margin-top: 5px;
+  color: #ffffff;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.map-progress-chip {
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: #edf7ff;
+  color: #0759bd;
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.adventure-map-stage {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  min-height: 430px;
+  overflow: hidden;
+  border: 5px solid #ffffff;
+  border-radius: 20px;
+  background: url("/assets/adventure-map-3d.png") center / cover no-repeat;
+  box-shadow:
+    0 8px 0 #aac8df,
+    0 16px 30px rgba(9, 51, 95, 0.22);
+}
+
+.map-node {
+  position: absolute;
+  left: clamp(12px, var(--map-x), calc(100% - 138px));
+  top: clamp(12px, var(--map-y), calc(100% - 82px));
+  display: grid;
+  width: 126px;
+  max-width: calc(100% - 24px);
+  min-height: 66px;
+  place-items: center;
+  gap: 0;
+  padding: 8px;
+  border: 3px solid #ffffff;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #ffdf4a, #ff9f16);
+  color: #09205e;
+  cursor: pointer;
+  text-align: center;
+  box-shadow:
+    0 6px 0 #ad5e08,
+    0 10px 20px rgba(16, 46, 78, 0.28),
+    inset 0 2px 0 rgba(255, 255, 255, 0.55);
+}
+
+.map-node:active {
+  box-shadow:
+    0 1px 0 #ad5e08,
+    0 4px 8px rgba(16, 46, 78, 0.24);
+}
+
+.map-node b {
+  display: grid;
+  min-width: 26px;
+  min-height: 26px;
+  place-items: center;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0a63d8;
+  font-size: 0.72rem;
+}
+
+.map-node span {
+  font-size: 0.78rem;
+  font-weight: 950;
+}
+
+.map-node small {
+  font-size: 0.61rem;
+  font-weight: 800;
+}
+
+.map-node.done {
+  background: linear-gradient(180deg, #9ee76e, #48b83c);
+}
+
+.map-node.locked {
+  background: linear-gradient(180deg, #777f9d, #454c68);
+  color: #ffffff;
+  cursor: not-allowed;
+  filter: grayscale(0.35);
+}
+
+.node-1 { --map-x: 9%; --map-y: 18%; }
+.node-2 { --map-x: 43%; --map-y: 10%; }
+.node-3 { --map-x: 78%; --map-y: 22%; }
+.node-4 { --map-x: 8%; --map-y: 70%; }
+.node-5 { --map-x: 44%; --map-y: 73%; }
+.node-6 { --map-x: 79%; --map-y: 69%; }
+
+.map-journey-card {
+  display: grid;
+  gap: 9px;
+  padding: 14px;
+  border: 1px solid #d9e5f1;
+  border-radius: 16px;
+  background: #ffffff;
+  box-shadow: 0 7px 0 #cbddeb, 0 12px 20px rgba(25, 62, 108, 0.1);
+}
+
+.map-journey-card > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.map-journey-card p {
+  margin: 0;
+  color: #52627d;
+  font-size: 0.8rem;
+}
+
+.profile-actions {
+  display: grid;
+  gap: 12px;
+}
+
+.logout-button {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px solid #e34a42;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #fff6f5, #ffe4e1);
+  color: #b4231c;
+  cursor: pointer;
+  font-weight: 900;
+  box-shadow:
+    0 6px 0 #e5aaa5,
+    0 10px 16px rgba(151, 41, 33, 0.14),
+    inset 0 2px 0 #ffffff;
+}
+
+.logout-button:not(:disabled):active {
+  box-shadow:
+    0 1px 0 #e5aaa5,
+    0 4px 8px rgba(151, 41, 33, 0.12);
+}
+
+@keyframes cinematic-pan {
+  from { background-size: auto 108%; }
+  to { background-size: auto 116%; }
+}
+
+@keyframes intro-progress {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
 @media (min-width: 900px) {
   .app-shell {
     padding: 32px 24px;
@@ -1131,6 +1622,10 @@ a {
     align-self: center;
   }
 
+  .map-bg .grade-story-panel {
+    grid-column: 1 / -1;
+  }
+
   .home-screen .blue-hero {
     margin: -28px -28px 0;
     padding: 28px;
@@ -1183,6 +1678,16 @@ a {
   .reward-screen .toast-message {
     grid-column: 1 / -1;
   }
+
+  .adventure-map-screen .adventure-map-stage,
+  .adventure-map-screen .map-journey-card,
+  .report-screen .profile-actions {
+    grid-column: 1 / -1;
+  }
+
+  .adventure-map-screen .adventure-map-stage {
+    min-height: 580px;
+  }
 }
 @media (max-width: 440px) {
   .app-shell {
@@ -1199,4 +1704,89 @@ a {
     border: 0;
     border-radius: 0;
   }
+
+  .intro-scene {
+    padding: 20px;
+    background-position: 40% center;
+  }
+
+  .intro-scene::before {
+    background: linear-gradient(0deg, rgba(1, 8, 25, 0.94) 0%, rgba(2, 16, 42, 0.18) 70%);
+  }
+
+  .intro-copy {
+    width: 100%;
+    padding-bottom: 126px;
+  }
+
+  .intro-copy h1 {
+    font-size: 2.25rem;
+  }
+
+  .intro-controls {
+    left: 18px;
+    right: 18px;
+    bottom: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .intro-dots {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+
+  .cinema-button {
+    padding: 8px 10px;
+  }
+
+  .grade-story-panel {
+    min-height: 320px;
+    background-position: 62% center;
+  }
+
+  .grade-story-copy {
+    width: 78%;
+    padding: 18px;
+  }
+
+  .grade-story-copy h2 {
+    font-size: 1.2rem;
+  }
+
+  .mascot-journey {
+    width: 210px;
+    height: 315px;
+  }
+
+  .adventure-map-stage {
+    min-height: 430px;
+  }
+
+  .map-node {
+    left: clamp(8px, var(--map-x), calc(100% - 58px));
+    top: clamp(8px, var(--map-y), calc(100% - 58px));
+    width: 48px;
+    min-height: 48px;
+    padding: 4px;
+    border-width: 2px;
+    border-radius: 50%;
+  }
+
+  .map-node span,
+  .map-node small {
+    display: none;
+  }
+
+  .map-node b {
+    background: transparent;
+    color: inherit;
+  }
+
+  .node-1 { --map-x: 7%; --map-y: 22%; }
+  .node-2 { --map-x: 43%; --map-y: 16%; }
+  .node-3 { --map-x: 80%; --map-y: 25%; }
+  .node-4 { --map-x: 7%; --map-y: 70%; }
+  .node-5 { --map-x: 44%; --map-y: 74%; }
+  .node-6 { --map-x: 81%; --map-y: 69%; }
 }

@@ -8,6 +8,8 @@ import Quiz from './pages/Quiz';
 import Wallet from './pages/Wallet';
 import Rewards from './pages/Rewards';
 import ParentReport from './pages/ParentReport';
+import Intro from './pages/Intro';
+import AdventureMap from './pages/AdventureMap';
 import Header from './components/Header';
 import { useAppState } from './store';
 
@@ -17,14 +19,25 @@ const RequireSession: React.FC<{ children: React.ReactElement }> = ({ children }
 };
 
 const App: React.FC = () => {
+  const { playSound } = useAppState();
+
+  const handleGlobalPress = (event: React.PointerEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest('button, a, [role="button"]')) {
+      playSound('tap');
+    }
+  };
+
   return (
-    <div className="app">
+    <div className="app" onPointerDownCapture={handleGlobalPress}>
       <Header />
       <main className="app-shell">
         <Routes>
           <Route path="/" element={<Navigate to="/login" />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/intro" element={<RequireSession><Intro /></RequireSession>} />
           <Route path="/grade" element={<RequireSession><Grade /></RequireSession>} />
+          <Route path="/map" element={<RequireSession><AdventureMap /></RequireSession>} />
           <Route path="/home" element={<RequireSession><Home /></RequireSession>} />
           <Route path="/quest" element={<RequireSession><Quest /></RequireSession>} />
           <Route path="/quiz" element={<RequireSession><Quiz /></RequireSession>} />

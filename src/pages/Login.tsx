@@ -5,7 +5,7 @@ import { AppScreen, Logo } from '../ui';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const { login, playSound } = useAppState();
+  const { login } = useAppState();
   const [parentName, setParentName] = useState('Parent');
   const [childName, setChildName] = useState('Hunter');
   const [email, setEmail] = useState('parent@example.com');
@@ -13,7 +13,7 @@ const Login: React.FC = () => {
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     login({ parentName, childName, email });
-    navigate('/grade');
+    navigate('/intro');
   };
 
   return (
@@ -43,10 +43,10 @@ const Login: React.FC = () => {
           Email
           <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
         </label>
-        <button className="primary-button wide" type="submit" onClick={() => playSound('tap')}>
+        <button className="primary-button wide" type="submit">
           Login →
         </button>
-        <button className="outline-button wide" type="button" onClick={() => playSound('tap')}>
+        <button className="outline-button wide" type="button">
           Scan QR Code
         </button>
       </form>

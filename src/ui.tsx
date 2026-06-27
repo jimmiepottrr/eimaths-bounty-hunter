@@ -1,17 +1,24 @@
 import React from 'react';
 import { Link, NavLink, useLocation } from 'react-router-dom';
-import { useAppState } from './store';
 
-export const Mascot: React.FC<{ mood?: 'happy' | 'focus' | 'wow' | 'oops'; compact?: boolean }> = ({
+export const Mascot: React.FC<{
+  mood?: 'happy' | 'focus' | 'wow' | 'oops';
+  compact?: boolean;
+  variant?: 'portrait' | 'journey';
+}> = ({
   mood = 'happy',
   compact = false,
+  variant = 'portrait',
 }) => (
   <div
-    className={`mascot mascot-${mood} ${compact ? 'compact' : ''}`}
+    className={`mascot mascot-${mood} mascot-${variant} ${compact ? 'compact' : ''}`}
     role="img"
     aria-label={`Eimaths lion mascot, ${mood}`}
   >
-    <img src={`${import.meta.env.BASE_URL}assets/eimaths-hero-3d.png`} alt="" />
+    <img
+      src={`${import.meta.env.BASE_URL}assets/${variant === 'journey' ? 'eimaths-journey-3d.png' : 'eimaths-hero-3d.png'}`}
+      alt=""
+    />
   </div>
 );
 
@@ -74,10 +81,9 @@ export const ScreenHeader: React.FC<{
 );
 
 export const BottomNav: React.FC = () => {
-  const { playSound } = useAppState();
   const items = [
     { to: '/home', label: 'Home', icon: '🏠' },
-    { to: '/grade', label: 'Map', icon: '🗺️' },
+    { to: '/map', label: 'Map', icon: '🗺️' },
     { to: '/quest', label: 'Quest', icon: '📋' },
     { to: '/rewards', label: 'Rewards', icon: '🎁' },
     { to: '/parent-report', label: 'Profile', icon: '👤' },
@@ -89,7 +95,6 @@ export const BottomNav: React.FC = () => {
         <NavLink
           key={item.to}
           to={item.to}
-          onClick={() => playSound('tap')}
           className={({ isActive }) => (isActive ? 'active' : '')}
         >
           <span>{item.icon}</span>

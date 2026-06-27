@@ -53,7 +53,7 @@ const Home: React.FC = () => {
       </article>
 
       <div className="action-grid">
-        <Link to="/grade">🗺️<span>Map</span></Link>
+        <Link to="/map">🗺️<span>Map</span></Link>
         <Link to="/quest">📋<span>Quest</span></Link>
         <Link to={`/quiz/${nextQuest.id}`}>👾<span>Boss</span></Link>
         <Link to="/rewards">🎁<span>Rewards</span></Link>
