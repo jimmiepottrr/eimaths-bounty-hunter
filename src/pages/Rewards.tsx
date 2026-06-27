@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { rewards } from '../data';
 import { useAppState } from '../store';
-import { AppScreen, Mascot, ScreenHeader } from '../ui';
+import { AppScreen, ScreenHeader } from '../ui';
 
 const Rewards: React.FC = () => {
   const { state, redeemReward } = useAppState();
@@ -28,7 +28,6 @@ const Rewards: React.FC = () => {
           <h1>Course Discount Coupons</h1>
           <p>Choose a coupon and redeem it with your coins.</p>
         </div>
-        <Mascot compact />
       </div>
 
       {message && <p className="toast-message">{message}</p>}

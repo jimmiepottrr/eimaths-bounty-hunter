@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../store';
-import { AppScreen, Logo, Mascot } from '../ui';
+import { AppScreen, Logo } from '../ui';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -21,11 +21,10 @@ const Login: React.FC = () => {
       <div className="splash-panel">
         <Logo />
         <div className="island-scene">
-          <div className="sun" />
-          <div className="cloud c1" />
-          <div className="cloud c2" />
-          <Mascot />
-          <div className="treasure">🪙</div>
+          <div className="hero-caption">
+            <strong>Learn. Explore. Earn.</strong>
+            <span>Your next math adventure starts here.</span>
+          </div>
         </div>
       </div>
 

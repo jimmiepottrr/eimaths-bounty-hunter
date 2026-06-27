@@ -5,28 +5,15 @@ import { useAppState } from './store';
 export const Mascot: React.FC<{ mood?: 'happy' | 'focus' | 'wow' | 'oops'; compact?: boolean }> = ({
   mood = 'happy',
   compact = false,
-}) => {
-  const faces = {
-    happy: 'ᵔᴥᵔ',
-    focus: '•ᴥ•',
-    wow: '★ᴥ★',
-    oops: '•́ᴥ•̀',
-  };
-
-  return (
-    <div className={`mascot ${compact ? 'compact' : ''}`} aria-label="Eimaths lion mascot">
-      <div className="mane">
-        <div className="ear left" />
-        <div className="ear right" />
-        <div className="helmet">E</div>
-        <div className="face">
-          <span>{faces[mood]}</span>
-        </div>
-      </div>
-      {!compact && <div className="paw">👍</div>}
-    </div>
-  );
-};
+}) => (
+  <div
+    className={`mascot mascot-${mood} ${compact ? 'compact' : ''}`}
+    role="img"
+    aria-label={`Eimaths lion mascot, ${mood}`}
+  >
+    <img src={`${import.meta.env.BASE_URL}assets/eimaths-hero-3d.png`} alt="" />
+  </div>
+);
 
 export const Logo: React.FC<{ small?: boolean }> = ({ small = false }) => (
   <div className={`game-logo ${small ? 'small' : ''}`}>

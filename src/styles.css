@@ -1,7 +1,7 @@
 :root {
   color: #06144f;
   background: #eef6ff;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Trebuchet MS", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
   font-synthesis: none;
   line-height: 1.45;
   text-rendering: optimizeLegibility;
@@ -15,10 +15,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   margin: 0;
-  background:
-    radial-gradient(circle at 20% 12%, rgba(255, 207, 48, 0.22), transparent 24%),
-    radial-gradient(circle at 80% 4%, rgba(85, 179, 242, 0.22), transparent 28%),
-    linear-gradient(180deg, #ffffff 0%, #edf7ff 100%);
+  background: linear-gradient(135deg, #f7fbff 0%, #eaf5ff 50%, #fff8df 100%);
 }
 
 button,
@@ -104,14 +101,16 @@ a {
 
 .game-logo span {
   font-size: 2rem;
-  font-weight: 950;
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  font-weight: 900;
 }
 
 .game-logo strong,
 .game-logo b {
   color: #ffbd22;
   font-size: 3.8rem;
-  font-weight: 950;
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  font-weight: 900;
   letter-spacing: 0;
   text-shadow: 0 4px 0 #8f3b0b, 0 8px 14px rgba(117, 55, 0, 0.24);
 }
@@ -127,101 +126,27 @@ a {
 
 .mascot {
   position: relative;
-  display: grid;
-  place-items: center;
+  overflow: hidden;
   width: 148px;
   height: 148px;
+  border: 5px solid #ffffff;
+  border-radius: 50%;
+  background: #79cfff;
+  box-shadow: 0 10px 24px rgba(21, 67, 127, 0.2);
 }
 
 .mascot.compact {
   width: 58px;
   height: 58px;
+  border-width: 3px;
 }
 
-.mane {
-  position: relative;
-  display: grid;
-  width: 116px;
-  height: 116px;
-  place-items: center;
-  border-radius: 50%;
-  background: radial-gradient(circle, #ffcf45 24%, #d66f11 25%, #a84b09 62%, #7b3005 100%);
-  box-shadow: inset 0 -8px 0 rgba(79, 31, 0, 0.24), 0 10px 22px rgba(87, 49, 8, 0.18);
-}
-
-.compact .mane {
-  width: 52px;
-  height: 52px;
-}
-
-.face {
-  display: grid;
-  width: 72px;
-  height: 68px;
-  place-items: center;
-  border-radius: 42% 42% 48% 48%;
-  background: #ffd96b;
-  color: #4b2500;
-  font-size: 1.25rem;
-  font-weight: 950;
-}
-
-.compact .face {
-  width: 34px;
-  height: 32px;
-  font-size: 0.58rem;
-}
-
-.ear {
-  position: absolute;
-  top: 19px;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background: #c85b0d;
-}
-
-.compact .ear {
-  top: 8px;
-  width: 13px;
-  height: 13px;
-}
-
-.ear.left {
-  left: 9px;
-}
-
-.ear.right {
-  right: 9px;
-}
-
-.helmet {
-  position: absolute;
-  top: -4px;
-  display: grid;
-  width: 52px;
-  height: 30px;
-  place-items: center;
-  border: 3px solid #a85b13;
-  border-radius: 999px 999px 10px 10px;
-  background: #c77721;
-  color: #0f67d8;
-  font-weight: 950;
-}
-
-.compact .helmet {
-  top: -2px;
-  width: 25px;
-  height: 16px;
-  border-width: 1px;
-  font-size: 0.55rem;
-}
-
-.paw {
-  position: absolute;
-  right: 5px;
-  bottom: 20px;
-  font-size: 2rem;
+.mascot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 52% 37%;
+  transform: scale(1.65);
 }
 
 .primary-button,
@@ -355,72 +280,30 @@ a {
   display: grid;
   width: 100%;
   height: 236px;
-  place-items: end center;
+  align-items: end;
   overflow: hidden;
   border-radius: 24px;
-  background:
-    linear-gradient(180deg, rgba(87, 198, 255, 0.88), rgba(255, 247, 202, 0.86)),
-    linear-gradient(135deg, #6dc9ff, #fff3b0);
+  background: url("/assets/eimaths-hero-3d.png") center 43% / cover no-repeat;
+  box-shadow: inset 0 -95px 70px rgba(2, 31, 71, 0.58);
 }
 
-.sun,
-.cloud,
-.treasure {
-  position: absolute;
+.hero-caption {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  padding: 18px;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
 }
 
-.sun {
-  top: 24px;
-  right: 38px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #ffd335;
+.hero-caption strong {
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", sans-serif;
+  font-size: 1.25rem;
 }
 
-.cloud {
-  width: 64px;
-  height: 22px;
-  border-radius: 999px;
-  background: #ffffff;
-}
-
-.cloud::before,
-.cloud::after {
-  position: absolute;
-  content: "";
-  border-radius: 50%;
-  background: #ffffff;
-}
-
-.cloud::before {
-  left: 10px;
-  top: -10px;
-  width: 28px;
-  height: 28px;
-}
-
-.cloud::after {
-  right: 10px;
-  top: -7px;
-  width: 22px;
-  height: 22px;
-}
-
-.c1 {
-  top: 56px;
-  left: 26px;
-}
-
-.c2 {
-  top: 88px;
-  right: 34px;
-}
-
-.treasure {
-  right: 34px;
-  bottom: 18px;
-  font-size: 3.2rem;
+.hero-caption span {
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .login-card,
@@ -854,9 +737,20 @@ a {
 
 .quiz-coach {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 42% 1fr;
   align-items: center;
   gap: 10px;
+  min-height: 126px;
+  overflow: hidden;
+  padding: 12px;
+  border: 1px solid #f0d390;
+  border-radius: 18px;
+  background: url("/assets/eimaths-quiz-coach-3d.png") center / cover no-repeat;
+  box-shadow: 0 10px 22px rgba(40, 59, 102, 0.08);
+}
+
+.quiz-coach .mascot {
+  visibility: hidden;
 }
 
 .quiz-coach p {
@@ -864,7 +758,7 @@ a {
   padding: 12px;
   border: 1px solid #f1d08c;
   border-radius: 16px;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.92);
   color: #07175f;
   font-size: 0.82rem;
   font-weight: 850;
@@ -1070,12 +964,15 @@ a {
 
 .shop-hero {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: minmax(0, 48%) 1fr;
   align-items: center;
   gap: 8px;
-  padding: 14px;
+  min-height: 172px;
+  padding: 20px;
   border-radius: 18px;
-  background: linear-gradient(135deg, #1ca8ff, #0d6fe7);
+  background:
+    linear-gradient(90deg, rgba(4, 70, 159, 0.88) 0%, rgba(6, 93, 191, 0.68) 43%, transparent 72%),
+    url("/assets/eimaths-rewards-3d.png") center / cover no-repeat;
   color: #ffffff;
 }
 
@@ -1180,14 +1077,113 @@ a {
 
 @media (min-width: 900px) {
   .app-shell {
-    padding-top: 42px;
+    padding: 32px 24px;
   }
 
   .phone-frame {
-    width: 420px;
+    display: grid;
+    width: min(1100px, calc(100vw - 48px));
+    min-height: 720px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-content: start;
+    gap: 18px;
+    padding: 28px 28px 104px;
+    border: 1px solid rgba(143, 168, 203, 0.5);
+    border-radius: 24px;
+  }
+
+  .phone-notch,
+  .phone-status {
+    display: none;
+  }
+
+  .screen-header,
+  .blue-hero,
+  .streak-card,
+  .result-actions,
+  .bottom-nav {
+    grid-column: 1 / -1;
+  }
+
+  .login-art .phone-frame {
+    grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+    align-items: center;
+  }
+
+  .login-art .splash-panel {
+    padding: 0;
+  }
+
+  .login-art .island-scene {
+    height: 520px;
+  }
+
+  .login-art .login-card {
+    align-self: center;
+    padding: 26px;
+  }
+
+  .map-bg .peek-mascot {
+    align-self: center;
+  }
+
+  .map-bg .grade-list {
+    align-self: center;
+  }
+
+  .home-screen .blue-hero {
+    margin: -28px -28px 0;
+    padding: 28px;
+  }
+
+  .home-screen .action-grid {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .quest-screen .mission-list {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .quest-screen .mission-card {
+    grid-template-columns: auto 1fr;
+  }
+
+  .quest-screen .reward-badge {
+    grid-column: 1 / -1;
+  }
+
+  .quiz-screen .progress-track {
+    grid-column: 1 / -1;
+  }
+
+  .quiz-screen .quiz-coach {
+    min-height: 300px;
+  }
+
+  .quiz-screen .question-card {
+    align-self: stretch;
+  }
+
+  .result-screen .celebration {
+    min-height: 330px;
+  }
+
+  .reward-screen .shop-hero,
+  .report-screen .report-hero,
+  .wallet-screen .profile-card {
+    grid-column: 1 / -1;
+  }
+
+  .reward-screen .shop-hero {
+    min-height: 280px;
+  }
+
+  .reward-screen .toast-message {
+    grid-column: 1 / -1;
   }
 }
-
 @media (max-width: 440px) {
   .app-shell {
     padding: 0;
