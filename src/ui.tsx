@@ -105,13 +105,25 @@ export const BottomNav: React.FC = () => {
   );
 };
 
-export const AppScreen: React.FC<{ children: React.ReactNode; className?: string }> = ({ children, className = '' }) => {
+export const AppScreen: React.FC<{
+  children: React.ReactNode;
+  className?: string;
+  /** slug อาร์ตพื้นหลัง (stylized 3D) — ถ้ามีจะวาดเป็นเลเยอร์พื้นหลังใต้เนื้อหา */
+  bgArt?: string;
+}> = ({ children, className = '', bgArt }) => {
   const location = useLocation();
   const isLogin = location.pathname === '/login';
 
   return (
-    <section className={`app-screen ${className}`}>
+    <section className={`app-screen ${className} ${bgArt ? 'has-scene-bg' : ''}`}>
       <PhoneFrame>
+        {bgArt && (
+          <div
+            className="scene-bg"
+            aria-hidden="true"
+            style={{ backgroundImage: `url(${bgArt})` }}
+          />
+        )}
         {children}
         {!isLogin && <BottomNav />}
       </PhoneFrame>

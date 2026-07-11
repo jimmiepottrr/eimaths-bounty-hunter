@@ -3,7 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { api, ApiError, QuizAnswerResponse, QuizStartResponse } from '../api';
 import { useAppState } from '../store';
 import { AppScreen, Mascot, ProgressBar, ScreenHeader } from '../ui';
-import { getWorld } from '../world';
+import { getWorld, sceneArtSlug, bossArtSlug } from '../world';
+import { artUrl } from '../config';
 
 /**
  * Quiz เฟส 2 — โจทย์/คะแนน/คอมโบ/เหรียญมาจากเซิร์ฟเวอร์ทั้งหมด
@@ -47,6 +48,10 @@ const Quiz: React.FC = () => {
   const { player, playSound, markSceneCleared, markBossCleared } = useAppState();
   const grade = player?.grade ?? 3;
   const world = getWorld(grade);
+
+  // อาร์ตพื้นหลังของฉาก/บอส (stylized 3D) — boss ใช้ art บอส, ฉากใช้ art ตามเลข scene
+  const artSlug = isBoss ? bossArtSlug(grade) : sceneArtSlug(grade, sceneNumber);
+  const bgArt = artSlug ? artUrl(artSlug) : undefined;
 
   const [phase, setPhase] = useState<Phase>('loading');
   const [errorMessage, setErrorMessage] = useState('');
@@ -177,7 +182,7 @@ const Quiz: React.FC = () => {
 
   if (phase === 'loading') {
     return (
-      <AppScreen className={`quiz-screen theme-${world.theme}`}>
+      <AppScreen bgArt={bgArt} className={`quiz-screen theme-${world.theme}`}>
         <div className="quiz-loading">
           <Mascot mood="focus" />
           <p>ปิ๊งกำลังเปิดแผนที่โจทย์… ⏳</p>
@@ -188,7 +193,7 @@ const Quiz: React.FC = () => {
 
   if (phase === 'error') {
     return (
-      <AppScreen className={`quiz-screen theme-${world.theme}`}>
+      <AppScreen bgArt={bgArt} className={`quiz-screen theme-${world.theme}`}>
         <div className="quiz-error">
           <Mascot mood="oops" />
           <h1>อุ๊ปส์!</h1>
@@ -278,7 +283,7 @@ const Quiz: React.FC = () => {
   const timerDanger = secondsLeft <= Math.ceil(session.time_limit_sec / 3);
 
   return (
-    <AppScreen className={`quiz-screen theme-${world.theme} ${isBoss ? 'boss-mode' : ''}`}>
+    <AppScreen bgArt={bgArt} className={`quiz-screen theme-${world.theme} ${isBoss ? 'boss-mode' : ''}`}>
       <ScreenHeader
         title={`ข้อ ${questionIndex + 1}/${totalQuestions}`}
         subtitle={`${world.land} · ${sceneName}`}

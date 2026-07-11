@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../store';
 import { AppScreen, ProgressBar, ScreenHeader } from '../ui';
 import { getWorld, lastSceneOf } from '../world';
+import { artUrl } from '../config';
 
 /**
  * Adventure Map — ดินแดนตามชั้นเรียนของผู้เล่น
@@ -66,6 +67,7 @@ const AdventureMap: React.FC = () => {
               className={className}
               disabled={!unlocked}
               onClick={() => enterScene(sceneDef.scene, sceneDef.ping)}
+              style={{ ['--node-art' as string]: `url(${artUrl(sceneDef.art)})` }}
             >
               <b>{done ? '✓' : unlocked ? sceneDef.scene : '🔒'}</b>
               <span>{sceneDef.name}</span>
@@ -81,6 +83,7 @@ const AdventureMap: React.FC = () => {
           }`}
           disabled={!bossUnlocked}
           onClick={enterBoss}
+          style={{ ['--node-art' as string]: `url(${artUrl(world.boss.art)})` }}
         >
           <b>{progress.bossCleared ? '👑' : bossUnlocked ? '⚔️' : '🔒'}</b>
           <span>{world.boss.name}</span>
