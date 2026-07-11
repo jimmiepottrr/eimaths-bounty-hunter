@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAppState } from '../store';
 import { AppScreen } from '../ui';
 import { WORLDS } from '../world';
+import { artUrl } from '../config';
 
 /**
  * หน้าโหลดวิดีโอ cutscene — สเปกตาม Design Doc / COWORK-BRIEF ข้อ 5 (Jim สั่งเจาะจง):
@@ -27,7 +28,8 @@ const Cutscene: React.FC = () => {
   const base = import.meta.env.BASE_URL;
   const h265Url = `${base}assets/cutscenes/${id}.h265.mp4`;
   const h264Url = `${base}assets/cutscenes/${id}.h264.mp4`;
-  const posterUrl = `${base}assets/${world.boss.poster}`;
+  // ใช้อาร์ตบอสจริง (stylized 3D) เป็น poster; ถ้าโหลดไม่ได้ค่อย fallback placeholder เดิม
+  const posterUrl = artUrl(world.boss.art);
 
   const [stage, setStage] = useState<Stage>('loading');
   const [percent, setPercent] = useState(0);
