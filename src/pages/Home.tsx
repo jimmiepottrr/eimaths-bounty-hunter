@@ -1,63 +1,63 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { grades, quests } from '../data';
 import { useAppState } from '../store';
 import { AppScreen, Mascot, ProgressBar, ScreenHeader, StatPill } from '../ui';
+import { getWorld, lastSceneOf } from '../world';
 
 const Home: React.FC = () => {
-  const { state, level } = useAppState();
-  const grade = grades.find((item) => item.id === state.gradeId);
-  const completedCount = state.completedQuestIds.length;
-  const nextQuest = quests.find((quest) => !state.completedQuestIds.includes(quest.id)) || quests[0];
-  const dailyProgress = Math.min(100, Math.round((completedCount / quests.length) * 100));
-  const expProgress = state.exp % 500;
+  const { player, progressFor } = useAppState();
+  const grade = player?.grade ?? 3;
+  const world = getWorld(grade);
+  const progress = progressFor(grade);
+  const totalNodes = world.scenes.length + 1;
+  const clearedNodes = progress.clearedScenes + (progress.bossCleared ? 1 : 0);
+  const bossUnlocked = progress.clearedScenes >= lastSceneOf(world);
 
   return (
-    <AppScreen className="home-screen">
+    <AppScreen className={`home-screen theme-${world.theme}`}>
       <div className="blue-hero">
         <ScreenHeader
-          title={`Hi, ${state.childName || 'Hunter'}!`}
-          subtitle="Ready for today's adventure?"
-          right={<span className="bell">🔔</span>}
+          title={`สวัสดี, ${player?.nickname || 'นักล่า'}!`}
+          subtitle={`นักล่าสมบัติ ${world.gradeLabel} · ${world.land}`}
+          right={<span className="bell">🦉</span>}
         />
         <div className="stat-strip">
-          <StatPill icon="🪙" label="Coins" value={state.coins.toLocaleString()} />
-          <StatPill icon="⭐" label="EXP" value={state.exp.toLocaleString()} />
-          <StatPill icon="🔥" label="Streak" value={`${state.streak} days`} />
+          <StatPill icon="🪙" label="เหรียญ" value={(player?.coins ?? 0).toLocaleString()} />
+          <StatPill icon="🗺️" label="ฉากที่ผ่าน" value={`${clearedNodes}/${totalNodes}`} />
+          <StatPill icon="🎖️" label="สถานะ" value={player?.type === 'student' ? 'นร.eiMaths' : 'Guest'} />
         </div>
       </div>
 
       <article className="daily-card">
         <div>
-          <span className="scroll-icon">📜</span>
-          <h2>Daily Quest</h2>
-          <p>Solve 3 math missions in {grade?.label || 'your grade'}</p>
-          <ProgressBar value={dailyProgress} tone="gold" />
-          <small>{completedCount}/{quests.length}</small>
+          <span className="scroll-icon">🗺️</span>
+          <h2>{world.emoji} {world.land}</h2>
+          <p>
+            {progress.bossCleared
+              ? 'พิชิตดินแดนนี้แล้ว! เก็บคะแนน/เหรียญเพิ่มได้ทุกฉาก'
+              : bossUnlocked
+                ? `ถึงเวลาท้าดวล ${world.boss.name}!`
+                : `ฉากต่อไป: ${world.scenes[progress.clearedScenes]?.name ?? '-'}`}
+          </p>
+          <ProgressBar value={(clearedNodes / totalNodes) * 100} tone="gold" />
+          <small>
+            {clearedNodes}/{totalNodes} · เวลา {world.timeLimitSec} วิ/ข้อ
+          </small>
         </div>
-        <strong>+150</strong>
+        <strong>{world.emoji}</strong>
       </article>
 
       <div className="coach-card">
         <Mascot compact />
-        <p>Great job! Keep it up and earn more rewards.</p>
+        <p>ปิ๊ง: "ตอบถูกได้คะแนนเต็มเสมอ ตอบไวได้โบนัสความเร็วเพิ่ม! ⚡"</p>
       </div>
 
-      <article className="progress-card">
-        <div className="section-title compact">
-          <h2>Your Progress</h2>
-          <span>Level {level}</span>
-        </div>
-        <ProgressBar value={(expProgress / 500) * 100} />
-        <small>{expProgress}/500 EXP</small>
-      </article>
-
       <div className="action-grid">
-        <Link to="/map">🗺️<span>Map</span></Link>
-        <Link to="/quest">📋<span>Quest</span></Link>
-        <Link to={`/quiz/${nextQuest.id}`}>👾<span>Boss</span></Link>
-        <Link to="/rewards">🎁<span>Rewards</span></Link>
-        <Link to="/parent-report">👤<span>Profile</span></Link>
+        <Link to="/map">🗺️<span>แผนที่</span></Link>
+        <Link to={bossUnlocked ? '/quiz/boss' : '/map'}>⚔️<span>บอส</span></Link>
+        <Link to="/rewards">🎁<span>ของรางวัล</span></Link>
+        <Link to="/wallet">🪙<span>กระเป๋า</span></Link>
+        <Link to="/parent-report">👤<span>โปรไฟล์</span></Link>
       </div>
     </AppScreen>
   );

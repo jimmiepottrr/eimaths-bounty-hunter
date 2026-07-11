@@ -6,25 +6,25 @@ const scenes = [
   {
     image: 'assets/intro-voyage-3d.png',
     mobileImage: 'assets/intro-voyage-mobile-3d.png',
-    eyebrow: 'The adventure begins',
-    title: 'A mysterious island is calling',
-    caption: 'Eimaths follows an ancient map toward a temple filled with math treasure.',
+    eyebrow: 'ตำนานเริ่มต้น',
+    title: 'ขุมทรัพย์แห่งปัญญา',
+    caption: 'นานมาแล้ว จอมปราชญ์ผู้ยิ่งใหญ่ซ่อนขุมทรัพย์แห่งปัญญาไว้สุดปลายหมู่เกาะปริศนา ท่านฉีกแผนที่เป็น 4 ชิ้น มอบให้ผู้พิทักษ์ 4 ดินแดน',
     voice: 'assets/intro-voice-1.wav',
   },
   {
     image: 'assets/intro-obstacle-3d.png',
     mobileImage: 'assets/intro-obstacle-mobile-3d.png',
-    eyebrow: 'Trouble ahead',
-    title: 'The path is broken',
-    caption: 'A locked temple and a missing bridge block the way. Every clue is a math challenge.',
+    eyebrow: 'ภัยคุกคาม',
+    title: 'กิลด์เงาออกไล่ล่า',
+    caption: '"ขุมทรัพย์นี้จะเป็นของผู้พิสูจน์ตนด้วยปัญญา มิใช่กำลัง" …แต่บัดนี้ กิลด์เงา นำโดย ลอร์ดเงา ออกไล่ล่าแผนที่ทุกชิ้น!',
     voice: 'assets/intro-voice-2.wav',
   },
   {
     image: 'assets/intro-call-3d.png',
     mobileImage: 'assets/intro-call-mobile-3d.png',
-    eyebrow: 'A hero is needed',
-    title: 'Will you help Eimaths?',
-    caption: 'Solve each puzzle, rebuild the path, and unlock the legendary treasure together.',
+    eyebrow: 'ถึงตาเจ้าแล้ว',
+    title: 'นักล่าแห่งกิลด์แสงดาว',
+    caption: 'เจ้าคือนักล่าสมบัติฝึกหัดแห่งกิลด์แสงดาว จงออกเดินทางพร้อม "ปิ๊ง" นกฮูกเข็มทิศ… หยุดกิลด์เงา แล้วคว้าขุมทรัพย์มาให้ได้!',
     voice: 'assets/intro-voice-3.wav',
   },
 ];
@@ -39,7 +39,7 @@ const minimumSceneDuration = 5.5;
 
 const Intro: React.FC = () => {
   const navigate = useNavigate();
-  const { playIntroSound, stopIntroSound, state, toggleSound } = useAppState();
+  const { playIntroSound, stopIntroSound, soundEnabled, toggleSound } = useAppState();
   const [sceneIndex, setSceneIndex] = useState(0);
   const [loadedCount, setLoadedCount] = useState(0);
   const [isReady, setIsReady] = useState(false);
@@ -50,7 +50,7 @@ const Intro: React.FC = () => {
   const preloadedRef = useRef<PreloadedScene[]>([]);
   const voiceRef = useRef<HTMLAudioElement | null>(null);
   const transitionTimerRef = useRef<number | null>(null);
-  const soundEnabledRef = useRef(state.soundEnabled);
+  const soundEnabledRef = useRef(soundEnabled);
   const totalAssets = scenes.length * 2;
 
   const clearTransitionTimer = () => {
@@ -69,15 +69,15 @@ const Intro: React.FC = () => {
       audio.currentTime = 0;
     });
     stopIntroSound();
-    navigate('/grade');
+    navigate('/map');
   }, [navigate, stopIntroSound]);
 
   useEffect(() => {
-    soundEnabledRef.current = state.soundEnabled;
+    soundEnabledRef.current = soundEnabled;
     if (voiceRef.current) {
-      voiceRef.current.muted = !state.soundEnabled;
+      voiceRef.current.muted = !soundEnabled;
     }
-  }, [state.soundEnabled]);
+  }, [soundEnabled]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -232,7 +232,7 @@ const Intro: React.FC = () => {
     const firstAudio = preloadedRef.current[0]?.audio;
     if (firstAudio) {
       firstAudio.currentTime = 0;
-      firstAudio.muted = !state.soundEnabled;
+      firstAudio.muted = !soundEnabled;
       void firstAudio.play().catch(() => {
         // The opening can still play silently if the browser blocks audio.
       });
@@ -257,8 +257,8 @@ const Intro: React.FC = () => {
       >
         <div className="intro-loader-content">
           <span className="intro-loader-mark">E</span>
-          <p className="intro-loader-eyebrow">Preparing your adventure</p>
-          <h1>{isReady ? 'The story is ready!' : 'Loading story and sound...'}</h1>
+          <p className="intro-loader-eyebrow">เตรียมตัวออกผจญภัย</p>
+          <h1>{isReady ? 'เรื่องราวพร้อมแล้ว!' : 'กำลังโหลดเนื้อเรื่องและเสียง…'}</h1>
           <div
             className="intro-loader-track"
             role="progressbar"
@@ -269,7 +269,7 @@ const Intro: React.FC = () => {
             <span style={{ width: `${progress}%` }} />
           </div>
           <p className="intro-loader-status">
-            {loadError || (isReady ? 'All 3 scenes and voices are ready.' : `${loadedCount} of ${totalAssets} files loaded`)}
+            {loadError || (isReady ? 'พร้อมครบ 3 ฉากแล้ว ลุยเลย!' : `โหลดแล้ว ${loadedCount}/${totalAssets} ไฟล์`)}
           </p>
           {loadError ? (
             <button className="cinema-button intro-start-button" type="button" onClick={() => setLoadAttempt((value) => value + 1)}>
@@ -282,7 +282,7 @@ const Intro: React.FC = () => {
               onClick={startStory}
               disabled={!isReady}
             >
-              Start Story
+              เริ่มเนื้อเรื่อง
             </button>
           )}
         </div>
@@ -316,10 +316,10 @@ const Intro: React.FC = () => {
           ))}
         </div>
         <button className="cinema-button" type="button" onClick={toggleSound}>
-          {state.soundEnabled ? 'Sound on' : 'Sound off'}
+          {soundEnabled ? '🔊 เสียงเปิด' : '🔇 เสียงปิด'}
         </button>
         <button className="cinema-button" type="button" onClick={finish}>
-          {sceneIndex === scenes.length - 1 ? 'Start Adventure' : 'Skip Story'}
+          {sceneIndex === scenes.length - 1 ? 'เริ่มผจญภัย →' : 'ข้ามเนื้อเรื่อง'}
         </button>
       </div>
       <div

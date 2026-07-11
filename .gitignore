@@ -8,3 +8,6 @@ yarn-error.log*
 pnpm-debug.log*
 .DS_Store
 Thumbs.db
+test-results/
+playwright-report/
+shots/

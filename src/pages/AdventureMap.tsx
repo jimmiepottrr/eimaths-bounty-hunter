@@ -1,59 +1,112 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { quests } from '../data';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../store';
 import { AppScreen, ProgressBar, ScreenHeader } from '../ui';
+import { getWorld, lastSceneOf } from '../world';
 
-const destinations = [
-  { name: 'Treasure Trail', topic: 'Addition Island', position: 'node-1', questId: quests[0].id },
-  { name: 'Cave of Clues', topic: 'Number Desert', position: 'node-2', questId: quests[1].id },
-  { name: 'Boss Map', topic: 'Ratio River', position: 'node-3', questId: quests[2].id },
-  { name: 'Geometry City', topic: 'Coming soon', position: 'node-4' },
-  { name: 'Problem Dungeon', topic: 'Coming soon', position: 'node-5' },
-  { name: 'Algebra Castle', topic: 'Coming soon', position: 'node-6' },
-];
-
+/**
+ * Adventure Map — ดินแดนตามชั้นเรียนของผู้เล่น
+ * โครง: ชั้นละ 4 ฉาก + บอส (ป.6 = 3 ฉาก + บอสใหญ่)
+ * ปลดล็อกตามลำดับ: จบฉาก 1 → เปิดฉาก 2 … จบฉากสุดท้าย → เปิดบอส
+ */
 const AdventureMap: React.FC = () => {
-  const { state } = useAppState();
-  const completed = state.completedQuestIds.length;
+  const navigate = useNavigate();
+  const { player, progressFor, playSound } = useAppState();
+  const [pingLine, setPingLine] = useState('');
+
+  const grade = player?.grade ?? 3;
+  const world = getWorld(grade);
+  const progress = progressFor(grade);
+  const totalNodes = world.scenes.length + 1; // ฉากทั้งหมด + บอส
+  const clearedNodes = progress.clearedScenes + (progress.bossCleared ? 1 : 0);
+  const bossUnlocked = progress.clearedScenes >= lastSceneOf(world);
+
+  const enterScene = (scene: number, ping: string) => {
+    playSound('level');
+    setPingLine(ping);
+    window.setTimeout(() => navigate(`/quiz/${scene}`), 900);
+  };
+
+  const enterBoss = () => {
+    playSound('level');
+    setPingLine(world.boss.quote);
+    window.setTimeout(() => navigate('/quiz/boss'), 1200);
+  };
 
   return (
-    <AppScreen className="adventure-map-screen">
+    <AppScreen className={`adventure-map-screen theme-${world.theme}`}>
       <ScreenHeader
-        title="Adventure Map"
-        subtitle="Follow the trail, solve every challenge, and unlock the island."
+        title={`${world.emoji} ${world.land}`}
+        subtitle={`${world.gradeLabel} · ${world.scenes.length} ฉาก + บอส · ${world.timeLimitSec} วิ/ข้อ`}
         showBack
-        right={<span className="map-progress-chip">{completed}/6 cleared</span>}
+        right={
+          <span className="map-progress-chip">
+            {clearedNodes}/{totalNodes} ผ่านแล้ว
+          </span>
+        }
       />
 
-      <div className="adventure-map-stage">
-        {destinations.map((destination, index) => {
-          const locked = !destination.questId;
-          const done = destination.questId ? state.completedQuestIds.includes(destination.questId) : false;
-          const className = `map-node ${destination.position} ${locked ? 'locked' : ''} ${done ? 'done' : ''}`;
-          const content = (
-            <>
-              <b>{locked ? 'Locked' : done ? 'Cleared' : index + 1}</b>
-              <span>{destination.name}</span>
-              <small>{destination.topic}</small>
-            </>
-          );
+      {pingLine && (
+        <div className="ping-bubble" role="status">
+          <span className="ping-owl">🦉</span>
+          <p>ปิ๊ง: "{pingLine}"</p>
+        </div>
+      )}
 
-          return locked ? (
-            <div className={className} key={destination.name}>{content}</div>
-          ) : (
-            <Link className={className} key={destination.name} to={`/quiz/${destination.questId}`}>{content}</Link>
+      <div className="adventure-map-stage">
+        {world.scenes.map((sceneDef, index) => {
+          const unlocked = progress.clearedScenes >= index; // ฉากแรก unlock เสมอ
+          const done = progress.clearedScenes > index;
+          const className = `map-node scene-node node-${index + 1} ${unlocked ? '' : 'locked'} ${done ? 'done' : ''}`;
+
+          return (
+            <button
+              type="button"
+              key={sceneDef.scene}
+              className={className}
+              disabled={!unlocked}
+              onClick={() => enterScene(sceneDef.scene, sceneDef.ping)}
+            >
+              <b>{done ? '✓' : unlocked ? sceneDef.scene : '🔒'}</b>
+              <span>{sceneDef.name}</span>
+              <small>{done ? 'ผ่านแล้ว' : unlocked ? 'พร้อมลุย!' : 'ผ่านฉากก่อนหน้าเพื่อปลดล็อก'}</small>
+            </button>
           );
         })}
+
+        <button
+          type="button"
+          className={`map-node boss-node node-${world.scenes.length + 1} ${bossUnlocked ? '' : 'locked'} ${
+            progress.bossCleared ? 'done' : ''
+          }`}
+          disabled={!bossUnlocked}
+          onClick={enterBoss}
+        >
+          <b>{progress.bossCleared ? '👑' : bossUnlocked ? '⚔️' : '🔒'}</b>
+          <span>{world.boss.name}</span>
+          <small>
+            {progress.bossCleared
+              ? 'ชนะแล้ว!'
+              : bossUnlocked
+                ? world.boss.title
+                : `จบครบ ${world.scenes.length} ฉากเพื่อท้าบอส`}
+          </small>
+        </button>
       </div>
 
       <article className="map-journey-card">
         <div>
-          <span>Island progress</span>
-          <strong>{Math.round((completed / destinations.length) * 100)}%</strong>
+          <span>ความคืบหน้า {world.land}</span>
+          <strong>{Math.round((clearedNodes / totalNodes) * 100)}%</strong>
         </div>
-        <ProgressBar value={(completed / destinations.length) * 100} tone="gold" />
-        <p>Complete the first three missions to prepare for Geometry City.</p>
+        <ProgressBar value={(clearedNodes / totalNodes) * 100} tone="gold" />
+        <p>
+          {progress.bossCleared
+            ? `ได้ชิ้นส่วนแผนที่ของ${world.land}แล้ว! 🗺️`
+            : bossUnlocked
+              ? `${world.boss.name}รออยู่… เตรียมหัวใจ 3 ดวงให้พร้อม!`
+              : 'ผ่านทุกฉากเพื่อเปิดทางสู่บอสประจำดินแดน'}
+        </p>
       </article>
     </AppScreen>
   );

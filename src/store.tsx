@@ -1,47 +1,39 @@
-import React, { createContext, useContext, useMemo, useState } from 'react';
-import { quests, rewards } from './data';
+import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { api, ApiError, Player, setAuthErrorHandler, setAuthToken } from './api';
 
-type QuizResult = {
-  questId: string;
-  score: number;
-  total: number;
-  earnedCoins: number;
-  earnedExp: number;
-  completedAt: string;
-};
+/**
+ * Store เฟส 2 — เซสชัน/คะแนน/เหรียญมาจากเซิร์ฟเวอร์ทั้งหมด (client แสดงผลอย่างเดียว)
+ * ที่เก็บใน localStorage มีแค่: token + ข้อมูลผู้เล่นล่าสุด + ความคืบหน้าปลดล็อกฉาก (ต่อผู้เล่น)
+ */
 
-type PlayerState = {
-  parentName: string;
-  childName: string;
-  email: string;
-  gradeId: string;
-  coins: number;
-  exp: number;
-  streak: number;
-  soundEnabled: boolean;
-  completedQuestIds: string[];
-  quizResults: QuizResult[];
-  redeemedRewardIds: string[];
+type UnlockProgress = {
+  /** จำนวนฉากปกติที่เคลียร์แล้วของชั้นนั้น (0..4) */
+  clearedScenes: number;
+  bossCleared: boolean;
 };
 
 type SoundName = 'tap' | 'success' | 'error' | 'reward' | 'level';
 
 type AppContextValue = {
-  state: PlayerState;
+  player: Player | null;
+  token: string | null;
   isLoggedIn: boolean;
-  login: (payload: Pick<PlayerState, 'parentName' | 'childName' | 'email'>) => void;
+  authError: string;
+  loginStudent: (studentCode: string, pin: string) => Promise<void>;
+  loginGuest: (nickname: string, grade: number) => Promise<void>;
   logout: () => void;
-  selectGrade: (gradeId: string) => void;
-  completeQuest: (questId: string, score: number, total: number) => number;
-  redeemReward: (rewardId: string) => { ok: boolean; message: string };
-  resetProgress: () => void;
+  /** อัปเดตยอดเหรียญตามค่าที่ API ตอบกลับ (ไม่คำนวณเอง) */
+  syncCoins: (coinsFromServer: number) => void;
+  progressFor: (grade: number) => UnlockProgress;
+  markSceneCleared: (grade: number, scene: number) => void;
+  markBossCleared: (grade: number) => void;
+  hasWatchedCutscene: (id: string) => boolean;
+  markCutsceneWatched: (id: string) => void;
+  soundEnabled: boolean;
   toggleSound: () => void;
   playSound: (name: SoundName) => void;
   playIntroSound: () => void;
   stopIntroSound: () => void;
-  accuracy: number;
-  totalEarnedCoins: number;
-  level: number;
 };
 
 declare global {
@@ -50,36 +42,20 @@ declare global {
   }
 }
 
-const storageKey = 'eimaths-bounty-hunter-state';
+const TOKEN_KEY = 'bh2-token';
+const PLAYER_KEY = 'bh2-player';
+const PROGRESS_KEY = 'bh2-progress';
+const CUTSCENE_KEY = 'bh2-cutscenes';
 
-const initialState: PlayerState = {
-  parentName: '',
-  childName: '',
-  email: '',
-  gradeId: 'p4',
-  coins: 2450,
-  exp: 3680,
-  streak: 7,
-  soundEnabled: true,
-  completedQuestIds: [],
-  quizResults: [],
-  redeemedRewardIds: [],
-};
+// ---------- Sound engine (คงของเดิมจาก demo) ----------
 
 let audioContext: AudioContext | null = null;
 let introSources: OscillatorNode[] = [];
 
-const AppContext = createContext<AppContextValue | undefined>(undefined);
-
 const playTone = (name: SoundName, enabled: boolean) => {
-  if (!enabled) {
-    return;
-  }
-
+  if (!enabled) return;
   const AudioCtor = window.AudioContext || window.webkitAudioContext;
-  if (!AudioCtor) {
-    return;
-  }
+  if (!AudioCtor) return;
 
   audioContext = audioContext || new AudioCtor();
   const context = audioContext;
@@ -113,21 +89,16 @@ const stopIntroScore = () => {
     try {
       source.stop();
     } catch {
-      // The source may already have completed.
+      // already stopped
     }
   });
   introSources = [];
 };
 
 const playIntroScore = (enabled: boolean) => {
-  if (!enabled) {
-    return;
-  }
-
+  if (!enabled) return;
   const AudioCtor = window.AudioContext || window.webkitAudioContext;
-  if (!AudioCtor) {
-    return;
-  }
+  if (!AudioCtor) return;
 
   stopIntroScore();
   audioContext = audioContext || new AudioCtor();
@@ -188,13 +159,7 @@ const playIntroScore = (enabled: boolean) => {
       'triangle',
     );
 
-    scheduleNote(
-      banjoPattern[(step + phrase) % banjoPattern.length] * 2,
-      start,
-      beat * 0.2,
-      0.07,
-      'square',
-    );
+    scheduleNote(banjoPattern[(step + phrase) % banjoPattern.length] * 2, start, beat * 0.2, 0.07, 'square');
     scheduleNote(
       banjoPattern[(step + phrase + 2) % banjoPattern.length] * 2,
       start + beat * 0.5,
@@ -241,141 +206,162 @@ const playIntroScore = (enabled: boolean) => {
   });
 };
 
-const readState = (): PlayerState => {
+// ---------- Storage helpers ----------
+
+const readPlayer = (): Player | null => {
   try {
-    const raw = window.localStorage.getItem(storageKey);
-    if (!raw) {
-      return initialState;
-    }
-    return { ...initialState, ...JSON.parse(raw) };
+    const raw = window.localStorage.getItem(PLAYER_KEY);
+    return raw ? (JSON.parse(raw) as Player) : null;
   } catch {
-    return initialState;
+    return null;
   }
 };
 
-const writeState = (state: PlayerState) => {
-  window.localStorage.setItem(storageKey, JSON.stringify(state));
+type ProgressMap = Record<string, Record<number, UnlockProgress>>;
+
+const readProgressMap = (): ProgressMap => {
+  try {
+    const raw = window.localStorage.getItem(PROGRESS_KEY);
+    return raw ? (JSON.parse(raw) as ProgressMap) : {};
+  } catch {
+    return {};
+  }
 };
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [state, setState] = useState<PlayerState>(() => readState());
+const playerKeyOf = (player: Player | null) => (player ? `${player.type}-${player.id}` : 'anon');
 
-  const updateState = (updater: (current: PlayerState) => PlayerState) => {
-    setState((current) => {
-      const next = updater(current);
-      writeState(next);
-      return next;
+// ---------- Context ----------
+
+const AppContext = createContext<AppContextValue | undefined>(undefined);
+
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [token, setToken] = useState<string | null>(() => window.localStorage.getItem(TOKEN_KEY));
+  const [player, setPlayer] = useState<Player | null>(() => readPlayer());
+  const [authError, setAuthError] = useState('');
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [progressVersion, setProgressVersion] = useState(0);
+
+  useEffect(() => {
+    setAuthToken(token);
+  }, [token]);
+
+  useEffect(() => {
+    // 401 จากทุก endpoint → เคลียร์เซสชัน + เด้งกลับหน้า login (RequireSession จัดการ redirect)
+    setAuthErrorHandler(() => {
+      window.localStorage.removeItem(TOKEN_KEY);
+      window.localStorage.removeItem(PLAYER_KEY);
+      setToken(null);
+      setPlayer(null);
+      setAuthError('เซสชันหมดอายุ เข้าสู่ระบบใหม่อีกครั้งนะ');
     });
+    return () => setAuthErrorHandler(null);
+  }, []);
+
+  const persistSession = (nextToken: string, nextPlayer: Player) => {
+    window.localStorage.setItem(TOKEN_KEY, nextToken);
+    window.localStorage.setItem(PLAYER_KEY, JSON.stringify(nextPlayer));
+    setAuthToken(nextToken);
+    setToken(nextToken);
+    setPlayer(nextPlayer);
+    setAuthError('');
   };
 
   const value = useMemo<AppContextValue>(() => {
-    const answered = state.quizResults.reduce((sum, result) => sum + result.total, 0);
-    const correct = state.quizResults.reduce((sum, result) => sum + result.score, 0);
-    const totalEarnedCoins = state.quizResults.reduce((sum, result) => sum + result.earnedCoins, 0);
-    const level = Math.max(1, Math.floor(state.exp / 300) + 1);
+    const progressMap = readProgressMap();
+    const key = playerKeyOf(player);
 
     return {
-      state,
-      isLoggedIn: Boolean(state.email),
-      login: (payload) => {
-        playTone('success', state.soundEnabled);
-        updateState((current) => ({
-          ...current,
-          ...payload,
-          coins: current.coins || initialState.coins,
-          exp: current.exp || initialState.exp,
-        }));
+      player,
+      token,
+      isLoggedIn: Boolean(token && player),
+      authError,
+
+      loginStudent: async (studentCode, pin) => {
+        const result = await api.loginStudent(studentCode.trim(), pin.trim());
+        persistSession(result.token, result.player);
+        playTone('success', soundEnabled);
       },
+
+      loginGuest: async (nickname, grade) => {
+        const result = await api.loginGuest(nickname.trim(), grade);
+        persistSession(result.token, result.player);
+        playTone('success', soundEnabled);
+      },
+
       logout: () => {
-        playTone('tap', state.soundEnabled);
-        updateState((current) => ({
-          ...initialState,
-          gradeId: current.gradeId,
-          soundEnabled: current.soundEnabled,
-        }));
+        window.localStorage.removeItem(TOKEN_KEY);
+        window.localStorage.removeItem(PLAYER_KEY);
+        setAuthToken(null);
+        setToken(null);
+        setPlayer(null);
+        setAuthError('');
+        playTone('tap', soundEnabled);
       },
-      selectGrade: (gradeId) => {
-        playTone('level', state.soundEnabled);
-        updateState((current) => ({ ...current, gradeId }));
-      },
-      completeQuest: (questId, score, total) => {
-        const quest = quests.find((item) => item.id === questId);
-        const perfectBonus = score === total ? 50 : 0;
-        const earnedCoins = Math.round((quest?.reward || 100) * (score / total)) + perfectBonus;
-        const earnedExp = Math.round((quest?.exp || 50) * (score / total));
-        playTone(score === total ? 'success' : 'level', state.soundEnabled);
 
-        updateState((current) => {
-          const alreadyCompleted = current.completedQuestIds.includes(questId);
-          return {
-            ...current,
-            coins: current.coins + earnedCoins,
-            exp: current.exp + earnedExp,
-            streak: score > 0 ? current.streak + 1 : 0,
-            completedQuestIds: alreadyCompleted
-              ? current.completedQuestIds
-              : [...current.completedQuestIds, questId],
-            quizResults: [
-              {
-                questId,
-                score,
-                total,
-                earnedCoins,
-                earnedExp,
-                completedAt: new Date().toISOString(),
-              },
-              ...current.quizResults,
-            ].slice(0, 12),
-          };
+      syncCoins: (coinsFromServer) => {
+        setPlayer((current) => {
+          if (!current) return current;
+          const next = { ...current, coins: coinsFromServer };
+          window.localStorage.setItem(PLAYER_KEY, JSON.stringify(next));
+          return next;
         });
+      },
 
-        return earnedCoins;
+      progressFor: (grade) => progressMap[key]?.[grade] ?? { clearedScenes: 0, bossCleared: false },
+
+      markSceneCleared: (grade, scene) => {
+        const map = readProgressMap();
+        const current = map[key]?.[grade] ?? { clearedScenes: 0, bossCleared: false };
+        const next = { ...current, clearedScenes: Math.max(current.clearedScenes, scene) };
+        map[key] = { ...(map[key] ?? {}), [grade]: next };
+        window.localStorage.setItem(PROGRESS_KEY, JSON.stringify(map));
+        setProgressVersion((version) => version + 1);
       },
-      redeemReward: (rewardId) => {
-        const reward = rewards.find((item) => item.id === rewardId);
-        if (!reward) {
-          playTone('error', state.soundEnabled);
-          return { ok: false, message: 'Reward not found.' };
-        }
-        if (state.redeemedRewardIds.includes(rewardId)) {
-          playTone('error', state.soundEnabled);
-          return { ok: false, message: 'This reward has already been redeemed.' };
-        }
-        if (state.coins < reward.cost) {
-          playTone('error', state.soundEnabled);
-          return { ok: false, message: `Need ${reward.cost - state.coins} more coins.` };
-        }
-        playTone('reward', state.soundEnabled);
-        updateState((current) => ({
-          ...current,
-          coins: current.coins - reward.cost,
-          redeemedRewardIds: [...current.redeemedRewardIds, rewardId],
-        }));
-        return { ok: true, message: `${reward.name} redeemed successfully.` };
+
+      markBossCleared: (grade) => {
+        const map = readProgressMap();
+        const current = map[key]?.[grade] ?? { clearedScenes: 0, bossCleared: false };
+        map[key] = { ...(map[key] ?? {}), [grade]: { ...current, bossCleared: true } };
+        window.localStorage.setItem(PROGRESS_KEY, JSON.stringify(map));
+        setProgressVersion((version) => version + 1);
       },
-      resetProgress: () => {
-        playTone('tap', state.soundEnabled);
-        updateState((current) => ({
-          ...initialState,
-          parentName: current.parentName,
-          childName: current.childName,
-          email: current.email,
-          gradeId: current.gradeId,
-          soundEnabled: current.soundEnabled,
-        }));
+
+      hasWatchedCutscene: (id) => {
+        try {
+          const list: string[] = JSON.parse(window.localStorage.getItem(CUTSCENE_KEY) ?? '[]');
+          return list.includes(`${key}:${id}`);
+        } catch {
+          return false;
+        }
       },
+
+      markCutsceneWatched: (id) => {
+        try {
+          const list: string[] = JSON.parse(window.localStorage.getItem(CUTSCENE_KEY) ?? '[]');
+          const entry = `${key}:${id}`;
+          if (!list.includes(entry)) {
+            list.push(entry);
+            window.localStorage.setItem(CUTSCENE_KEY, JSON.stringify(list));
+          }
+        } catch {
+          // storage may be unavailable — ignore
+        }
+      },
+
+      soundEnabled,
       toggleSound: () => {
-        updateState((current) => ({ ...current, soundEnabled: !current.soundEnabled }));
-        playTone('tap', !state.soundEnabled);
+        setSoundEnabled((current) => {
+          playTone('tap', !current);
+          return !current;
+        });
       },
-      playSound: (name) => playTone(name, state.soundEnabled),
-      playIntroSound: () => playIntroScore(state.soundEnabled),
+      playSound: (name) => playTone(name, soundEnabled),
+      playIntroSound: () => playIntroScore(soundEnabled),
       stopIntroSound: stopIntroScore,
-      accuracy: answered === 0 ? 87 : Math.round((correct / answered) * 100),
-      totalEarnedCoins,
-      level,
     };
-  }, [state]);
+    // progressVersion บังคับให้ context สร้างใหม่เมื่อความคืบหน้าเปลี่ยน
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [player, token, authError, soundEnabled, progressVersion]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 };
@@ -387,3 +373,5 @@ export const useAppState = () => {
   }
   return value;
 };
+
+export { ApiError };
