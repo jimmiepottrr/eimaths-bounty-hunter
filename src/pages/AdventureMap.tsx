@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../store';
 import { AppScreen, ProgressBar, ScreenHeader } from '../ui';
 import { getWorld, lastSceneOf } from '../world';
 import { artUrl } from '../config';
+import { landTrack, playMusic } from '../audio';
 
 /**
  * Adventure Map — ดินแดนตามชั้นเรียนของผู้เล่น
@@ -21,6 +22,14 @@ const AdventureMap: React.FC = () => {
   const totalNodes = world.scenes.length + 1; // ฉากทั้งหมด + บอส
   const clearedNodes = progress.clearedScenes + (progress.bossCleared ? 1 : 0);
   const bossUnlocked = progress.clearedScenes >= lastSceneOf(world);
+
+  // ตำแหน่งปัจจุบันของผู้เล่น = โหนดแรกที่ยังไม่เคลียร์ (index ของฉาก หรือ = scenes.length เมื่อถึงคิวบอส)
+  const currentIndex = progress.bossCleared ? -1 : progress.clearedScenes;
+
+  // เพลงประจำดินแดน เริ่มตั้งแต่หน้าแผนที่
+  useEffect(() => {
+    playMusic(landTrack(grade));
+  }, [grade]);
 
   const enterScene = (scene: number, ping: string) => {
     playSound('level');
@@ -58,7 +67,8 @@ const AdventureMap: React.FC = () => {
         {world.scenes.map((sceneDef, index) => {
           const unlocked = progress.clearedScenes >= index; // ฉากแรก unlock เสมอ
           const done = progress.clearedScenes > index;
-          const className = `map-node scene-node node-${index + 1} ${unlocked ? '' : 'locked'} ${done ? 'done' : ''}`;
+          const isCurrent = index === currentIndex;
+          const className = `map-node scene-node node-${index + 1} ${unlocked ? '' : 'locked'} ${done ? 'done' : ''} ${isCurrent ? 'current' : ''}`;
 
           return (
             <button
@@ -68,7 +78,9 @@ const AdventureMap: React.FC = () => {
               disabled={!unlocked}
               onClick={() => enterScene(sceneDef.scene, sceneDef.ping)}
               style={{ ['--node-art' as string]: `url(${artUrl(sceneDef.art)})` }}
+              aria-current={isCurrent ? 'step' : undefined}
             >
+              {isCurrent && <span className="you-are-here" aria-hidden="true">📍</span>}
               <b>{done ? '✓' : unlocked ? sceneDef.scene : '🔒'}</b>
               <span>{sceneDef.name}</span>
               <small>{done ? 'ผ่านแล้ว' : unlocked ? 'พร้อมลุย!' : 'ผ่านฉากก่อนหน้าเพื่อปลดล็อก'}</small>
@@ -80,11 +92,13 @@ const AdventureMap: React.FC = () => {
           type="button"
           className={`map-node boss-node node-${world.scenes.length + 1} ${bossUnlocked ? '' : 'locked'} ${
             progress.bossCleared ? 'done' : ''
-          }`}
+          } ${currentIndex === world.scenes.length ? 'current' : ''}`}
           disabled={!bossUnlocked}
           onClick={enterBoss}
           style={{ ['--node-art' as string]: `url(${artUrl(world.boss.art)})` }}
+          aria-current={currentIndex === world.scenes.length ? 'step' : undefined}
         >
+          {currentIndex === world.scenes.length && <span className="you-are-here" aria-hidden="true">📍</span>}
           <b>{progress.bossCleared ? '👑' : bossUnlocked ? '⚔️' : '🔒'}</b>
           <span>{world.boss.name}</span>
           <small>

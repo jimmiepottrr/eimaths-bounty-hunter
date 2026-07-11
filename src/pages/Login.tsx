@@ -1,13 +1,18 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppState } from '../store';
 import { ApiError } from '../api';
 import { AppScreen, Logo } from '../ui';
 import { WORLDS } from '../world';
+import { stopMusic } from '../audio';
 
 type Mode = 'student' | 'guest';
 
 const Login: React.FC = () => {
+  // เข้าหน้า login = จบเซสชันเดิม → เงียบเพลงค้าง
+  useEffect(() => {
+    stopMusic(0);
+  }, []);
   const navigate = useNavigate();
   const { loginStudent, loginGuest, authError } = useAppState();
   const [mode, setMode] = useState<Mode>('student');
