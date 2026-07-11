@@ -82,11 +82,11 @@ export const ScreenHeader: React.FC<{
 
 export const BottomNav: React.FC = () => {
   const items = [
-    { to: '/home', label: 'Home', icon: '🏠' },
-    { to: '/map', label: 'Map', icon: '🗺️' },
-    { to: '/quest', label: 'Quest', icon: '📋' },
-    { to: '/rewards', label: 'Rewards', icon: '🎁' },
-    { to: '/parent-report', label: 'Profile', icon: '👤' },
+    { to: '/home', label: 'หน้าหลัก', icon: '🏠' },
+    { to: '/map', label: 'แผนที่', icon: '🗺️' },
+    { to: '/rewards', label: 'รางวัล', icon: '🎁' },
+    { to: '/wallet', label: 'กระเป๋า', icon: '🪙' },
+    { to: '/parent-report', label: 'โปรไฟล์', icon: '👤' },
   ];
 
   return (

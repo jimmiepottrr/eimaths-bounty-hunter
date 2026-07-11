@@ -1,188 +1,404 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { getQuestionsForQuest, quests } from '../data';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { api, ApiError, QuizAnswerResponse, QuizStartResponse } from '../api';
 import { useAppState } from '../store';
 import { AppScreen, Mascot, ProgressBar, ScreenHeader } from '../ui';
+import { getWorld } from '../world';
 
-type AnswerFeedback = 'correct' | 'wrong' | null;
+/**
+ * Quiz เฟส 2 — โจทย์/คะแนน/คอมโบ/เหรียญมาจากเซิร์ฟเวอร์ทั้งหมด
+ * client มีหน้าที่: จับเวลา (ส่ง elapsed_ms จริง) · แสดงผลตาม response · กัน double-submit
+ * โหมดบอส: HP 10 ช่อง / หัวใจ 3 ดวง / แพ้ → เริ่มใหม่ด้วยชุดโจทย์สลับใหม่
+ */
+
+type Phase = 'loading' | 'error' | 'question' | 'feedback' | 'finished';
+
+const CHOICE_KEYS = ['a', 'b', 'c', 'd'] as const;
+type ChoiceKey = (typeof CHOICE_KEYS)[number];
+
+const REPORT_KEY = 'bh2-reported-questions';
+
+const speedTierLabel = (tier: string) => {
+  if (tier === 'fast') return '⚡ สายฟ้าแลบ!';
+  if (tier === 'normal') return '🏃 ทันใจ';
+  return '🚶 ทันเวลา';
+};
+
+const reportQuestion = (qid: number) => {
+  try {
+    const list: number[] = JSON.parse(window.localStorage.getItem(REPORT_KEY) ?? '[]');
+    if (!list.includes(qid)) {
+      list.push(qid);
+      window.localStorage.setItem(REPORT_KEY, JSON.stringify(list));
+    }
+    // เฟส 4 ค่อยส่งเข้าระบบ — ตอนนี้เก็บ local + log ไว้ก่อน (ตาม brief ข้อ 7)
+    console.log('[report-question]', qid);
+  } catch {
+    console.log('[report-question]', qid);
+  }
+};
 
 const Quiz: React.FC = () => {
-  const { questId = quests[0].id } = useParams();
-  const { completeQuest, playSound } = useAppState();
-  const quest = quests.find((item) => item.id === questId) || quests[0];
-  const quizQuestions = useMemo(() => getQuestionsForQuest(quest.id), [quest.id]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selected, setSelected] = useState('');
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [showHint, setShowHint] = useState(false);
-  const [feedback, setFeedback] = useState<AnswerFeedback>(null);
-  const [result, setResult] = useState<{ score: number; earnedCoins: number } | null>(null);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const navigate = useNavigate();
+  const { scene = '1' } = useParams();
+  const isBoss = scene === 'boss';
+  const sceneNumber = isBoss ? 0 : Number(scene);
 
-  const currentQuestion = quizQuestions[currentIndex];
-  const progress = Math.round(((currentIndex + 1) / quizQuestions.length) * 100);
-  const formattedTime = `${String(Math.floor(elapsedSeconds / 60)).padStart(2, '0')}:${String(
-    elapsedSeconds % 60,
-  ).padStart(2, '0')}`;
+  const { player, playSound, markSceneCleared, markBossCleared } = useAppState();
+  const grade = player?.grade ?? 3;
+  const world = getWorld(grade);
 
-  useEffect(() => {
-    setElapsedSeconds(0);
-  }, [currentIndex]);
+  const [phase, setPhase] = useState<Phase>('loading');
+  const [errorMessage, setErrorMessage] = useState('');
+  const [session, setSession] = useState<QuizStartResponse | null>(null);
+  const [questionIndex, setQuestionIndex] = useState(0);
+  const [selected, setSelected] = useState<ChoiceKey | null>(null);
+  const [answer, setAnswer] = useState<QuizAnswerResponse | null>(null);
+  const [secondsLeft, setSecondsLeft] = useState(0);
+  const [reported, setReported] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (feedback || result) {
-      return;
+  const questionShownAt = useRef(0);
+  const submitLock = useRef(false); // กัน double-submit ระดับ ref (กันคลิกรัวก่อน state ทัน)
+
+  const bossMaxHp = session?.boss?.hp ?? 10;
+  const bossMaxHearts = session?.boss?.hearts ?? 3;
+  const bossHp = answer?.session.boss_hp ?? bossMaxHp;
+  const hearts = answer?.session.hearts ?? bossMaxHearts;
+  const streak = answer?.session.streak ?? 0;
+
+  const loadSession = useCallback(async () => {
+    setPhase('loading');
+    setErrorMessage('');
+    setAnswer(null);
+    setSelected(null);
+    setQuestionIndex(0);
+    setReported(false);
+    submitLock.current = false;
+    setSubmitting(false);
+    try {
+      const started = await api.quizStart(grade, isBoss ? 'boss' : sceneNumber);
+      setSession(started);
+      setSecondsLeft(started.time_limit_sec);
+      questionShownAt.current = performance.now();
+      setPhase('question');
+    } catch (caught) {
+      setErrorMessage(caught instanceof ApiError ? caught.message : 'โหลดโจทย์ไม่สำเร็จ ลองใหม่อีกครั้งนะ');
+      setPhase('error');
     }
+  }, [grade, isBoss, sceneNumber]);
 
+  useEffect(() => {
+    void loadSession();
+  }, [loadSession]);
+
+  // นาฬิกานับถอยหลังต่อข้อ — เดินเฉพาะตอนแสดงโจทย์
+  useEffect(() => {
+    if (phase !== 'question') return;
     const timer = window.setInterval(() => {
-      setElapsedSeconds((seconds) => seconds + 1);
+      setSecondsLeft((current) => Math.max(0, current - 1));
     }, 1000);
-
     return () => window.clearInterval(timer);
-  }, [currentIndex, feedback, result]);
+  }, [phase, questionIndex]);
 
-  const startOver = () => {
-    setCurrentIndex(0);
-    setSelected('');
-    setAnswers({});
-    setShowHint(false);
-    setFeedback(null);
-    setResult(null);
-  };
+  const currentQuestion = session?.questions[questionIndex];
+  const totalQuestions = session?.questions.length ?? 0;
 
-  const handleCheck = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!selected || !currentQuestion) {
+  const submitAnswer = async (choice: ChoiceKey) => {
+    if (!session || !currentQuestion) return;
+    if (submitLock.current || phase !== 'question') return; // double-submit guard
+    submitLock.current = true;
+    setSubmitting(true);
+    setSelected(choice);
+
+    const elapsedMs = Math.round(performance.now() - questionShownAt.current);
+
+    try {
+      const result = await api.quizAnswer(session.session_id, currentQuestion.qid, choice, elapsedMs);
+      setAnswer(result);
+      // แสดงเฉลย/คะแนนของข้อนี้ก่อนเสมอ (รวมข้อสุดท้าย) — ค่อยกด "ดูสรุป" เข้าหน้าจบ
+      setPhase('feedback');
+      playSound(result.correct ? 'success' : 'error');
+    } catch (caught) {
+      submitLock.current = false;
+      setSelected(null);
+      setErrorMessage(caught instanceof ApiError ? caught.message : 'ส่งคำตอบไม่สำเร็จ ลองใหม่อีกครั้งนะ');
+      setPhase('error');
       return;
     }
-
-    const isCorrect = selected === currentQuestion.answer;
-    setFeedback(isCorrect ? 'correct' : 'wrong');
-    playSound(isCorrect ? 'success' : 'error');
+    setSubmitting(false);
   };
 
-  const handleNext = () => {
-    if (!selected || !currentQuestion) {
-      return;
-    }
-
-    const nextAnswers = { ...answers, [currentQuestion.id]: selected };
-    setAnswers(nextAnswers);
-    setFeedback(null);
-    setShowHint(false);
-
-    if (currentIndex < quizQuestions.length - 1) {
-      setCurrentIndex((index) => index + 1);
-      setSelected('');
-      return;
-    }
-
-    const score = quizQuestions.filter((question) => nextAnswers[question.id] === question.answer).length;
-    const earnedCoins = completeQuest(quest.id, score, quizQuestions.length);
-    setResult({ score, earnedCoins });
+  const goNextQuestion = () => {
+    if (!session) return;
+    setQuestionIndex((index) => index + 1);
+    setSelected(null);
+    setAnswer((current) => current); // คงค่า streak/hp ไว้แสดงระหว่างข้อ
+    setReported(false);
+    setSecondsLeft(session.time_limit_sec);
+    questionShownAt.current = performance.now();
+    submitLock.current = false;
+    setPhase('question');
   };
 
-  if (result) {
-    const perfect = result.score === quizQuestions.length;
-    return (
-      <AppScreen className="result-screen">
-        <div className="celebration">
-          <div className="stars">⭐ ⭐ ⭐</div>
-          <Mascot mood={perfect ? 'wow' : 'happy'} />
-          <h1>{perfect ? 'Great Job!' : 'Quest Complete!'}</h1>
-          <p>{perfect ? 'You got it right!' : 'Keep learning and try again for full rewards.'}</p>
+  const finishScene = () => {
+    if (isBoss) {
+      markBossCleared(grade);
+      navigate(`/cutscene/${world.boss.video}`);
+    } else {
+      markSceneCleared(grade, sceneNumber);
+      navigate('/map');
+    }
+  };
+
+  // ---------- Render helpers ----------
+
+  const bossBar = isBoss && session?.boss && (
+    <div className="boss-panel">
+      <div className="boss-head">
+        <span className="boss-avatar">😈</span>
+        <div>
+          <strong>{world.boss.name}</strong>
+          <small>{world.boss.title}</small>
         </div>
-        <article className="earned-card">
-          <h2>You Earned</h2>
-          <div className="stat-strip flat">
-            <span>🪙 Coins <b>+{result.earnedCoins}</b></span>
-            <span>⭐ EXP <b>+{Math.max(10, result.score * 25)}</b></span>
-          </div>
-        </article>
-        <article className="explain-card">
-          <h2>Result</h2>
-          <p>Score {result.score}/{quizQuestions.length}. Review hints any time to learn from each question.</p>
-        </article>
-        <div className="result-actions">
-          <button className="outline-button" type="button" onClick={startOver}>
-            Try Again
-          </button>
-          <Link className="primary-button" to="/home">
-            Continue →
-          </Link>
+      </div>
+      <div className="boss-hp" aria-label={`พลังบอส ${bossHp}/${bossMaxHp}`}>
+        {Array.from({ length: bossMaxHp }, (_, index) => (
+          <span key={index} className={`hp-cell ${index < bossHp ? 'full' : 'hit'}`} />
+        ))}
+      </div>
+      <div className="player-hearts" aria-label={`หัวใจ ${hearts}/${bossMaxHearts}`}>
+        {Array.from({ length: bossMaxHearts }, (_, index) => (
+          <span key={index}>{index < hearts ? '❤️' : '🖤'}</span>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (phase === 'loading') {
+    return (
+      <AppScreen className={`quiz-screen theme-${world.theme}`}>
+        <div className="quiz-loading">
+          <Mascot mood="focus" />
+          <p>ปิ๊งกำลังเปิดแผนที่โจทย์… ⏳</p>
         </div>
       </AppScreen>
     );
   }
 
-  return (
-    <AppScreen className="quiz-screen">
-      <ScreenHeader
-        title={`Question ${currentIndex + 1} of ${quizQuestions.length}`}
-        subtitle={quest.topic}
-        showBack
-        right={<span className="timer" aria-label={`Time on question ${formattedTime}`}>⏱ {formattedTime}</span>}
-      />
-      <ProgressBar value={progress} />
+  if (phase === 'error') {
+    return (
+      <AppScreen className={`quiz-screen theme-${world.theme}`}>
+        <div className="quiz-error">
+          <Mascot mood="oops" />
+          <h1>อุ๊ปส์!</h1>
+          <p>{errorMessage}</p>
+          <div className="result-actions">
+            <button className="primary-button" type="button" onClick={() => void loadSession()}>
+              ลองใหม่
+            </button>
+            <button className="outline-button" type="button" onClick={() => navigate('/map')}>
+              กลับแผนที่
+            </button>
+          </div>
+        </div>
+      </AppScreen>
+    );
+  }
 
-      <div className="quiz-coach">
-        <Mascot compact mood={feedback === 'wrong' ? 'oops' : 'focus'} />
-        <p>{feedback === 'wrong' ? "Oops! Let's figure it out together." : "Focus and think! You've got this!"}</p>
-      </div>
+  if (phase === 'finished' && answer) {
+    const finish = answer.finish;
+    const won = finish?.result === 'win' || finish?.result === 'done';
+    const bossLost = isBoss && !won;
 
-      <form className={`question-card ${feedback || ''}`} onSubmit={handleCheck}>
-        <h1>{currentQuestion.prompt}</h1>
-        <div className="answer-list">
-          {currentQuestion.options.map((option, index) => (
-            <label className={`answer-option ${selected === option ? 'selected' : ''}`} key={option}>
-              <input
-                type="radio"
-                name="answer"
-                value={option}
-                checked={selected === option}
-                disabled={feedback !== null}
-                onChange={() => {
-                  setSelected(option);
-                  playSound('tap');
-                }}
-              />
-              <b>{String.fromCharCode(65 + index)}</b>
-              <span>{option}</span>
-            </label>
-          ))}
+    return (
+      <AppScreen className={`result-screen theme-${world.theme}`}>
+        <div className="celebration">
+          <div className="stars">{won ? '⭐ ⭐ ⭐' : '💫'}</div>
+          <Mascot mood={won ? 'wow' : 'oops'} />
+          <h1>{bossLost ? 'พ่ายศึกนี้… แต่ยังไม่จบ!' : won ? (isBoss ? `ชนะ${world.boss.name}แล้ว!` : 'ผ่านฉากนี้แล้ว!') : 'จบรอบนี้แล้ว!'}</h1>
+          <p>
+            {bossLost
+              ? 'หัวใจหมด! สู้ใหม่ด้วยชุดโจทย์สลับใหม่ — บอสจำเฉลยเดิมไม่ได้หรอก 😉'
+              : won && isBoss
+                ? 'ได้ชิ้นส่วนแผนที่มาครอง! ดูเนื้อเรื่องต่อเลย'
+                : 'เก่งมาก! สะสมคะแนนต่อในฉากถัดไป'}
+          </p>
         </div>
 
-        {feedback === 'wrong' && (
-          <div className="wrong-box">
-            <h2>The correct answer is {currentQuestion.answer}.</h2>
-            <p>You selected {selected}. {currentQuestion.explanation}</p>
+        <article className="earned-card">
+          <h2>สรุปรอบนี้ (คิดโดยเซิร์ฟเวอร์)</h2>
+          <div className="stat-strip flat">
+            <span>
+              🏆 คะแนน <b>{answer.session.score_total.toLocaleString()}</b>
+            </span>
+            <span>
+              🪙 เหรียญ <b>+{answer.session.coins_total.toLocaleString()}</b>
+            </span>
           </div>
-        )}
-
-        {feedback === 'correct' && (
-          <div className="correct-box">
-            <h2>Correct!</h2>
-            <p>{currentQuestion.explanation}</p>
+          <div className="stat-strip flat">
+            {typeof finish?.accuracy === 'number' && (
+              <span>
+                🎯 ความแม่น <b>{finish.accuracy}%</b>
+              </span>
+            )}
+            {typeof finish?.bonus === 'number' && finish.bonus > 0 && (
+              <span>
+                🎁 โบนัส <b>+{finish.bonus}</b>
+              </span>
+            )}
           </div>
-        )}
+        </article>
 
-        {showHint && <p className="hint-box">💡 {currentQuestion.hint}</p>}
-
-        <div className="quiz-actions">
-          <button className="outline-button" type="button" onClick={() => setShowHint((value) => !value)}>
-            Hint
-          </button>
-          {feedback ? (
-            <button className="primary-button" type="button" onClick={handleNext}>
-              {currentIndex === quizQuestions.length - 1 ? 'Finish' : 'Continue'}
-            </button>
+        <div className="result-actions">
+          {bossLost ? (
+            <>
+              <button className="primary-button" type="button" onClick={() => void loadSession()}>
+                ⚔️ สู้ใหม่ (โจทย์ชุดใหม่)
+              </button>
+              <button className="outline-button" type="button" onClick={() => navigate('/map')}>
+                กลับแผนที่
+              </button>
+            </>
           ) : (
-            <button className="primary-button" type="submit" disabled={!selected}>
-              Check
+            <button className="primary-button wide" type="button" onClick={finishScene}>
+              {isBoss ? '🎬 ดูเนื้อเรื่องต่อ →' : 'กลับแผนที่ →'}
             </button>
           )}
         </div>
-      </form>
+      </AppScreen>
+    );
+  }
+
+  if (!currentQuestion || !session) {
+    return null;
+  }
+
+  const sceneName = isBoss ? world.boss.name : world.scenes[sceneNumber - 1]?.name ?? '';
+  const timerDanger = secondsLeft <= Math.ceil(session.time_limit_sec / 3);
+
+  return (
+    <AppScreen className={`quiz-screen theme-${world.theme} ${isBoss ? 'boss-mode' : ''}`}>
+      <ScreenHeader
+        title={`ข้อ ${questionIndex + 1}/${totalQuestions}`}
+        subtitle={`${world.land} · ${sceneName}`}
+        showBack
+        right={
+          <span className={`timer ${timerDanger ? 'danger' : ''}`} aria-label={`เหลือเวลา ${secondsLeft} วินาที`}>
+            ⏱ {secondsLeft}s
+          </span>
+        }
+      />
+      <ProgressBar value={Math.round(((questionIndex + 1) / totalQuestions) * 100)} />
+
+      {bossBar}
+
+      <div className="quiz-coach">
+        <Mascot compact mood={phase === 'feedback' && answer && !answer.correct ? 'oops' : 'focus'} />
+        <p>
+          {streak >= 2 && <span className="combo-flame">🔥 คอมโบ ×{streak} </span>}
+          {phase === 'feedback' && answer
+            ? answer.correct
+              ? 'เยี่ยม! ลุยข้อต่อไปเลย!'
+              : 'ไม่เป็นไร ดูเฉลยแล้วไปต่อ!'
+            : secondsLeft === 0
+              ? 'หมดเวลาโบนัส! ตอบได้อยู่แต่ไม่ได้ตัวคูณความเร็วนะ'
+              : 'ตั้งใจอ่าน… ตอบเร็วได้โบนัสความเร็ว!'}
+        </p>
+      </div>
+
+      <div className={`question-card ${phase === 'feedback' && answer ? (answer.correct ? 'correct' : 'wrong') : ''}`}>
+        <div className="question-meta">
+          <span className="difficulty-chip">ความยาก {'★'.repeat(Math.max(1, Math.min(5, currentQuestion.difficulty)))}</span>
+          <button
+            type="button"
+            className="report-button"
+            disabled={reported}
+            onClick={() => {
+              reportQuestion(currentQuestion.qid);
+              setReported(true);
+            }}
+          >
+            {reported ? '✓ แจ้งแล้ว' : '🚩 แจ้งข้อผิด'}
+          </button>
+        </div>
+
+        <h1>{currentQuestion.text}</h1>
+
+        <div className="answer-list">
+          {CHOICE_KEYS.map((key) => {
+            const isSelected = selected === key;
+            const isCorrectChoice = phase === 'feedback' && answer?.correct_choice === key;
+            const isWrongPick = phase === 'feedback' && isSelected && answer && !answer.correct;
+            return (
+              <button
+                type="button"
+                key={key}
+                className={`answer-option ${isSelected ? 'selected' : ''} ${isCorrectChoice ? 'reveal-correct' : ''} ${
+                  isWrongPick ? 'reveal-wrong' : ''
+                }`}
+                disabled={phase !== 'question' || submitting}
+                onClick={() => void submitAnswer(key)}
+              >
+                <b>{key.toUpperCase()}</b>
+                <span>{currentQuestion.choices[key]}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {phase === 'feedback' && answer && (
+          <div className={answer.correct ? 'correct-box' : 'wrong-box'}>
+            <h2>
+              {answer.correct
+                ? `ถูกต้อง! +${answer.earned.score.toLocaleString()} คะแนน · ${speedTierLabel(answer.earned.speed_tier)}`
+                : `เฉลยคือข้อ ${answer.correct_choice.toUpperCase()}`}
+            </h2>
+            {answer.explanation && <p>{answer.explanation}</p>}
+            {answer.correct && (
+              <p className="earned-line">
+                🪙 +{answer.earned.coins.toLocaleString()} เหรียญ
+                {answer.session.streak >= 2 && ` · 🔥 คอมโบ ×${answer.session.streak}`}
+              </p>
+            )}
+            {isBoss && (
+              <p className="earned-line">
+                {answer.correct ? `✂️ ฟันดาบใส่บอส! เหลือ HP ${answer.session.boss_hp}/${bossMaxHp}` : `💔 โดนบอสสวน! หัวใจเหลือ ${answer.session.hearts}`}
+              </p>
+            )}
+          </div>
+        )}
+
+        {currentQuestion.hint && phase === 'question' && (
+          <details className="hint-box">
+            <summary>💡 ขอคำใบ้จากปิ๊ง</summary>
+            <p>{currentQuestion.hint}</p>
+          </details>
+        )}
+
+        {phase === 'feedback' && answer && (
+          <div className="quiz-actions">
+            {answer.finished ? (
+              <button
+                className="primary-button wide"
+                type="button"
+                onClick={() => {
+                  if (answer.finish?.result === 'win' || answer.finish?.result === 'done') {
+                    playSound('reward');
+                  }
+                  setPhase('finished');
+                }}
+              >
+                ดูสรุป →
+              </button>
+            ) : (
+              <button className="primary-button wide" type="button" onClick={goNextQuestion}>
+                ข้อต่อไป →
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </AppScreen>
   );
 };
