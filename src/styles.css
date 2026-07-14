@@ -2431,8 +2431,12 @@ details.hint-box p { margin: 6px 0 0; }
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
 }
 
-/* ---------- เฟส 4: ตำแหน่งปัจจุบันบนแผนที่ (blink "คุณอยู่ที่นี่") ---------- */
-.map-node { position: relative; }
+/* ---------- เฟส 4: ตำแหน่งปัจจุบันบนแผนที่ (blink "คุณอยู่ที่นี่") ----------
+ * FIX 2026-07-14: ห้ามตั้ง position: relative ที่นี่ — .map-node เป็น absolute
+ * (บรรทัด ~1542) อยู่แล้ว การ override เป็น relative ทำให้โหนดเรียงซ้อนแนวตั้ง
+ * แล้วดันด่าน 4 + บอสตกขอบล่างจนโดน overflow:hidden ตัดหาย. absolute
+ * เป็น positioning context ให้ .you-are-here ได้อยู่แล้ว จึงคงไว้เป็น absolute */
+.map-node { position: absolute; }
 
 .map-node.current:not(:disabled) {
   animation: node-pulse 1.6s ease-in-out infinite;
