@@ -52,9 +52,13 @@ export type MusicTrack =
   | 'music-victory';
 
 /** ที่อยู่ไฟล์เพลงบน VPS — override ได้ด้วย VITE_MUSIC_BASE */
+/**
+ * หมายเหตุ 2026-07-14: batch.html วางไฟล์เพลงไว้ที่ /staging/ (ยืนยันแล้วว่าเล่นได้จริง)
+ * ถ้าย้ายเพลงไป /assets/music/ ในอนาคต ให้เปลี่ยน fallback นี้ หรือ set VITE_MUSIC_BASE ตอน build
+ */
 export const MUSIC_BASE: string =
   (import.meta.env.VITE_MUSIC_BASE as string | undefined) ??
-  ASSET_BASE.replace(/\/worlds$/, '/music');
+  'https://srv1813136.hstgr.cloud/staging';
 
 export const landTrack = (grade: number): MusicTrack =>
   (grade >= 3 && grade <= 6 ? `music-p${grade}` : 'music-p3') as MusicTrack;
