@@ -1,11 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppState } from '../store';
 import { AppScreen, Mascot, ProgressBar, ScreenHeader, StatPill } from '../ui';
 import { getWorld, lastSceneOf } from '../world';
+import { stopMusic } from '../audio';
 
 const Home: React.FC = () => {
   const { player, progressFor } = useAppState();
+
+  // หน้าหลักเป็นพื้นที่พัก — ค่อยเริ่มเพลงอีกทีตอนเข้าแผนที่
+  useEffect(() => {
+    stopMusic();
+  }, []);
   const grade = player?.grade ?? 3;
   const world = getWorld(grade);
   const progress = progressFor(grade);

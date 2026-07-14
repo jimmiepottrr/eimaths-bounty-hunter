@@ -5,6 +5,7 @@ import { useAppState } from '../store';
 import { AppScreen, Mascot, ProgressBar, ScreenHeader } from '../ui';
 import { getWorld, sceneArtSlug, bossArtSlug } from '../world';
 import { artUrl } from '../config';
+import { correctSfxForStreak, landTrack, playMusic, playSfx, stopMusic } from '../audio';
 
 /**
  * Quiz เฟส 2 — โจทย์/คะแนน/คอมโบ/เหรียญมาจากเซิร์ฟเวอร์ทั้งหมด
@@ -97,6 +98,22 @@ const Quiz: React.FC = () => {
     void loadSession();
   }, [loadSession]);
 
+  // เพลงประกอบ: โหมดบอสใช้เพลงบอส · ฉากปกติใช้เพลงประจำดินแดน (ต่อเนื่องจากแผนที่)
+  useEffect(() => {
+    playMusic(isBoss ? 'music-boss' : landTrack(grade));
+  }, [isBoss, grade]);
+
+  // จบรอบ: ชนะ → เพลงฉลอง (เล่นครั้งเดียว) · แพ้บอส → หยุดเพลงให้เงียบลง
+  useEffect(() => {
+    if (phase !== 'finished' || !answer) return;
+    const result = answer.finish?.result;
+    if (result === 'win' || result === 'done') {
+      playMusic('music-victory', { loop: false });
+    } else if (isBoss) {
+      stopMusic();
+    }
+  }, [phase, answer, isBoss]);
+
   // นาฬิกานับถอยหลังต่อข้อ — เดินเฉพาะตอนแสดงโจทย์
   useEffect(() => {
     if (phase !== 'question') return;
@@ -123,7 +140,12 @@ const Quiz: React.FC = () => {
       setAnswer(result);
       // แสดงเฉลย/คะแนนของข้อนี้ก่อนเสมอ (รวมข้อสุดท้าย) — ค่อยกด "ดูสรุป" เข้าหน้าจบ
       setPhase('feedback');
-      playSound(result.correct ? 'success' : 'error');
+      // SFX ไฟล์จริง: ตอบถูก 3 ระดับตามคอมโบ (เซิร์ฟเวอร์นับ) / ตอบผิดเสียงนุ่มไม่หลอนเด็ก
+      if (result.correct) {
+        playSfx(correctSfxForStreak(result.session.streak));
+      } else {
+        playSfx('wrong');
+      }
     } catch (caught) {
       submitLock.current = false;
       setSelected(null);

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { api, ApiError, Player, setAuthErrorHandler, setAuthToken } from './api';
+import { setAudioEnabled } from './audio';
 
 /**
  * Store เฟส 2 — เซสชัน/คะแนน/เหรียญมาจากเซิร์ฟเวอร์ทั้งหมด (client แสดงผลอย่างเดียว)
@@ -244,6 +245,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     setAuthToken(token);
   }, [token]);
+
+  // sync ปุ่มเปิด/ปิดเสียงไปยังระบบเสียงไฟล์จริง (เพลงประกอบ + SFX เฟส 4)
+  useEffect(() => {
+    setAudioEnabled(soundEnabled);
+  }, [soundEnabled]);
 
   useEffect(() => {
     // 401 จากทุก endpoint → เคลียร์เซสชัน + เด้งกลับหน้า login (RequireSession จัดการ redirect)
