@@ -2505,3 +2505,32 @@ details.hint-box p { margin: 6px 0 0; }
 .theme-shadow .scene-node.node-2 { --map-x:57%; --map-y:55%; }
 .theme-shadow .scene-node.node-3 { --map-x:72%; --map-y:40%; }
 .theme-shadow .boss-node.node-4  { --map-x:82%; --map-y:26%; }
+
+/* ============================================================
+   เฟส v2 (#6): มาสคอตหัวสิงโต "โค้ช" มุมล่างขวา (เหมือนล่าม/ผู้ช่วย)
+   แสดงเมื่อล็อกอินแล้วทุกหน้า · decorative (ไม่บังการกด)
+   ============================================================ */
+.mascot-corner {
+  position: fixed;
+  right: 14px;
+  bottom: 82px;
+  width: 84px;
+  height: 88px;
+  border-radius: 50%;
+  background: url("/assets/mascot-coach-3d.webp") center 42% / cover no-repeat, #ffe9c2;
+  border: 3px solid #ffffff;
+  box-shadow: 0 6px 18px rgba(16, 46, 78, 0.32);
+  z-index: 45;
+  pointer-events: none;
+  animation: mascot-bob 3s ease-in-out infinite;
+}
+@keyframes mascot-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+@media (max-width: 560px) {
+  .mascot-corner { width: 58px; height: 58px; right: 8px; bottom: 70px; border-width: 2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-corner { animation: none; }
+}

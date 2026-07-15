@@ -11,7 +11,7 @@ let enabled = true;
 
 // ---------- SFX ----------
 
-export type SfxName = 'correct-1' | 'correct-2' | 'correct-3' | 'wrong';
+export type SfxName = 'correct-1' | 'correct-2' | 'correct-3' | 'wrong' | 'combo';
 
 const sfxUrl = (name: SfxName) => `${import.meta.env.BASE_URL}assets/sfx/${name}.mp3`;
 
@@ -37,9 +37,17 @@ export const playSfx = (name: SfxName, volume = 0.8): void => {
   }
 };
 
-/** เลือกระดับความดีใจตามคอมโบจากเซิร์ฟเวอร์: 1-2 ธรรมดา · 3-4 ดีใจ · 5+ ดีใจมากๆ */
+/** ระดับเสียงตอบถูกตามคอมโบ (เฟส v2): 1 ข้อ = ธรรมดา · 2 = ดีใจ · 3 ขึ้นไป = ดีใจมาก (ระดับ 3) */
 export const correctSfxForStreak = (streak: number): SfxName =>
-  streak >= 5 ? 'correct-3' : streak >= 3 ? 'correct-2' : 'correct-1';
+  streak >= 3 ? 'correct-3' : streak >= 2 ? 'correct-2' : 'correct-1';
+
+/** เล่นเสียงตอบถูก + เพิ่ม "กลองคอมโบ" ซ้อนเมื่อถูก 3 ข้อติดขึ้นไป */
+export const playCorrect = (streak: number): void => {
+  playSfx(correctSfxForStreak(streak));
+  if (streak >= 3) {
+    window.setTimeout(() => playSfx('combo', 0.7), 90); // กลองตามหลังนิดให้ได้ยินชัด
+  }
+};
 
 // ---------- เพลงประกอบ ----------
 

@@ -18,7 +18,7 @@ const RequireSession: React.FC<{ children: React.ReactElement }> = ({ children }
 };
 
 const App: React.FC = () => {
-  const { playSound } = useAppState();
+  const { playSound, isLoggedIn } = useAppState();
 
   const handleGlobalPress = (event: React.PointerEvent<HTMLDivElement>) => {
     const target = event.target as HTMLElement;
@@ -30,6 +30,9 @@ const App: React.FC = () => {
   return (
     <div className="app" onPointerDownCapture={handleGlobalPress}>
       <Header />
+      {isLoggedIn && (
+        <div className="mascot-corner" role="img" aria-label="โค้ชสิงโตอีมาeท" />
+      )}
       <main className="app-shell">
         <Routes>
           <Route path="/" element={<Navigate to="/login" />} />

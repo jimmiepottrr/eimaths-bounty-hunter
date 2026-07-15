@@ -124,3 +124,32 @@ place(c, soft(E5 * 0.5, 0.28, 0.8), 0.0)
 place(c, soft(B4 * 0.5, 0.42, 0.85), 0.20)
 finish(c, 'wrong', peak=0.6)
 print('DONE')
+
+# ---------- combo: กลองคอมโบ (เล่นซ้อน correct-3 ตอนตอบถูก 3 ข้อติด) ----------
+def kick(dur=0.28, f0=140, f1=50, vol=1.0):
+    n = int(dur * SR); t = np.arange(n) / SR
+    freq = f1 + (f0 - f1) * np.exp(-t * 32)
+    ph = 2 * np.pi * np.cumsum(freq) / SR
+    return vol * np.sin(ph) * np.exp(-t * 10)
+
+def snare(dur=0.22, vol=0.6):
+    n = int(dur * SR); t = np.arange(n) / SR
+    rng = np.random.default_rng(11)
+    body = rng.standard_normal(n) * 0.7 + np.sin(2 * np.pi * 190 * t) * 0.5
+    return vol * body * np.exp(-t * 22)
+
+def tom(f, dur=0.14, vol=0.7):
+    n = int(dur * SR); t = np.arange(n) / SR
+    freq = f * np.exp(-t * 6)
+    return vol * np.sin(2 * np.pi * np.cumsum(freq) / SR) * np.exp(-t * 14)
+
+n = int(0.72 * SR); c = np.zeros(n)
+for i, f in enumerate([150, 200, 260]):        # tom fill ขึ้น 3 ตัว
+    place(c, tom(f, 0.12, 0.6), i * 0.07)
+place(c, kick(0.26, 140, 50, 1.0), 0.22)        # dun
+place(c, snare(0.22, 0.5), 0.22)
+place(c, kick(0.30, 150, 52, 1.1), 0.40)        # DUN-CHA!
+place(c, snare(0.28, 0.7), 0.40)
+place(c, sparkle(0.4, 0.12), 0.40)
+finish(c, 'combo', peak=0.74)
+print('COMBO DONE')

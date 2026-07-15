@@ -5,7 +5,7 @@ import { useAppState } from '../store';
 import { AppScreen, Mascot, ProgressBar, ScreenHeader } from '../ui';
 import { getWorld, sceneArtSlug, bossArtSlug } from '../world';
 import { artUrl } from '../config';
-import { correctSfxForStreak, playMusic, playSfx, stopMusic } from '../audio';
+import { playCorrect, playMusic, playSfx, stopMusic } from '../audio';
 
 /**
  * Quiz เฟส 2 — โจทย์/คะแนน/คอมโบ/เหรียญมาจากเซิร์ฟเวอร์ทั้งหมด
@@ -143,7 +143,7 @@ const Quiz: React.FC = () => {
       setPhase('feedback');
       // SFX ไฟล์จริง: ตอบถูก 3 ระดับตามคอมโบ (เซิร์ฟเวอร์นับ) / ตอบผิดเสียงนุ่มไม่หลอนเด็ก
       if (result.correct) {
-        playSfx(correctSfxForStreak(result.session.streak));
+        playCorrect(result.session.streak); // 3 ระดับ + กลองคอมโบเมื่อถูก 3 ข้อติด
       } else {
         playSfx('wrong');
       }
