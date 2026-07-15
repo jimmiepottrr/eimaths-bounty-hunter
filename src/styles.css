@@ -2477,3 +2477,31 @@ details.hint-box p { margin: 6px 0 0; }
   .map-node.current:not(:disabled) { animation: none; box-shadow: 0 0 0 4px rgba(255, 199, 44, 0.6); }
   .map-node .you-are-here { animation: none; }
 }
+
+/* ============================================================
+   เฟส v2 (#5): แผนที่แยกตามชั้น (theme) + ตำแหน่งหมุดต่อแผนที่
+   ป.3 dawn = แผนที่เดิม · ป.4/5/6 = แผนที่ใหม่ theme desert/ice/shadow
+   ============================================================ */
+.theme-desert .adventure-map-stage { background-image: url("/assets/map-p4-desert-3d.webp"); }
+.theme-ice    .adventure-map-stage { background-image: url("/assets/map-p5-ice-3d.webp"); }
+.theme-shadow .adventure-map-stage { background-image: url("/assets/map-p6-shadow-3d.webp"); }
+
+/* Desert ป.4 — 4 ฉาก + บอส(node-5) */
+.theme-desert .scene-node.node-1 { --map-x:22%; --map-y:74%; }
+.theme-desert .scene-node.node-2 { --map-x:44%; --map-y:58%; }
+.theme-desert .scene-node.node-3 { --map-x:27%; --map-y:28%; }
+.theme-desert .scene-node.node-4 { --map-x:60%; --map-y:22%; }
+.theme-desert .boss-node.node-5  { --map-x:80%; --map-y:40%; }
+
+/* Ice ป.5 — 4 ฉาก + บอส(node-5) */
+.theme-ice .scene-node.node-1 { --map-x:20%; --map-y:32%; }
+.theme-ice .scene-node.node-2 { --map-x:22%; --map-y:66%; }
+.theme-ice .scene-node.node-3 { --map-x:52%; --map-y:60%; }
+.theme-ice .scene-node.node-4 { --map-x:66%; --map-y:34%; }
+.theme-ice .boss-node.node-5  { --map-x:82%; --map-y:22%; }
+
+/* Shadow ป.6 — 3 ฉาก + บอส(node-4) */
+.theme-shadow .scene-node.node-1 { --map-x:30%; --map-y:52%; }
+.theme-shadow .scene-node.node-2 { --map-x:57%; --map-y:55%; }
+.theme-shadow .scene-node.node-3 { --map-x:72%; --map-y:40%; }
+.theme-shadow .boss-node.node-4  { --map-x:82%; --map-y:26%; }

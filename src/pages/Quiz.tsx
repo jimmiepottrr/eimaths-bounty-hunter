@@ -5,7 +5,7 @@ import { useAppState } from '../store';
 import { AppScreen, Mascot, ProgressBar, ScreenHeader } from '../ui';
 import { getWorld, sceneArtSlug, bossArtSlug } from '../world';
 import { artUrl } from '../config';
-import { correctSfxForStreak, landTrack, playMusic, playSfx, stopMusic } from '../audio';
+import { correctSfxForStreak, playMusic, playSfx, stopMusic } from '../audio';
 
 /**
  * Quiz เฟส 2 — โจทย์/คะแนน/คอมโบ/เหรียญมาจากเซิร์ฟเวอร์ทั้งหมด
@@ -98,10 +98,11 @@ const Quiz: React.FC = () => {
     void loadSession();
   }, [loadSession]);
 
-  // เพลงประกอบ: โหมดบอสใช้เพลงบอส · ฉากปกติใช้เพลงประจำดินแดน (ต่อเนื่องจากแผนที่)
+  // เฟส v2: ระหว่าง "ทำข้อสอบ" ต้องเงียบ ให้เด็กมีสมาธิ — หยุดเพลงที่ค้างมาจากแผนที่/บอส
+  // (เพลงเล่นเฉพาะตอนไม่ได้ทำข้อสอบ: login / map / ช่วงเปลี่ยนด่าน-cutscene)
   useEffect(() => {
-    playMusic(isBoss ? 'music-boss' : landTrack(grade));
-  }, [isBoss, grade]);
+    stopMusic();
+  }, []);
 
   // จบรอบ: ชนะ → เพลงฉลอง (เล่นครั้งเดียว) · แพ้บอส → หยุดเพลงให้เงียบลง
   useEffect(() => {
