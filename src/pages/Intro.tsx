@@ -4,24 +4,24 @@ import { useAppState } from '../store';
 
 const scenes = [
   {
-    image: 'assets/intro-voyage-3d.png',
-    mobileImage: 'assets/intro-voyage-mobile-3d.png',
+    image: 'assets/intro-voyage-3d.webp',
+    mobileImage: 'assets/intro-voyage-mobile-3d.webp',
     eyebrow: 'ตำนานเริ่มต้น',
     title: 'ขุมทรัพย์แห่งปัญญา',
     caption: 'นานมาแล้ว จอมปราชญ์ผู้ยิ่งใหญ่ซ่อนขุมทรัพย์แห่งปัญญาไว้สุดปลายหมู่เกาะปริศนา ท่านฉีกแผนที่เป็น 4 ชิ้น มอบให้ผู้พิทักษ์ 4 ดินแดน',
     voice: 'assets/intro-voice-1.wav',
   },
   {
-    image: 'assets/intro-obstacle-3d.png',
-    mobileImage: 'assets/intro-obstacle-mobile-3d.png',
+    image: 'assets/intro-obstacle-3d.webp',
+    mobileImage: 'assets/intro-obstacle-mobile-3d.webp',
     eyebrow: 'ภัยคุกคาม',
     title: 'กิลด์เงาออกไล่ล่า',
     caption: '"ขุมทรัพย์นี้จะเป็นของผู้พิสูจน์ตนด้วยปัญญา มิใช่กำลัง" …แต่บัดนี้ กิลด์เงา นำโดย ลอร์ดเงา ออกไล่ล่าแผนที่ทุกชิ้น!',
     voice: 'assets/intro-voice-2.wav',
   },
   {
-    image: 'assets/intro-call-3d.png',
-    mobileImage: 'assets/intro-call-mobile-3d.png',
+    image: 'assets/intro-call-3d.webp',
+    mobileImage: 'assets/intro-call-mobile-3d.webp',
     eyebrow: 'ถึงตาเจ้าแล้ว',
     title: 'นักล่าแห่งกิลด์แสงดาว',
     caption: 'เจ้าคือนักล่าสมบัติฝึกหัดแห่งกิลด์แสงดาว จงออกเดินทางพร้อม "ปิ๊ง" นกฮูกเข็มทิศ… หยุดกิลด์เงา แล้วคว้าขุมทรัพย์มาให้ได้!',

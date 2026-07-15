@@ -16,7 +16,7 @@ export const Mascot: React.FC<{
     aria-label={`Eimaths lion mascot, ${mood}`}
   >
     <img
-      src={`${import.meta.env.BASE_URL}assets/${variant === 'journey' ? 'eimaths-journey-3d.png' : 'eimaths-hero-3d.png'}`}
+      src={`${import.meta.env.BASE_URL}assets/${variant === 'journey' ? 'eimaths-journey-3d.webp' : 'eimaths-hero-3d.webp'}`}
       alt=""
     />
   </div>

@@ -350,7 +350,7 @@ a {
   align-items: end;
   overflow: hidden;
   border-radius: 24px;
-  background: url("/assets/eimaths-hero-3d.png") center 43% / cover no-repeat;
+  background: url("/assets/eimaths-hero-3d.webp") center 43% / cover no-repeat;
   box-shadow: inset 0 -95px 70px rgba(2, 31, 71, 0.58);
 }
 
@@ -448,7 +448,7 @@ a {
   inset: -24px;
   background:
     linear-gradient(rgba(255, 252, 242, 0.72), rgba(245, 251, 255, 0.84)),
-    url("/assets/adventure-map-3d.png") center / cover no-repeat;
+    url("/assets/adventure-map-3d.webp") center / cover no-repeat;
   content: "";
   filter: blur(7px) saturate(0.92);
   opacity: 0.62;
@@ -545,7 +545,7 @@ a {
   border-radius: 0 0 24px 24px;
   background:
     linear-gradient(112deg, rgba(7, 110, 233, 0.95), rgba(3, 55, 157, 0.92)),
-    url("/assets/adventure-map-3d.png") center 44% / cover no-repeat;
+    url("/assets/adventure-map-3d.webp") center 44% / cover no-repeat;
   color: #ffffff;
 }
 
@@ -872,7 +872,7 @@ a {
   padding: 12px;
   border: 1px solid #f0d390;
   border-radius: 18px;
-  background: url("/assets/eimaths-quiz-coach-3d.png") center / cover no-repeat;
+  background: url("/assets/eimaths-quiz-coach-3d.webp") center / cover no-repeat;
   box-shadow: 0 10px 22px rgba(40, 59, 102, 0.08);
 }
 
@@ -1099,7 +1099,7 @@ a {
   border-radius: 18px;
   background:
     linear-gradient(90deg, rgba(4, 70, 159, 0.88) 0%, rgba(6, 93, 191, 0.68) 43%, transparent 72%),
-    url("/assets/eimaths-rewards-3d.png") center / cover no-repeat;
+    url("/assets/eimaths-rewards-3d.webp") center / cover no-repeat;
   color: #ffffff;
 }
 
@@ -1234,7 +1234,7 @@ a {
   padding: 28px;
   background:
     linear-gradient(0deg, rgba(1, 9, 29, 0.94) 0%, rgba(3, 22, 57, 0.42) 64%, rgba(2, 19, 48, 0.28) 100%),
-    url("/assets/intro-voyage-3d.png") center / cover;
+    url("/assets/intro-voyage-3d.webp") center / cover;
   color: #ffffff;
   text-align: center;
   z-index: 101;
@@ -1451,7 +1451,7 @@ a {
   border-radius: 18px;
   background:
     linear-gradient(90deg, rgba(5, 34, 85, 0.95) 0%, rgba(5, 45, 102, 0.82) 48%, rgba(4, 35, 75, 0.2) 72%),
-    url("/assets/adventure-map-3d.png") center / cover no-repeat;
+    url("/assets/adventure-map-3d.webp") center / cover no-repeat;
   box-shadow: 0 12px 26px rgba(11, 47, 94, 0.18);
   color: #ffffff;
 }
@@ -1533,7 +1533,7 @@ a {
   overflow: hidden;
   border: 5px solid #ffffff;
   border-radius: 20px;
-  background: url("/assets/adventure-map-3d.png") center / cover no-repeat;
+  background: url("/assets/adventure-map-3d.webp") center / cover no-repeat;
   box-shadow:
     0 8px 0 #aac8df,
     0 16px 30px rgba(9, 51, 95, 0.22);
@@ -1859,7 +1859,7 @@ a {
     padding: 18px;
     background-image:
       linear-gradient(0deg, rgba(1, 9, 29, 0.95) 0%, rgba(3, 22, 57, 0.35) 72%, rgba(2, 19, 48, 0.15) 100%),
-      url("/assets/intro-voyage-mobile-3d.png");
+      url("/assets/intro-voyage-mobile-3d.webp");
   }
 
   .intro-loader-content {
