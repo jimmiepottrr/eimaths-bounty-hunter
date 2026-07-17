@@ -2534,3 +2534,20 @@ details.hint-box p { margin: 6px 0 0; }
 @media (prefers-reduced-motion: reduce) {
   .mascot-corner { animation: none; }
 }
+
+/* ============================================================
+   เฟส v2 (#8): การันตี "เลื่อนขวา-ซ้ายไม่ได้เลย" ทุกหน้า ทุกขนาดจอ
+   safety net ระดับ global — กัน horizontal scroll ถาวร แม้เนื้อหายาวผิดคาด
+   ============================================================ */
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+/* รูป/สื่อห้ามดันความกว้างเกินจอ */
+img, svg, video, canvas, iframe {
+  max-width: 100%;
+}
+/* คำ/URL ยาวๆ ให้ตัดบรรทัดแทนการดันจอ */
+h1, h2, h3, p, span, small, button, a, li, td {
+  overflow-wrap: break-word;
+}
