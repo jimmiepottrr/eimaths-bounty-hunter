@@ -35,7 +35,7 @@ const App: React.FC = () => {
       )}
       <main className="app-shell">
         <Routes>
-          <Route path="/" element={<Navigate to="/login" />} />
+          <Route path="/" element={<Navigate to={`/login${window.location.search}`} replace />} />
           <Route path="/login" element={<Login />} />
           <Route path="/intro" element={<RequireSession><Intro /></RequireSession>} />
           <Route path="/map" element={<RequireSession><AdventureMap /></RequireSession>} />

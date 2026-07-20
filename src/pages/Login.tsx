@@ -15,9 +15,13 @@ const Login: React.FC = () => {
   }, []);
   const navigate = useNavigate();
   const { loginStudent, loginGuest, authError } = useAppState();
+  // โหมดตรวจ: รับ code + pin จาก URL (?code=QCP4xxx&pin=1234) มากรอกให้ล่วงหน้า — เหลือแค่กด "เข้าสู่ระบบ"
+  const qparams = new URLSearchParams(window.location.search);
+  const preCode = qparams.get('code') ?? '';
+  const prePin = (qparams.get('pin') ?? '').replace(/\D/g, '').slice(0, 4);
   const [mode, setMode] = useState<Mode>('student');
-  const [studentCode, setStudentCode] = useState('');
-  const [pin, setPin] = useState('');
+  const [studentCode, setStudentCode] = useState(preCode);
+  const [pin, setPin] = useState(prePin);
   const [nickname, setNickname] = useState('');
   const [grade, setGrade] = useState(3);
   const [error, setError] = useState('');
