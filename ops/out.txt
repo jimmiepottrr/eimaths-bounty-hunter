@@ -1,1 +1,3 @@
-(no result yet)
+=== run Mon Jul 20 17:19:01 UTC 2026 ===
+ops relay ready on srv1813136 as root
+=== exit 0 ===
