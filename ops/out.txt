@@ -1,43 +1,13 @@
-=== run Mon Jul 20 17:25:02 UTC 2026 ===
-=== NGINX bounty config ===
-server {
-  server_name srv1813136.hstgr.cloud;
-    location /assets/ { add_header Access-Control-Allow-Origin "*"; add_header Cache-Control "public, max-age=2592000, immutable"; try_files $uri =404; }
-  root /var/www/bounty;
-  client_max_body_size 200m;
-  index index.php;
-  location ~ /(config\.php|sql/|import/) { deny all; }
-  location ~ \.php$ {
-    include snippets/fastcgi-php.conf;
-    fastcgi_pass unix:/run/php/php-fpm.sock;
-  }
-
-    listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/srv1813136.hstgr.cloud/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/srv1813136.hstgr.cloud/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-
-}
-server {
-    if ($host = srv1813136.hstgr.cloud) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
-  listen 80 default_server;
-  server_name srv1813136.hstgr.cloud;
-    location /assets/ { add_header Access-Control-Allow-Origin "*"; add_header Cache-Control "public, max-age=2592000, immutable"; try_files $uri =404; }
-    return 404; # managed by Certbot
-
-
-}=== SETUP MCP ===
-npm install...
-npm OK
-secret file perms: -rw-------  (ไม่ echo ค่า secret)
-files: node_modules
-package-lock.json
-package.json
-server.mjs
-=== DONE ===
+=== run Mon Jul 20 17:28:02 UTC 2026 ===
+service active: active
+listen 8848: YES
+log:
+  Jul 20 17:28:03 srv1813136 systemd[1]: Started eimaths-mcp.service - eimaths-infra MCP.
+  Jul 20 17:28:03 srv1813136 node[127680]: ✅ eimaths-mcp ฟังที่ 127.0.0.1:8848  path: /mcp/<secret>
+nginx /mcp: added
+nginx TEST FAIL -> restore
+2026/07/20 17:28:05 [emerg] 127699#127699: a duplicate default server for 0.0.0.0:80 in /etc/nginx/sites-enabled/bounty.bak:26
+nginx: configuration file /etc/nginx/nginx.conf test failed
+=== connector URL (secret ปิดไว้) ===
+https://srv1813136.hstgr.cloud/mcp/****(อ่านด้วย: cat ~/eimaths-mcp/.secret)
 === exit 0 ===
