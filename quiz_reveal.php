@@ -10,8 +10,13 @@ declare(strict_types=1);
 require __DIR__ . '/lib/bootstrap.php';
 api_key_check();
 $player = current_player();
-$rid = (int) setting('reviewer_player_id', 0);
-if ($rid === 0 || (int) $player['id'] !== $rid) {
+// gate: อนุญาตหลายบัญชีผู้ตรวจได้ (reviewer_player_ids = อาเรย์) + รองรับค่าเดิม reviewer_player_id (เดี่ยว)
+$ids = setting('reviewer_player_ids', []);
+if (!is_array($ids)) $ids = [];
+$ids = array_map('intval', $ids);
+$single = (int) setting('reviewer_player_id', 0);
+if ($single > 0) $ids[] = $single;
+if (empty($ids) || !in_array((int) $player['id'], $ids, true)) {
   json_err('เฉพาะบัญชีผู้ตรวจเท่านั้น', 403);
 }
 $sid = (int) ($_GET['session_id'] ?? 0);
