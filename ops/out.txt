@@ -1,13 +1,6 @@
-=== run Mon Jul 20 17:28:02 UTC 2026 ===
-service active: active
-listen 8848: YES
-log:
-  Jul 20 17:28:03 srv1813136 systemd[1]: Started eimaths-mcp.service - eimaths-infra MCP.
-  Jul 20 17:28:03 srv1813136 node[127680]: ✅ eimaths-mcp ฟังที่ 127.0.0.1:8848  path: /mcp/<secret>
-nginx /mcp: added
-nginx TEST FAIL -> restore
-2026/07/20 17:28:05 [emerg] 127699#127699: a duplicate default server for 0.0.0.0:80 in /etc/nginx/sites-enabled/bounty.bak:26
-nginx: configuration file /etc/nginx/nginx.conf test failed
-=== connector URL (secret ปิดไว้) ===
-https://srv1813136.hstgr.cloud/mcp/****(อ่านด้วย: cat ~/eimaths-mcp/.secret)
+=== run Mon Jul 20 17:31:02 UTC 2026 ===
+/mcp added
+nginx: reloaded OK
+service: active | listen8848: YES
+files sites-enabled: bounty
 === exit 0 ===
