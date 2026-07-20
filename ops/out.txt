@@ -1,3 +1,15 @@
-=== run Mon Jul 20 17:19:01 UTC 2026 ===
-ops relay ready on srv1813136 as root
+=== run Mon Jul 20 17:23:02 UTC 2026 ===
+=== RECON ===
+whoami: root  host: srv1813136
+node bin: /root/.nvm/versions/node/v24.18.0/bin/node
+node ver: v24.18.0
+npm bin: /root/.nvm/versions/node/v24.18.0/bin/npm
+pm2: 
+nginx: nginx version: nginx/1.24.0 (Ubuntu)
+sites-enabled:
+bounty
+conf.d:
+server_name ที่ตั้งไว้:
+webroot bounty: /var/www/bounty
+port 8848: free
 === exit 0 ===
