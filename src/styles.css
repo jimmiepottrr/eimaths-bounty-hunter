@@ -2551,3 +2551,38 @@ img, svg, video, canvas, iframe {
 h1, h2, h3, p, span, small, button, a, li, td {
   overflow-wrap: break-word;
 }
+
+/* ── QC / โหมดตรวจ (เฉลยปุ่มเหลือง) — ใช้ทดสอบภายในเท่านั้น ── */
+.answer-option.qc-answer {
+  background: #fff3bf;
+  border-color: #f59f00;
+  box-shadow: 0 0 0 3px rgba(245, 159, 0, 0.35);
+  position: relative;
+}
+.answer-option.qc-answer .qc-tag {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-style: normal;
+  font-size: 11px;
+  font-weight: 800;
+  color: #7a5200;
+  background: #ffe08a;
+  border: 1px solid #f0b429;
+  border-radius: 999px;
+  padding: 1px 8px;
+}
+.qc-badge {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  margin: 0 0 8px;
+  padding: 6px 12px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #7a5200;
+  background: linear-gradient(90deg, #ffe08a, #ffd43b);
+  border: 1px solid #f0b429;
+  border-radius: 10px;
+}

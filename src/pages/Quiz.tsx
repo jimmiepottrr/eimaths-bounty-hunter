@@ -19,6 +19,24 @@ const CHOICE_KEYS = ['a', 'b', 'c', 'd'] as const;
 type ChoiceKey = (typeof CHOICE_KEYS)[number];
 
 const REPORT_KEY = 'bh2-reported-questions';
+const QC_KEY = 'bh2-qc';
+
+/**
+ * โหมดตรวจ (QC) — เปิดด้วย ?qc=1 บน URL, ปิดด้วย ?qc=0
+ * เก็บใน sessionStorage เพื่อให้อยู่ข้ามหน้า (login→map→quiz) จนกว่าจะปิดแท็บ
+ * หมายเหตุ: นี่เป็นแค่ "สวิตช์ฝั่ง client ว่าจะขอเฉลยไหม" — การอนุญาตจริงอยู่ที่เซิร์ฟเวอร์
+ * (quiz_reveal.php ตอบเฉลยเฉพาะบัญชีผู้ตรวจ) เด็กเปิด ?qc=1 เองก็ได้ 403 ไม่มีเฉลย
+ */
+const isQcMode = (): boolean => {
+  try {
+    const flag = new URLSearchParams(window.location.search).get('qc');
+    if (flag === '1') window.sessionStorage.setItem(QC_KEY, '1');
+    if (flag === '0') window.sessionStorage.removeItem(QC_KEY);
+    return window.sessionStorage.getItem(QC_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
 
 const speedTierLabel = (tier: string) => {
   if (tier === 'fast') return '⚡ สายฟ้าแลบ!';
@@ -63,6 +81,7 @@ const Quiz: React.FC = () => {
   const [secondsLeft, setSecondsLeft] = useState(0);
   const [reported, setReported] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [revealAnswers, setRevealAnswers] = useState<Record<number, string>>({}); // QC only: qid → choice
 
   const questionShownAt = useRef(0);
   const submitLock = useRef(false); // กัน double-submit ระดับ ref (กันคลิกรัวก่อน state ทัน)
@@ -88,6 +107,20 @@ const Quiz: React.FC = () => {
       setSecondsLeft(started.time_limit_sec);
       questionShownAt.current = performance.now();
       setPhase('question');
+      // โหมดตรวจ: ขอเฉลยจากเซิร์ฟเวอร์ (non-blocking) — ถ้าไม่ใช่ผู้ตรวจจะโดน 403 เงียบๆ ไม่มีไฮไลต์
+      setRevealAnswers({});
+      if (isQcMode()) {
+        api
+          .quizReveal(started.session_id)
+          .then((rv) => {
+            const map: Record<number, string> = {};
+            for (const [qid, choice] of Object.entries(rv.answers)) map[Number(qid)] = String(choice);
+            setRevealAnswers(map);
+          })
+          .catch(() => {
+            /* ไม่ใช่บัญชีผู้ตรวจ หรือดึงไม่ได้ — ไม่ต้องทำอะไร */
+          });
+      }
     } catch (caught) {
       setErrorMessage(caught instanceof ApiError ? caught.message : 'โหลดโจทย์ไม่สำเร็จ ลองใหม่อีกครั้งนะ');
       setPhase('error');
@@ -304,9 +337,12 @@ const Quiz: React.FC = () => {
 
   const sceneName = isBoss ? world.boss.name : world.scenes[sceneNumber - 1]?.name ?? '';
   const timerDanger = secondsLeft <= Math.ceil(session.time_limit_sec / 3);
+  const qcMode = isQcMode();
+  const qcAnswerKey = qcMode ? revealAnswers[currentQuestion.qid] : undefined;
 
   return (
     <AppScreen bgArt={bgArt} className={`quiz-screen theme-${world.theme} ${isBoss ? 'boss-mode' : ''}`}>
+      {qcMode && <div className="qc-badge">🔑 โหมดตรวจ · เฉลย = ปุ่มเหลือง (สำหรับทดสอบเท่านั้น)</div>}
       <ScreenHeader
         title={`ข้อ ${questionIndex + 1}/${totalQuestions}`}
         subtitle={`${world.land} · ${sceneName}`}
@@ -358,18 +394,21 @@ const Quiz: React.FC = () => {
             const isSelected = selected === key;
             const isCorrectChoice = phase === 'feedback' && answer?.correct_choice === key;
             const isWrongPick = phase === 'feedback' && isSelected && answer && !answer.correct;
+            // QC เท่านั้น: ไฮไลต์เฉลยเป็นปุ่มเหลืองตอนโจทย์ยังไม่ถูกตอบ
+            const isQcAnswer = phase === 'question' && qcAnswerKey === key;
             return (
               <button
                 type="button"
                 key={key}
                 className={`answer-option ${isSelected ? 'selected' : ''} ${isCorrectChoice ? 'reveal-correct' : ''} ${
                   isWrongPick ? 'reveal-wrong' : ''
-                }`}
+                } ${isQcAnswer ? 'qc-answer' : ''}`}
                 disabled={phase !== 'question' || submitting}
                 onClick={() => void submitAnswer(key)}
               >
                 <b>{key.toUpperCase()}</b>
                 <span>{currentQuestion.choices[key]}</span>
+                {isQcAnswer && <em className="qc-tag">เฉลย</em>}
               </button>
             );
           })}

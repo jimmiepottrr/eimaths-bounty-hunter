@@ -93,6 +93,9 @@ export type RewardItem = {
 export type RewardCatalogResponse = { ok: true; rewards?: RewardItem[]; catalog?: RewardItem[] };
 export type RewardRedeemResponse = { ok: true; message?: string; coins?: number };
 
+// เฉลยเฉพาะบัญชีผู้ตรวจ (QC) — server เป็นคน gate, ผู้เล่นปกติเรียกแล้วได้ 403
+export type QuizRevealResponse = { ok: true; answers: Record<string, string> };
+
 // ---------- Error ----------
 
 export class ApiError extends Error {
@@ -197,6 +200,10 @@ export const api = {
       method: 'POST',
       body: { session_id, question_id, choice, elapsed_ms },
     }),
+
+  // QC only: ดึงเฉลยของ session (server gate ด้วย reviewer_player_id) — ปกติจะได้ 403
+  quizReveal: (session_id: string) =>
+    request<QuizRevealResponse>(`/quiz_reveal.php?session_id=${encodeURIComponent(session_id)}`),
 
   rewardCatalog: () => request<RewardCatalogResponse>('/reward_redeem.php'),
 
