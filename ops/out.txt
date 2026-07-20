@@ -1,6 +1,5 @@
-=== run Mon Jul 20 17:31:02 UTC 2026 ===
-/mcp added
-nginx: reloaded OK
-service: active | listen8848: YES
-files sites-enabled: bounty
+=== run Mon Jul 20 17:33:02 UTC 2026 ===
+node direct  (คาดหวัง 404): 404
+via nginx https (คาดหวัง 404): 404
+ยิง secret ถูกต้อง (คาดหวัง 200/405/406 = ถึง node จริง): 406
 === exit 0 ===
