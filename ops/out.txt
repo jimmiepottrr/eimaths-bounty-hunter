@@ -1,15 +1,43 @@
-=== run Mon Jul 20 17:23:02 UTC 2026 ===
-=== RECON ===
-whoami: root  host: srv1813136
-node bin: /root/.nvm/versions/node/v24.18.0/bin/node
-node ver: v24.18.0
-npm bin: /root/.nvm/versions/node/v24.18.0/bin/npm
-pm2: 
-nginx: nginx version: nginx/1.24.0 (Ubuntu)
-sites-enabled:
-bounty
-conf.d:
-server_name ที่ตั้งไว้:
-webroot bounty: /var/www/bounty
-port 8848: free
+=== run Mon Jul 20 17:25:02 UTC 2026 ===
+=== NGINX bounty config ===
+server {
+  server_name srv1813136.hstgr.cloud;
+    location /assets/ { add_header Access-Control-Allow-Origin "*"; add_header Cache-Control "public, max-age=2592000, immutable"; try_files $uri =404; }
+  root /var/www/bounty;
+  client_max_body_size 200m;
+  index index.php;
+  location ~ /(config\.php|sql/|import/) { deny all; }
+  location ~ \.php$ {
+    include snippets/fastcgi-php.conf;
+    fastcgi_pass unix:/run/php/php-fpm.sock;
+  }
+
+    listen 443 ssl; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/srv1813136.hstgr.cloud/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/srv1813136.hstgr.cloud/privkey.pem; # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+
+}
+server {
+    if ($host = srv1813136.hstgr.cloud) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
+  listen 80 default_server;
+  server_name srv1813136.hstgr.cloud;
+    location /assets/ { add_header Access-Control-Allow-Origin "*"; add_header Cache-Control "public, max-age=2592000, immutable"; try_files $uri =404; }
+    return 404; # managed by Certbot
+
+
+}=== SETUP MCP ===
+npm install...
+npm OK
+secret file perms: -rw-------  (ไม่ echo ค่า secret)
+files: node_modules
+package-lock.json
+package.json
+server.mjs
+=== DONE ===
 === exit 0 ===
