@@ -12,7 +12,7 @@ const stubGeo = (page: Page) =>
 test('มือถือ: เฮดเดอร์เตี้ย + ภาษาโชว์เฉพาะรหัส + แฮมเบอร์เกอร์นำทางได้', async ({ page }) => {
   await stubGeo(page);
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'ราคารับซื้อโลหะวันนี้' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'ทองแดง', exact: true })).toBeVisible();
 
   // ตัวเลือกภาษาแบบย่อ (รหัส) แสดง / แบบเต็มซ่อน
   await expect(page.locator('.lang-select-code')).toBeVisible();

@@ -31,7 +31,6 @@ const logout = async (page: Page) => {
 
 test('หน้าแรกแสดงบอร์ดราคาครบ 3 กลุ่ม และกดแถวราคาไม่ได้', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'ราคารับซื้อโลหะวันนี้' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'ทองแดง', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'ทองเหลือง', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'อลูมิเนียม', exact: true })).toBeVisible();
@@ -153,9 +152,13 @@ test('ข้อมูลผู้ใช้: เปลี่ยนรหัสผ
   await login(page, 'demo@copper8000.co.th', 'demo9999');
 });
 
-test('login แล้วหน้าแรกซ่อนข้อความแนะนำและวันที่', async ({ page }) => {
+test('หน้าแรกไม่มีข้อความแนะนำ/วันที่ — ขึ้นตารางราคาเลย (ทั้ง guest และหลัง login)', async ({ page }) => {
+  // guest: ไม่มีบล็อก hero, ไม่มีหัวข้อ "ราคารับซื้อโลหะวันนี้"
   await page.goto('/#/');
-  await expect(page.locator('.hero')).toBeVisible();
+  await expect(page.locator('.hero')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'ราคารับซื้อโลหะวันนี้' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'ทองแดง', exact: true })).toBeVisible();
+  // หลัง login ก็ยังไม่มีเช่นกัน
   await login(page, 'demo@copper8000.co.th', 'demo1234');
   await page.goto('/#/');
   await expect(page.locator('.hero')).toHaveCount(0);
