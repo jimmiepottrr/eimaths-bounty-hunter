@@ -88,8 +88,9 @@ body {
 body {
   font-family: 'Noto Sans Thai', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
   color: var(--ink);
-  /* แบ็กกราวนด์ตามธีม: แสงนวลมุมจอ + ไล่ครีม */
+  /* แบ็กกราวนด์ตามธีม: ลายรังผึ้งหกเหลี่ยง (motif จากโลโก้ C8) จางๆ + แสงนวลมุมจอ + ไล่ครีม */
   background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='98' viewBox='0 0 28 49'%3E%3Cpath d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z' fill='%23b08d2e' fill-opacity='0.05'/%3E%3C/svg%3E"),
     radial-gradient(1100px 480px at 88% -8%, var(--glow-a), transparent 60%),
     radial-gradient(900px 420px at -12% 28%, var(--glow-b), transparent 55%),
     radial-gradient(760px 380px at 50% 108%, var(--glow-c), transparent 60%),
@@ -134,13 +135,79 @@ button {
 
 /* ---------- Layout ---------- */
 
+/* เฮดเดอร์สีทองเมทัลลิก (ตามสี accent ของธีม: ทอง/ทองแดง/เงิน) — ตัวอักษรขาว */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(253, 252, 248, 0.94);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid var(--line);
+  background: linear-gradient(
+    110deg,
+    var(--copper-dark) 0%,
+    var(--copper) 28%,
+    var(--copper-light) 55%,
+    var(--copper) 78%,
+    var(--copper-dark) 100%
+  );
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.14);
+  --logo-main: #fff;
+  --logo-sub: rgba(255, 255, 255, 0.85);
+  --logo-line: rgba(255, 255, 255, 0.5);
+}
+
+.topbar .logo-mark {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.topbar .userbox .name {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.topbar .status-approved {
+  color: #d9f7e0;
+}
+
+.topbar .status-waiting {
+  color: #ffe9b0;
+}
+
+.topbar .btn-outline {
+  border-color: rgba(255, 255, 255, 0.75);
+  color: #fff;
+}
+
+.topbar .btn-outline:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.topbar .btn-primary {
+  background: #fff;
+  color: var(--copper-dark);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+}
+
+.topbar .btn-primary:hover:not(:disabled) {
+  background: var(--cream-1);
+  filter: none;
+}
+
+.topbar .demo-badge {
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.topbar .lang-picker {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+.topbar .lang-picker select {
+  color: #fff;
+}
+
+.topbar .lang-picker select option {
+  color: var(--ink);
+  background: #fff;
 }
 
 .topbar-inner {
@@ -190,7 +257,7 @@ button {
   gap: 2px;
   flex-wrap: wrap;
   width: 100%;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid rgba(255, 255, 255, 0.22);
   max-width: 1080px;
   margin: 0 auto;
   padding: 0 8px;
@@ -199,26 +266,24 @@ button {
 .tabs a {
   padding: 10px 14px;
   text-decoration: none;
-  color: var(--ink-soft);
+  color: rgba(255, 255, 255, 0.85);
   font-weight: 500;
   border-bottom: 3px solid transparent;
   white-space: nowrap;
-}
-
-.tabs a {
   transition: color 0.15s ease, background 0.15s ease;
   border-radius: 8px 8px 0 0;
 }
 
 .tabs a:hover {
-  color: var(--copper-dark);
-  background: var(--cream-1);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .tabs a.active {
-  color: var(--copper-dark);
-  border-bottom-color: var(--copper);
+  color: #fff;
+  border-bottom-color: #fff;
   font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 .page {

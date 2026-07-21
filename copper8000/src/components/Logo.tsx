@@ -4,7 +4,7 @@
 import { useI18n } from '../i18n';
 
 const Mark = ({ size = 44 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true">
+  <svg className="logo-mark" width={size} height={size} viewBox="0 0 120 120" aria-hidden="true">
     <defs>
       <linearGradient id="c8-copper" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0%" stopColor="#c98d5c" />
@@ -49,7 +49,7 @@ const Logo = ({ compact = false }: { compact?: boolean }) => {
           fontFamily: "'Noto Serif Thai', serif",
           fontWeight: 700,
           fontSize: compact ? 16 : 19,
-          color: '#7c4a24',
+          color: 'var(--logo-main, #7c4a24)',
           letterSpacing: lang === 'th' ? undefined : '0.06em',
         }}
       >
@@ -59,8 +59,8 @@ const Logo = ({ compact = false }: { compact?: boolean }) => {
         style={{
           fontSize: compact ? 9 : 10.5,
           letterSpacing: '0.18em',
-          color: '#a76a3a',
-          borderTop: '1px solid #d8c79a',
+          color: 'var(--logo-sub, #a76a3a)',
+          borderTop: '1px solid var(--logo-line, #d8c79a)',
           paddingTop: 2,
         }}
       >
