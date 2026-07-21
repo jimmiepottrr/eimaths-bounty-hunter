@@ -14,6 +14,22 @@ import { useAuth } from '../store';
 
 const MATERIAL_ORDER: Material[] = ['copper', 'brass', 'aluminium'];
 
+/** สีประจำชนิดโลหะ — แถวสินค้าไล่เฉดจากเข้มลงอ่อนตามลำดับในกลุ่ม */
+const MATERIAL_ACCENT: Record<Material, { bar: string; rgb: string }> = {
+  copper: { bar: '#a76a3a', rgb: '167, 106, 58' },
+  brass: { bar: '#b8a26a', rgb: '184, 162, 106' },
+  aluminium: { bar: '#8f979e', rgb: '143, 151, 158' },
+};
+
+const rowAccent = (material: Material, index: number) => {
+  const { bar, rgb } = MATERIAL_ACCENT[material];
+  const alpha = Math.max(0.05, 0.2 - index * 0.06);
+  return {
+    bar,
+    background: `linear-gradient(90deg, rgba(${rgb}, ${alpha}) 0%, rgba(${rgb}, 0) 62%) #fff`,
+  };
+};
+
 const ProductsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -104,8 +120,14 @@ const ProductsPage = () => {
             <section key={material} style={{ marginBottom: 28 }}>
               <h3 style={{ margin: '18px 0 10px' }}>{t(`material.${material}`)}</h3>
               <div className="trade-board">
-                {group.map((p) => (
-                  <ProductRow key={p.id} product={p} hint={hint} onClick={() => handleTap(p)} />
+                {group.map((p, i) => (
+                  <ProductRow
+                    key={p.id}
+                    product={p}
+                    hint={hint}
+                    accent={rowAccent(material, i)}
+                    onClick={() => handleTap(p)}
+                  />
                 ))}
               </div>
             </section>

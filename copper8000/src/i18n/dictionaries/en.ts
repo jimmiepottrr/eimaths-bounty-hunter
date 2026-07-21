@@ -128,6 +128,10 @@ export const en: Dict = {
   'admin.colPriceBahtKg': 'Price (THB/kg)',
   'admin.save': 'Save',
   'admin.toastPriceSaved': 'Saved price for {name}',
+  'admin.pendingTitle': 'Pending actions',
+  'admin.topicUsers': 'New member signups — awaiting approval',
+  'admin.topicBookings': 'New bookings — awaiting confirmation',
+  'admin.nonePending': 'Nothing pending — all caught up',
 
   'adminLang.colCode': 'Code',
   'adminLang.colName': 'Language name',
