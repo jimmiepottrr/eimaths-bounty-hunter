@@ -93,7 +93,29 @@ export const en: Dict = {
   'signup.errPwMismatch': 'Passwords do not match',
 
   'company.title': 'Copper 8000 Co., Ltd.',
-  'company.comingSoon': 'Company information coming soon',
+  'company.tagline': 'Full-service recycled-metal buyer — Copper · Brass · Aluminium',
+  'company.aboutTitle': 'About Us',
+  'company.aboutBody':
+    'Copper 8000 Co., Ltd. has been buying recycled scrap metal — copper, brass and aluminium — for over 15 years, serving factories, contractors and scrap dealers nationwide. Our main warehouse and buying station is located in Bang Phli, Samut Prakan, equipped with certified scales, and our buying prices are benchmarked to world markets and updated every business day.',
+  'company.visionTitle': 'Our Vision',
+  'company.visionBody':
+    'To be the most transparent recycled-metal buyer in Thailand — fair prices, accurate weighing, on-time payment, and a driving force in the circular economy.',
+  'company.statYears': 'Years of experience',
+  'company.statTons': 'Tonnes bought / month',
+  'company.statClients': 'Trusted clients',
+  'company.servicesTitle': 'Our Services',
+  'company.service1': 'On-site buying at our warehouse, weighed right in front of you',
+  'company.service2': 'Pickup service at your location for volumes of 1 tonne or more',
+  'company.service3': 'Book prices online in advance — the price you confirm is the price you get',
+  'company.service4': 'Instant bank transfer once goods are inspected and weighed',
+  'company.regTitle': 'Company Registration',
+  'company.regNoLabel': 'Registration no.',
+  'company.regCapitalLabel': 'Registered capital',
+  'company.regCapitalValue': 'THB 50,000,000',
+  'company.foundedLabel': 'Founded',
+  'company.foundedValue': '2011',
+  'company.ctaTitle': 'Ready to sell your metal?',
+  'company.ctaBody': 'Sign up today — once approved you can book prices online right away',
 
   'contact.addressLabel': 'Address',
   'contact.addressValue':

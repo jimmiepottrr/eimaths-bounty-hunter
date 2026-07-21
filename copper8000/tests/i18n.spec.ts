@@ -40,6 +40,21 @@ test('เข้าครั้งแรกจาก IP อเมริกา →
   await expect(page.getByRole('heading', { name: "Today's Metal Buying Prices" })).toBeVisible();
 });
 
+test('หน้าข้อมูลบริษัทแสดงครบ 3 ภาษา', async ({ page }) => {
+  await stubGeo(page, 'TH');
+  await page.goto('/#/company');
+  await expect(page.getByRole('heading', { name: 'เกี่ยวกับเรา' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'บริการของเรา' })).toBeVisible();
+
+  await page.locator('.lang-picker select').selectOption('en');
+  await expect(page.getByRole('heading', { name: 'About Us', exact: true })).toBeVisible();
+  await expect(page.getByText('Registration no.')).toBeVisible();
+
+  await page.locator('.lang-picker select').selectOption('zh');
+  await expect(page.getByRole('heading', { name: '关于我们' })).toBeVisible();
+  await expect(page.getByText('注册资本')).toBeVisible();
+});
+
 test('แอดมิน: เพิ่มภาษาใหม่ / ภาษาหลักไม่มีปุ่มลบ / ปิดภาษาแล้วหายจาก picker', async ({ page }) => {
   await stubGeo(page, 'TH');
   await loginAdmin(page);
