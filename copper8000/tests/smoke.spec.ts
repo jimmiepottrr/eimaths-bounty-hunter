@@ -152,13 +152,13 @@ test('ข้อมูลผู้ใช้: เปลี่ยนรหัสผ
   await login(page, 'demo@copper8000.co.th', 'demo9999');
 });
 
-test('หน้าแรกไม่มีข้อความแนะนำ/วันที่ — ขึ้นตารางราคาเลย (ทั้ง guest และหลัง login)', async ({ page }) => {
-  // guest: ไม่มีบล็อก hero, ไม่มีหัวข้อ "ราคารับซื้อโลหะวันนี้"
+test('หน้าแรก: ข้อความแนะนำโชว์ตอน guest · ซ่อนเมื่อ login แล้ว', async ({ page }) => {
+  // guest: มีบล็อก hero + หัวข้อ "ราคารับซื้อโลหะวันนี้"
   await page.goto('/#/');
-  await expect(page.locator('.hero')).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'ราคารับซื้อโลหะวันนี้' })).toHaveCount(0);
+  await expect(page.locator('.hero')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'ราคารับซื้อโลหะวันนี้' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'ทองแดง', exact: true })).toBeVisible();
-  // หลัง login ก็ยังไม่มีเช่นกัน
+  // หลัง login: hero หาย ขึ้นตารางราคาเลย
   await login(page, 'demo@copper8000.co.th', 'demo1234');
   await page.goto('/#/');
   await expect(page.locator('.hero')).toHaveCount(0);
