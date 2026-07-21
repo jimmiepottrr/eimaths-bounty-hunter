@@ -25,6 +25,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: '**/package-lock.json'
 
       - name: Install dependencies
         run: npm ci
@@ -37,6 +38,24 @@ jobs:
 
       - name: Add SPA fallback
         run: cp dist/index.html dist/404.html
+
+      # ---- Copper 8000 (webapp จองซื้อโลหะ) → เสิร์ฟที่ /eimaths-bounty-hunter/copper8000/ ----
+      - name: Install copper8000 dependencies
+        run: npm ci
+        working-directory: copper8000
+
+      - name: Build copper8000
+        run: npm run build
+        working-directory: copper8000
+        env:
+          # secrets แยกชุดจากเกม — ยังไม่ตั้ง = เว็บรันโหมดสาธิต (mock) อัตโนมัติ
+          VITE_API_BASE: ${{ secrets.COPPER_VITE_API_BASE }}
+          VITE_API_KEY: ${{ secrets.COPPER_VITE_API_KEY }}
+
+      - name: Merge copper8000 into dist
+        run: |
+          mkdir -p dist/copper8000
+          cp -r copper8000/dist/. dist/copper8000/
 
       - name: Publish to gh-pages
         uses: peaceiris/actions-gh-pages@v4
