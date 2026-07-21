@@ -55,4 +55,15 @@ if ($action === 'login') {
   json_out(['token' => new_session((int) $user['id']), 'user' => user_public($user)]);
 }
 
+if ($action === 'change_password') {
+  $user = require_auth();
+  $current = (string) ($body['current_password'] ?? '');
+  $new = (string) ($body['new_password'] ?? '');
+  if (mb_strlen($new) < 6) json_err('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร');
+  if (!password_verify($current, $user['password_hash'])) json_err('รหัสผ่านปัจจุบันไม่ถูกต้อง');
+  pdo()->prepare('UPDATE users SET password_hash = ? WHERE id = ?')
+    ->execute([password_hash($new, PASSWORD_DEFAULT), (int) $user['id']]);
+  json_out([]);
+}
+
 json_err('action ไม่ถูกต้อง');

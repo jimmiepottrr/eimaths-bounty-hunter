@@ -100,6 +100,13 @@ export const httpAdapter: DataService = {
     return res.user;
   },
 
+  async changePassword(current_password, new_password): Promise<void> {
+    await request('/auth.php', {
+      method: 'POST',
+      body: { action: 'change_password', current_password, new_password },
+    });
+  },
+
   async listProducts(): Promise<Product[]> {
     const res = await request<{ products: Product[] }>('/products.php');
     return res.products;

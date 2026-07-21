@@ -9,6 +9,13 @@ export const th: Dict = {
   'nav.myBookings': 'การจองของฉัน',
   'nav.admin': 'แอดมิน',
 
+  'nav.profile': 'ข้อมูลผู้ใช้',
+  'profile.readonlyNote': 'ข้อมูลส่วนตัวแก้ไขเองไม่ได้ — หากต้องการเปลี่ยนกรุณาติดต่อบริษัท',
+  'profile.changePw': 'เปลี่ยนรหัสผ่าน',
+  'profile.currentPw': 'รหัสผ่านปัจจุบัน',
+  'profile.newPw': 'รหัสผ่านใหม่ (อย่างน้อย 6 ตัวอักษร)',
+  'profile.confirmNewPw': 'ยืนยันรหัสผ่านใหม่',
+  'profile.saved': 'เปลี่ยนรหัสผ่านแล้ว',
   'auth.login': 'เข้าสู่ระบบ',
   'auth.signup': 'สมัครสมาชิก',
   'auth.logout': 'ออกจากระบบ',

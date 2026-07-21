@@ -9,6 +9,13 @@ export const zh: Dict = {
   'nav.myBookings': '我的预订',
   'nav.admin': '管理后台',
 
+  'nav.profile': '用户信息',
+  'profile.readonlyNote': '个人信息不可在此修改 — 如需更改请联系公司',
+  'profile.changePw': '修改密码',
+  'profile.currentPw': '当前密码',
+  'profile.newPw': '新密码（至少 6 个字符）',
+  'profile.confirmNewPw': '确认新密码',
+  'profile.saved': '密码已更新',
   'auth.login': '登录',
   'auth.signup': '注册',
   'auth.logout': '退出登录',

@@ -1,10 +1,10 @@
-/** โลโก้ C8 hexagon ทองแดง (วาดใหม่เป็น SVG ตามอาร์ตเวิร์กบริษัท) + wordmark
- *  wordmark หลักเป็นไทยเฉพาะตอนดูภาษาไทย — ภาษาอื่นใช้ COPPER 8000 (กันตัวไทยโผล่หน้า EN/中文) */
+/** โลโก้ C8 hexagon ทองแดง (สีแบรนด์เดิมทุกจุด) + wordmark
+ *  ขนาด/ฟอนต์คุมด้วยคลาส CSS (.logo-mark / .logo-word-*) เพื่อย่อบนมือถือได้ */
 
 import { useI18n } from '../i18n';
 
-const Mark = ({ size = 44 }: { size?: number }) => (
-  <svg className="logo-mark" width={size} height={size} viewBox="0 0 120 120" aria-hidden="true">
+const Mark = () => (
+  <svg className="logo-mark" width={44} height={44} viewBox="0 0 120 120" aria-hidden="true">
     <defs>
       <linearGradient id="c8-copper" x1="0" y1="0" x2="1" y2="1">
         <stop offset="0%" stopColor="#c98d5c" />
@@ -38,36 +38,18 @@ const Mark = ({ size = 44 }: { size?: number }) => (
   </svg>
 );
 
-const Logo = ({ compact = false }: { compact?: boolean }) => {
+const Logo = () => {
   const { lang } = useI18n();
   return (
-  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-    <Mark size={compact ? 36 : 44} />
-    <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
-      <span
-        style={{
-          fontFamily: "'Noto Serif Thai', serif",
-          fontWeight: 700,
-          fontSize: compact ? 16 : 19,
-          color: 'var(--logo-main, #7c4a24)',
-          letterSpacing: lang === 'th' ? undefined : '0.06em',
-        }}
-      >
-        {lang === 'th' ? 'คอปเปอร์ 8000' : 'COPPER 8000'}
-      </span>
-      <span
-        style={{
-          fontSize: compact ? 9 : 10.5,
-          letterSpacing: '0.18em',
-          color: 'var(--logo-sub, #a76a3a)',
-          borderTop: '1px solid var(--logo-line, #d8c79a)',
-          paddingTop: 2,
-        }}
-      >
-        COPPER 8000 CO., LTD.
+    <span className="logo-wrap">
+      <Mark />
+      <span className="logo-word">
+        <span className={`logo-word-main ${lang === 'th' ? '' : 'latin'}`}>
+          {lang === 'th' ? 'คอปเปอร์ 8000' : 'COPPER 8000'}
+        </span>
+        <span className="logo-word-sub">COPPER 8000 CO., LTD.</span>
       </span>
     </span>
-  </span>
   );
 };
 

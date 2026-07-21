@@ -1190,3 +1190,156 @@ button {
   color: var(--ink-soft);
   padding: 48px 16px;
 }
+
+/* ---------- โลโก้ (คุมขนาดด้วย CSS เพื่อย่อบนมือถือ) ---------- */
+
+.logo-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-word {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.logo-word-main {
+  font-family: 'Noto Serif Thai', serif;
+  font-weight: 700;
+  font-size: 19px;
+  color: var(--logo-main, #7c4a24);
+}
+
+.logo-word-main.latin {
+  letter-spacing: 0.06em;
+}
+
+.logo-word-sub {
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  color: var(--logo-sub, #a76a3a);
+  border-top: 1px solid var(--logo-line, #d8c79a);
+  padding-top: 2px;
+}
+
+/* userbox เป็นลิงก์ไปหน้าข้อมูลผู้ใช้ */
+a.userbox {
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.userbox:hover .name {
+  text-decoration: underline;
+}
+
+/* ---------- Hamburger + เมนูมือถือ ---------- */
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  width: 40px;
+  height: 36px;
+  padding: 8px 9px;
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.hamburger span {
+  display: block;
+  height: 2.5px;
+  border-radius: 2px;
+  background: var(--header-ink);
+}
+
+.mobile-menu {
+  display: none;
+}
+
+.lang-select-code {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  /* เฮดเดอร์มือถือแบบกะทัดรัด: แถวเดียว + แฮมเบอร์เกอร์ (ซ่อนแถบแท็บ) */
+  .tabs-band {
+    display: none;
+  }
+
+  .hamburger {
+    display: inline-flex;
+  }
+
+  .mobile-menu {
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-top: 1px solid var(--line);
+    padding: 4px 0 10px;
+  }
+
+  .mobile-menu a {
+    padding: 12px 20px;
+    text-decoration: none;
+    color: var(--ink);
+    font-weight: 600;
+    border-bottom: 1px solid var(--cream-1);
+  }
+
+  .mobile-menu a.active {
+    color: var(--copper-dark);
+    background: var(--cream-1);
+  }
+
+  .topbar-inner {
+    padding: 8px 12px;
+    gap: 10px;
+  }
+
+  .topbar .demo-badge {
+    display: none;
+  }
+
+  .topbar .logo-mark {
+    width: 30px;
+    height: 30px;
+  }
+
+  .topbar .logo-word-main {
+    font-size: 14px;
+  }
+
+  .topbar .logo-word-sub {
+    display: none;
+  }
+
+  .userbox .status {
+    display: none;
+  }
+
+  .userbox .name {
+    max-width: 88px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ตัวเลือกภาษาแบบย่อ: โชว์เฉพาะรหัส เช่น TH */
+  .lang-select-full {
+    display: none;
+  }
+
+  .lang-select-code {
+    display: inline-block;
+  }
+
+  .lang-picker {
+    padding: 4px 8px;
+    font-size: 12.5px;
+  }
+}

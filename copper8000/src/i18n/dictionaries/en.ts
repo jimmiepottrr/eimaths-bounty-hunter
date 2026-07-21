@@ -9,6 +9,13 @@ export const en: Dict = {
   'nav.myBookings': 'My Bookings',
   'nav.admin': 'Admin',
 
+  'nav.profile': 'My Account',
+  'profile.readonlyNote': 'Personal details cannot be edited here — please contact us to make changes',
+  'profile.changePw': 'Change password',
+  'profile.currentPw': 'Current password',
+  'profile.newPw': 'New password (at least 6 characters)',
+  'profile.confirmNewPw': 'Confirm new password',
+  'profile.saved': 'Password updated',
   'auth.login': 'Log in',
   'auth.signup': 'Sign up',
   'auth.logout': 'Log out',
