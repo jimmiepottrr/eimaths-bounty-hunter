@@ -79,6 +79,8 @@ export interface DataService {
   signup(input: { email: string; password: string; name: string; phone: string }): Promise<AuthResult>;
   login(email: string, password: string): Promise<AuthResult>;
   me(): Promise<User>;
+  /** เปลี่ยนรหัสผ่านของตัวเอง (ข้อมูลอื่นแก้ไม่ได้ — ต้องติดต่อบริษัท) */
+  changePassword(current_password: string, new_password: string): Promise<void>;
   listProducts(): Promise<Product[]>;
   /** expected_price_per_kg = ราคาที่ผู้ใช้เห็นบนจอ — เซิร์ฟเวอร์ปฏิเสธ (409) ถ้าราคาปัจจุบันไม่ตรง */
   createBooking(input: {

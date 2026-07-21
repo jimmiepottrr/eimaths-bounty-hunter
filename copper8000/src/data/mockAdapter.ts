@@ -143,6 +143,16 @@ export const mockAdapter: DataService = {
     return publicUser(requireUser(loadDb()));
   },
 
+  async changePassword(current_password, new_password): Promise<void> {
+    await delay();
+    const db = loadDb();
+    const user = requireUser(db);
+    if (user.password !== current_password) throw new ApiError('รหัสผ่านปัจจุบันไม่ถูกต้อง', 400);
+    if (new_password.length < 6) throw new ApiError('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร', 400);
+    user.password = new_password;
+    saveDb(db);
+  },
+
   async listProducts(): Promise<Product[]> {
     await delay();
     return loadDb().products;

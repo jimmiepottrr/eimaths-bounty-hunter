@@ -14,11 +14,17 @@ const Layout = () => {
   const t = useT();
   const location = useLocation();
   const [pendingCount, setPendingCount] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // ธีมของเว็บ (แอดมินตั้ง) — sync จาก backend ครั้งเดียวตอนเปิดแอป
   useEffect(() => {
     syncThemeFromServer();
   }, []);
+
+  // เปลี่ยนหน้าแล้วปิดเมนูมือถืออัตโนมัติ
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
 
   // badge บนแท็บ "แอดมิน": จำนวนเรื่องที่รอ approve (สมาชิกใหม่ + การจองใหม่)
   useEffect(() => {
@@ -39,6 +45,39 @@ const Layout = () => {
     };
   }, [user, location.pathname]);
 
+  const navLinks = (
+    <>
+      <NavLink to="/" end className={tabClass}>
+        {t('nav.home')}
+      </NavLink>
+      <NavLink to="/products" className={tabClass}>
+        {t('nav.products')}
+      </NavLink>
+      <NavLink to="/company" className={tabClass}>
+        {t('nav.company')}
+      </NavLink>
+      <NavLink to="/contact" className={tabClass}>
+        {t('nav.contact')}
+      </NavLink>
+      {user && (
+        <NavLink to="/booking-report" className={tabClass}>
+          {t('nav.myBookings')}
+        </NavLink>
+      )}
+      {user && (
+        <NavLink to="/profile" className={tabClass}>
+          {t('nav.profile')}
+        </NavLink>
+      )}
+      {user?.role === 'admin' && (
+        <NavLink to="/admin" className={tabClass}>
+          {t('nav.admin')}
+          {pendingCount > 0 && <span className="nav-badge">{pendingCount}</span>}
+        </NavLink>
+      )}
+    </>
+  );
+
   return (
     <>
       <header className="topbar">
@@ -51,7 +90,7 @@ const Layout = () => {
             <LanguagePicker />
             {user ? (
               <>
-                <div className="userbox">
+                <Link to="/profile" className="userbox" title={t('nav.profile')}>
                   <span className="name">{user.name}</span>
                   <span className={`status ${user.approved ? 'status-approved' : 'status-waiting'}`}>
                     {user.role === 'admin'
@@ -60,8 +99,8 @@ const Layout = () => {
                         ? t('auth.approved')
                         : t('auth.waiting')}
                   </span>
-                </div>
-                <button type="button" className="btn btn-outline btn-small" onClick={logout}>
+                </Link>
+                <button type="button" className="btn btn-outline btn-small logout-btn" onClick={logout}>
                   {t('auth.logout')}
                 </button>
               </>
@@ -79,35 +118,23 @@ const Layout = () => {
                 </Link>
               </>
             )}
+            <button
+              type="button"
+              className="hamburger"
+              aria-label={t('nav.home')}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((o) => !o)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
           </div>
         </div>
         <div className="tabs-band">
-          <nav className="tabs">
-          <NavLink to="/" end className={tabClass}>
-            {t('nav.home')}
-          </NavLink>
-          <NavLink to="/products" className={tabClass}>
-            {t('nav.products')}
-          </NavLink>
-          <NavLink to="/company" className={tabClass}>
-            {t('nav.company')}
-          </NavLink>
-          <NavLink to="/contact" className={tabClass}>
-            {t('nav.contact')}
-          </NavLink>
-          {user && (
-            <NavLink to="/booking-report" className={tabClass}>
-              {t('nav.myBookings')}
-            </NavLink>
-          )}
-          {user?.role === 'admin' && (
-            <NavLink to="/admin" className={tabClass}>
-              {t('nav.admin')}
-              {pendingCount > 0 && <span className="nav-badge">{pendingCount}</span>}
-            </NavLink>
-          )}
-          </nav>
+          <nav className="tabs">{navLinks}</nav>
         </div>
+        {menuOpen && <nav className="mobile-menu">{navLinks}</nav>}
       </header>
 
       <main className="page">

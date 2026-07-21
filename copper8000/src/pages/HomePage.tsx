@@ -6,6 +6,7 @@ import { dataService } from '../data/service';
 import type { Material, Product } from '../data/types';
 import { fmtToday } from '../format';
 import { useT } from '../i18n';
+import { useAuth } from '../store';
 
 const MATERIAL_ORDER: Material[] = ['copper', 'brass', 'aluminium'];
 
@@ -17,6 +18,7 @@ const MATERIAL_EN: Record<Material, string> = {
 
 const HomePage = () => {
   const t = useT();
+  const { user } = useAuth();
   const [products, setProducts] = useState<Product[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,11 +31,14 @@ const HomePage = () => {
 
   return (
     <>
-      <div className="hero">
-        <h1>{t('home.title')}</h1>
-        <p>{t('home.subtitle')}</p>
-        <div className="pricedate">{t('home.asOf', { date: fmtToday() })}</div>
-      </div>
+      {/* login แล้วไม่ต้องโชว์ข้อความแนะนำ + วันที่ — เข้าดูราคาได้เลย */}
+      {!user && (
+        <div className="hero">
+          <h1>{t('home.title')}</h1>
+          <p>{t('home.subtitle')}</p>
+          <div className="pricedate">{t('home.asOf', { date: fmtToday() })}</div>
+        </div>
+      )}
 
       {error && <div className="error-box">{error}</div>}
       {!products && !error && <div className="empty-state">{t('home.loading')}</div>}
