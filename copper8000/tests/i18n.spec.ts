@@ -18,26 +18,26 @@ const loginAdmin = async (page: Page) => {
 test('สลับภาษาเป็น English ที่ขวาบน แล้ว reload ยังจำภาษาอยู่', async ({ page }) => {
   await stubGeo(page, 'TH');
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'ราคารับซื้อโลหะวันนี้' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'ทองแดง', exact: true })).toBeVisible();
 
   await page.locator('.lang-select-full').selectOption('en');
-  await expect(page.getByRole('heading', { name: "Today's Metal Buying Prices" })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Copper', exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Products' })).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole('heading', { name: "Today's Metal Buying Prices" })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Copper', exact: true })).toBeVisible();
 });
 
 test('เข้าครั้งแรกจาก IP จีน → เริ่มเป็นภาษาจีนอัตโนมัติ', async ({ page }) => {
   await stubGeo(page, 'CN');
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: '今日金属收购价格' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '铜', exact: true })).toBeVisible();
 });
 
 test('เข้าครั้งแรกจาก IP อเมริกา → เริ่มเป็นภาษาอังกฤษ', async ({ page }) => {
   await stubGeo(page, 'US');
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: "Today's Metal Buying Prices" })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Copper', exact: true })).toBeVisible();
 });
 
 test('หน้าข้อมูลบริษัทแสดงครบ 3 ภาษา', async ({ page }) => {
@@ -68,19 +68,17 @@ test('แอดมิน: เพิ่มภาษาใหม่ / ภาษา
   // เพิ่มภาษาญี่ปุ่น (dict บางส่วน — key ที่เหลือ fallback เป็นอังกฤษ)
   await page.fill('#lang-code', 'ja');
   await page.fill('#lang-name', '日本語');
-  await page.fill('#lang-dict', JSON.stringify({ 'home.title': '本日の金属買取価格' }));
+  await page.fill('#lang-dict', JSON.stringify({ 'material.copper': '銅（テスト）' }));
   await page.getByRole('button', { name: 'เพิ่มภาษา', exact: true }).click();
   await expect(page.locator('tr', { hasText: '日本語' })).toBeVisible();
 
-  // ภาษาใหม่โผล่ใน picker และใช้งานได้จริง (hero โชว์เฉพาะตอนยังไม่ login — logout ก่อนตรวจ)
+  // ภาษาใหม่โผล่ใน picker และใช้งานได้จริง (หัวข้อกลุ่มโลหะเปลี่ยนตาม dict)
   await page.locator('.lang-select-full').selectOption('ja');
-  await page.getByRole('button', { name: 'Log out', exact: true }).click();
   await page.goto('/#/');
-  await expect(page.getByRole('heading', { name: '本日の金属買取価格' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '銅（テスト）', exact: true })).toBeVisible();
 
-  // กลับเป็นไทย + login admin ใหม่ → ปิดภาษาจีน → หายจาก picker
+  // กลับเป็นไทย → ปิดภาษาจีน → หายจาก picker
   await page.locator('.lang-select-full').selectOption('th');
-  await loginAdmin(page);
   await page.goto('/#/admin');
   await page.getByRole('button', { name: 'ภาษา', exact: true }).click();
   const zhRow = page.locator('tr', { hasText: '中文(简体)' });
