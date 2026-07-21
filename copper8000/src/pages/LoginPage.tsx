@@ -1,11 +1,13 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { IS_DEMO } from '../data/service';
+import { useT } from '../i18n';
 import { useAuth } from '../store';
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const t = useT();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -27,11 +29,11 @@ const LoginPage = () => {
 
   return (
     <div className="card auth-card">
-      <h2 style={{ marginTop: 0 }}>เข้าสู่ระบบ</h2>
+      <h2 style={{ marginTop: 0 }}>{t('auth.login')}</h2>
       {error && <div className="error-box">{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="field">
-          <label htmlFor="email">อีเมล</label>
+          <label htmlFor="email">{t('login.email')}</label>
           <input
             id="email"
             type="email"
@@ -42,7 +44,7 @@ const LoginPage = () => {
           />
         </div>
         <div className="field">
-          <label htmlFor="password">รหัสผ่าน</label>
+          <label htmlFor="password">{t('login.password')}</label>
           <input
             id="password"
             type="password"
@@ -53,19 +55,19 @@ const LoginPage = () => {
           />
         </div>
         <button type="submit" className="btn btn-primary" disabled={busy} style={{ width: '100%' }}>
-          {busy ? 'กำลังเข้าสู่ระบบ…' : 'เข้าสู่ระบบ'}
+          {busy ? t('login.submitting') : t('auth.login')}
         </button>
       </form>
       <p style={{ textAlign: 'center', fontSize: 14 }}>
-        ยังไม่มีบัญชี? <Link to="/signup">สมัครสมาชิก</Link>
+        {t('login.noAccount')} <Link to="/signup">{t('auth.signup')}</Link>
       </p>
       {IS_DEMO && (
         <div className="info-box">
-          <strong>บัญชีทดลอง (โหมดสาธิต):</strong>
+          <strong>{t('login.demoTitle')}</strong>
           <br />
-          ผู้ใช้: demo@copper8000.co.th / demo1234
+          {t('login.demoUser')}: demo@copper8000.co.th / demo1234
           <br />
-          แอดมิน: admin@copper8000.co.th / admin1234
+          {t('login.demoAdmin')}: admin@copper8000.co.th / admin1234
         </div>
       )}
     </div>

@@ -4,6 +4,7 @@
  */
 
 import { fmtNumber } from '../format';
+import { productName, productSubName, useI18n } from '../i18n';
 import type { Product } from '../data/types';
 
 /** ไล่เฉดตามลำดับแถวรวมทั้งบอร์ด (ตามรูป 1: เข้ม → อ่อน) */
@@ -24,18 +25,19 @@ const ROW_STYLES: { background: string; light: boolean }[] = [
 ];
 
 const PriceRow = ({ product, index, order }: { product: Product; index: number; order: number }) => {
+  const { lang, t } = useI18n();
   const style = ROW_STYLES[Math.min(index, ROW_STYLES.length - 1)];
   return (
     <div className={`price-row ${style.light ? 'row-light' : 'row-dark'}`} style={{ background: style.background }}>
       <div>
         <h3 className="row-title">
-          {order}. {product.name_th}
+          {order}. {productName(product, lang)}
         </h3>
         <span className="row-underline" />
-        <div className="row-sub">{product.name_en}</div>
+        <div className="row-sub">{productSubName(product, lang)}</div>
       </div>
       <div className="row-price">
-        {fmtNumber(product.price_per_kg)} <small>บาท/กก.</small>
+        {fmtNumber(product.price_per_kg)} <small>{t('unit.bahtPerKg')}</small>
       </div>
     </div>
   );

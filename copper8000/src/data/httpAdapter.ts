@@ -5,11 +5,13 @@
  */
 
 import { API_BASE, API_KEY, REQUEST_TIMEOUT_MS } from '../config';
+import { t } from '../i18n/core';
 import {
   ApiError,
   type AuthResult,
   type Booking,
   type DataService,
+  type LanguageInfo,
   type Product,
   type User,
 } from './types';
@@ -45,9 +47,9 @@ const request = async <T>(
   } catch (error) {
     window.clearTimeout(timer);
     if ((error as Error).name === 'AbortError') {
-      throw new ApiError('เชื่อมต่อนานเกินไป กรุณาลองใหม่อีกครั้ง', 0);
+      throw new ApiError(t('errors.timeout'), 0);
     }
-    throw new ApiError('เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบอินเทอร์เน็ต', 0);
+    throw new ApiError(t('errors.network'), 0);
   } finally {
     window.clearTimeout(timer);
   }
@@ -61,14 +63,11 @@ const request = async <T>(
 
   if (response.status === 401) {
     onAuthError?.();
-    throw new ApiError((data?.error as string) || 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่', 401);
+    throw new ApiError((data?.error as string) || t('errors.sessionExpired'), 401);
   }
 
   if (!response.ok || !data || data.ok !== true) {
-    throw new ApiError(
-      (data?.error as string) || 'มีบางอย่างผิดพลาด กรุณาลองใหม่อีกครั้ง',
-      response.status,
-    );
+    throw new ApiError((data?.error as string) || t('errors.generic'), response.status);
   }
 
   return data as T;
@@ -147,5 +146,34 @@ export const httpAdapter: DataService = {
       method: 'POST',
       body: { action: 'update_price', product_id, ...input },
     });
+  },
+
+  async listLanguages(): Promise<LanguageInfo[]> {
+    const res = await request<{ languages: LanguageInfo[] }>('/languages.php');
+    return res.languages;
+  },
+
+  async listAllLanguages(): Promise<LanguageInfo[]> {
+    const res = await request<{ languages: LanguageInfo[] }>('/languages.php?all=1');
+    return res.languages;
+  },
+
+  async addLanguage(input): Promise<void> {
+    await request('/languages.php', { method: 'POST', body: { action: 'add', ...input } });
+  },
+
+  async updateLanguage(code, input): Promise<void> {
+    await request('/languages.php', { method: 'POST', body: { action: 'update', code, ...input } });
+  },
+
+  async setLanguageEnabled(code, enabled): Promise<void> {
+    await request('/languages.php', {
+      method: 'POST',
+      body: { action: 'set_enabled', code, enabled },
+    });
+  },
+
+  async deleteLanguage(code): Promise<void> {
+    await request('/languages.php', { method: 'POST', body: { action: 'delete', code } });
   },
 };

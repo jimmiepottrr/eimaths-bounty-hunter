@@ -4,12 +4,13 @@
  * สลับเป็น backend จริงได้โดยไม่ต้องแก้หน้าจอ (ผ่าน service.ts)
  */
 
-import { SEED_BOOKINGS, SEED_PRODUCTS, SEED_USERS, type SeedUser } from './seed';
+import { SEED_BOOKINGS, SEED_LANGUAGES, SEED_PRODUCTS, SEED_USERS, type SeedUser } from './seed';
 import {
   ApiError,
   type AuthResult,
   type Booking,
   type DataService,
+  type LanguageInfo,
   type Product,
   type Unit,
   type User,
@@ -22,6 +23,7 @@ type Db = {
   products: Product[];
   bookings: Booking[];
   sessions: Record<string, number>; // token -> user id
+  languages: LanguageInfo[];
   nextUserId: number;
   nextBookingId: number;
 };
@@ -30,7 +32,13 @@ const loadDb = (): Db => {
   const raw = localStorage.getItem(DB_KEY);
   if (raw) {
     try {
-      return JSON.parse(raw) as Db;
+      const db = JSON.parse(raw) as Db;
+      // db เวอร์ชันก่อนหน้าไม่มี languages — backfill โดยไม่ล้างข้อมูลเดิม
+      if (!db.languages) {
+        db.languages = [...SEED_LANGUAGES];
+        localStorage.setItem(DB_KEY, JSON.stringify(db));
+      }
+      return db;
     } catch {
       /* seed ใหม่ */
     }
@@ -40,6 +48,7 @@ const loadDb = (): Db => {
     products: [...SEED_PRODUCTS],
     bookings: [...SEED_BOOKINGS],
     sessions: {},
+    languages: [...SEED_LANGUAGES],
     nextUserId: 100,
     nextBookingId: 100,
   };
@@ -200,6 +209,79 @@ export const mockAdapter: DataService = {
     const booking = db.bookings.find((b) => b.id === booking_id);
     if (!booking) throw new ApiError('ไม่พบรายการจอง', 404);
     booking.status = 'confirmed';
+    saveDb(db);
+  },
+
+  async listLanguages(): Promise<LanguageInfo[]> {
+    await delay(100);
+    return loadDb()
+      .languages.filter((l) => l.enabled)
+      .sort((a, b) => a.sort_order - b.sort_order);
+  },
+
+  async listAllLanguages(): Promise<LanguageInfo[]> {
+    await delay(100);
+    const db = loadDb();
+    requireAdmin(db);
+    return [...db.languages].sort((a, b) => a.sort_order - b.sort_order);
+  },
+
+  async addLanguage({ code, name_native, dict }): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    const norm = code.trim().toLowerCase();
+    if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(norm)) throw new ApiError('รหัสภาษาไม่ถูกต้อง', 400);
+    if (!name_native.trim()) throw new ApiError('กรุณากรอกชื่อภาษา', 400);
+    if (db.languages.some((l) => l.code === norm)) throw new ApiError('ภาษานี้มีอยู่แล้ว', 409);
+    const maxSort = Math.max(0, ...db.languages.map((l) => l.sort_order));
+    db.languages.push({
+      code: norm,
+      name_native: name_native.trim(),
+      enabled: true,
+      built_in: false,
+      sort_order: maxSort + 1,
+      dict,
+    });
+    saveDb(db);
+  },
+
+  async updateLanguage(code, { name_native, dict }): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    const language = db.languages.find((l) => l.code === code);
+    if (!language) throw new ApiError('ไม่พบภาษา', 404);
+    if (dict && language.built_in) throw new ApiError('ภาษาหลักแก้คำแปลไม่ได้', 400);
+    if (name_native !== undefined) language.name_native = name_native.trim();
+    if (dict !== undefined) language.dict = dict;
+    saveDb(db);
+  },
+
+  async setLanguageEnabled(code, enabled): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    const language = db.languages.find((l) => l.code === code);
+    if (!language) throw new ApiError('ไม่พบภาษา', 404);
+    if (!enabled && db.languages.filter((l) => l.enabled && l.code !== code).length === 0) {
+      throw new ApiError('ต้องมีอย่างน้อย 1 ภาษาที่เปิดใช้งาน', 400);
+    }
+    language.enabled = enabled;
+    saveDb(db);
+  },
+
+  async deleteLanguage(code): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    const language = db.languages.find((l) => l.code === code);
+    if (!language) throw new ApiError('ไม่พบภาษา', 404);
+    if (language.built_in) throw new ApiError('ภาษาหลักลบไม่ได้ (ปิดการใช้งานแทน)', 400);
+    if (language.enabled && db.languages.filter((l) => l.enabled && l.code !== code).length === 0) {
+      throw new ApiError('ต้องมีอย่างน้อย 1 ภาษาที่เปิดใช้งาน', 400);
+    }
+    db.languages = db.languages.filter((l) => l.code !== code);
     saveDb(db);
   },
 

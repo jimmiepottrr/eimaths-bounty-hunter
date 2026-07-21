@@ -31,7 +31,7 @@ body {
 }
 
 body {
-  font-family: 'Noto Sans Thai', system-ui, -apple-system, sans-serif;
+  font-family: 'Noto Sans Thai', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
   color: var(--ink);
   background: linear-gradient(180deg, var(--cream-3) 0%, var(--cream-2) 100%);
   min-height: 100vh;
@@ -41,7 +41,7 @@ body {
 h1,
 h2,
 h3 {
-  font-family: 'Noto Serif Thai', 'Noto Sans Thai', serif;
+  font-family: 'Noto Serif Thai', 'Noto Sans Thai', 'Noto Sans SC', serif;
   color: var(--ink);
 }
 
@@ -641,6 +641,51 @@ button {
   .price-edit-row {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* ---------- Language picker ---------- */
+
+.lang-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1.5px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 12px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.lang-picker select {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--copper-dark);
+  cursor: pointer;
+}
+
+.lang-picker select:focus {
+  outline: none;
+}
+
+.dict-editor {
+  font-family: ui-monospace, 'Cascadia Mono', 'Courier New', monospace;
+  font-size: 12.5px;
+  width: 100%;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  padding: 10px 12px;
+  resize: vertical;
+  color: var(--ink);
+  background: #fff;
+}
+
+.dict-editor:focus {
+  outline: none;
+  border-color: var(--copper);
+  box-shadow: 0 0 0 3px rgba(167, 106, 58, 0.15);
 }
 
 /* ---------- Toast ---------- */

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { fmtNumber } from '../format';
+import { productName, useI18n } from '../i18n';
 import type { Product, Unit } from '../data/types';
 
 const BookingModal = ({
@@ -15,6 +16,7 @@ const BookingModal = ({
   onConfirm: (quantity: number, unit: Unit) => void;
   onClose: () => void;
 }) => {
+  const { lang, t } = useI18n();
   const [quantityText, setQuantityText] = useState('1');
   const [unit, setUnit] = useState<Unit>('ton'); // default ตัน ตามสเปก
 
@@ -25,11 +27,11 @@ const BookingModal = ({
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
       <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
-        <h3>จอง — {product.name_th}</h3>
-        <div className="m-price">ราคารับซื้อวันนี้ {fmtNumber(product.price_per_kg)} บาท/กก.</div>
+        <h3>{t('booking.title', { name: productName(product, lang) })}</h3>
+        <div className="m-price">{t('booking.todayPrice', { price: fmtNumber(product.price_per_kg) })}</div>
 
         <div className="field">
-          <label htmlFor="qty">จำนวนที่ต้องการจอง</label>
+          <label htmlFor="qty">{t('booking.qty')}</label>
           <input
             id="qty"
             type="number"
@@ -42,27 +44,29 @@ const BookingModal = ({
         </div>
 
         <div className="field">
-          <label>หน่วย</label>
+          <label>{t('booking.unit')}</label>
           <div className="unit-choice">
             <label className={unit === 'ton' ? 'selected' : ''}>
               <input type="radio" name="unit" checked={unit === 'ton'} onChange={() => setUnit('ton')} />
-              ตัน
+              {t('unit.ton')}
             </label>
             <label className={unit === 'kg' ? 'selected' : ''}>
               <input type="radio" name="unit" checked={unit === 'kg'} onChange={() => setUnit('kg')} />
-              กิโลกรัม
+              {t('unit.kg')}
             </label>
           </div>
         </div>
 
         <div className="estimate">
-          <span>ยอดประมาณการ</span>
-          <span>{fmtNumber(estimate)} บาท</span>
+          <span>{t('booking.estimate')}</span>
+          <span>
+            {fmtNumber(estimate)} {t('unit.baht')}
+          </span>
         </div>
 
         <div className="modal-actions">
           <button type="button" className="btn btn-outline" onClick={onClose} disabled={submitting}>
-            ยกเลิก
+            {t('booking.cancel')}
           </button>
           <button
             type="button"
@@ -70,7 +74,7 @@ const BookingModal = ({
             disabled={!valid || submitting}
             onClick={() => onConfirm(quantity, unit)}
           >
-            {submitting ? 'กำลังจอง…' : 'ยืนยันการจอง'}
+            {submitting ? t('booking.confirming') : t('booking.confirm')}
           </button>
         </div>
       </div>

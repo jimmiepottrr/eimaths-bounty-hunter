@@ -3,8 +3,9 @@
 import { useEffect, useState } from 'react';
 import PriceRow from '../components/PriceRow';
 import { dataService } from '../data/service';
-import { MATERIAL_LABEL, type Material, type Product } from '../data/types';
-import { todayThai } from '../format';
+import type { Material, Product } from '../data/types';
+import { fmtToday } from '../format';
+import { useT } from '../i18n';
 
 const MATERIAL_ORDER: Material[] = ['copper', 'brass', 'aluminium'];
 
@@ -15,6 +16,7 @@ const MATERIAL_EN: Record<Material, string> = {
 };
 
 const HomePage = () => {
+  const t = useT();
   const [products, setProducts] = useState<Product[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,13 +30,13 @@ const HomePage = () => {
   return (
     <>
       <div className="hero">
-        <h1>ราคารับซื้อโลหะวันนี้</h1>
-        <p>ทองแดง · ทองเหลือง · อลูมิเนียม — สมาชิกที่ได้รับการอนุมัติสามารถจองราคาได้ที่เมนู "สินค้า"</p>
-        <div className="pricedate">ประจำ{todayThai()}</div>
+        <h1>{t('home.title')}</h1>
+        <p>{t('home.subtitle')}</p>
+        <div className="pricedate">{t('home.asOf', { date: fmtToday() })}</div>
       </div>
 
       {error && <div className="error-box">{error}</div>}
-      {!products && !error && <div className="empty-state">กำลังโหลดราคา…</div>}
+      {!products && !error && <div className="empty-state">{t('home.loading')}</div>}
 
       {products &&
         MATERIAL_ORDER.map((material) => {
@@ -43,7 +45,7 @@ const HomePage = () => {
           return (
             <section key={material}>
               <div className="section-heading">
-                <h2>{MATERIAL_LABEL[material]}</h2>
+                <h2>{t(`material.${material}`)}</h2>
                 <span className="en">{MATERIAL_EN[material]}</span>
               </div>
               <div className="price-board">

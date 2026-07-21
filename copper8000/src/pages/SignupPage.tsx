@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { useT } from '../i18n';
 import { useAuth } from '../store';
 
 const SignupPage = () => {
   const { signup } = useAuth();
+  const t = useT();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -17,11 +19,11 @@ const SignupPage = () => {
     e.preventDefault();
     setError(null);
     if (password.length < 6) {
-      setError('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร');
+      setError(t('signup.errPwLen'));
       return;
     }
     if (password !== confirm) {
-      setError('รหัสผ่านทั้งสองช่องไม่ตรงกัน');
+      setError(t('signup.errPwMismatch'));
       return;
     }
     setBusy(true);
@@ -38,14 +40,11 @@ const SignupPage = () => {
   if (done) {
     return (
       <div className="card auth-card">
-        <h2 style={{ marginTop: 0 }}>สมัครสำเร็จ</h2>
-        <div className="success-box">
-          บัญชีของคุณอยู่ระหว่าง<strong>รอการอนุมัติจากแอดมิน</strong> —
-          เมื่อได้รับการอนุมัติแล้วจะสามารถจองราคาสินค้าได้ทันที
-        </div>
+        <h2 style={{ marginTop: 0 }}>{t('signup.successTitle')}</h2>
+        <div className="success-box">{t('signup.successBody')}</div>
         <p style={{ fontSize: 14 }}>
-          ระหว่างนี้สามารถดู <Link to="/">ราคารับซื้อวันนี้</Link> หรือ{' '}
-          <Link to="/products">รายการสินค้า</Link> ได้ตามปกติ
+          {t('signup.browseNote')} <Link to="/">{t('nav.home')}</Link> ·{' '}
+          <Link to="/products">{t('nav.products')}</Link>
         </p>
       </div>
     );
@@ -53,22 +52,20 @@ const SignupPage = () => {
 
   return (
     <div className="card auth-card">
-      <h2 style={{ marginTop: 0 }}>สมัครสมาชิก</h2>
-      <p style={{ fontSize: 14, color: 'var(--ink-soft)', marginTop: 0 }}>
-        บัญชีใหม่ต้องผ่านการอนุมัติจากแอดมินก่อนจึงจะจองราคาได้
-      </p>
+      <h2 style={{ marginTop: 0 }}>{t('auth.signup')}</h2>
+      <p style={{ fontSize: 14, color: 'var(--ink-soft)', marginTop: 0 }}>{t('signup.note')}</p>
       {error && <div className="error-box">{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="field">
-          <label htmlFor="name">ชื่อ-นามสกุล / ชื่อบริษัท</label>
+          <label htmlFor="name">{t('signup.name')}</label>
           <input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
         </div>
         <div className="field">
-          <label htmlFor="phone">เบอร์โทรศัพท์</label>
+          <label htmlFor="phone">{t('signup.phone')}</label>
           <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
         </div>
         <div className="field">
-          <label htmlFor="email">อีเมล</label>
+          <label htmlFor="email">{t('login.email')}</label>
           <input
             id="email"
             type="email"
@@ -79,7 +76,7 @@ const SignupPage = () => {
           />
         </div>
         <div className="field">
-          <label htmlFor="password">รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label>
+          <label htmlFor="password">{t('signup.password6')}</label>
           <input
             id="password"
             type="password"
@@ -90,7 +87,7 @@ const SignupPage = () => {
           />
         </div>
         <div className="field">
-          <label htmlFor="confirm">ยืนยันรหัสผ่าน</label>
+          <label htmlFor="confirm">{t('signup.confirmPw')}</label>
           <input
             id="confirm"
             type="password"
@@ -101,11 +98,11 @@ const SignupPage = () => {
           />
         </div>
         <button type="submit" className="btn btn-primary" disabled={busy} style={{ width: '100%' }}>
-          {busy ? 'กำลังสมัคร…' : 'สมัครสมาชิก'}
+          {busy ? t('signup.submitting') : t('auth.signup')}
         </button>
       </form>
       <p style={{ textAlign: 'center', fontSize: 14 }}>
-        มีบัญชีแล้ว? <Link to="/login">เข้าสู่ระบบ</Link>
+        {t('signup.haveAccount')} <Link to="/login">{t('auth.login')}</Link>
       </p>
     </div>
   );

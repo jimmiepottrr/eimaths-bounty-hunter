@@ -8,7 +8,8 @@ import { useNavigate } from 'react-router-dom';
 import BookingModal from '../components/BookingModal';
 import ProductRow from '../components/ProductRow';
 import { dataService } from '../data/service';
-import { MATERIAL_LABEL, type Material, type Product, type Unit } from '../data/types';
+import type { Material, Product, Unit } from '../data/types';
+import { useT } from '../i18n';
 import { useAuth } from '../store';
 
 const MATERIAL_ORDER: Material[] = ['copper', 'brass', 'aluminium'];
@@ -16,6 +17,7 @@ const MATERIAL_ORDER: Material[] = ['copper', 'brass', 'aluminium'];
 const ProductsPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const t = useT();
   const [products, setProducts] = useState<Product[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<Product | null>(null);
@@ -31,15 +33,15 @@ const ProductsPage = () => {
 
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3500);
-    return () => clearTimeout(t);
+    const timer = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(timer);
   }, [toast]);
 
   const hint = !user
-    ? 'เข้าสู่ระบบเพื่อจอง'
+    ? t('products.hintLogin')
     : user.approved
-      ? 'แตะเพื่อจอง'
-      : 'บัญชีรอการอนุมัติ — ยังจองไม่ได้';
+      ? t('products.hintTap')
+      : t('products.hintWaiting');
 
   const handleTap = (product: Product) => {
     if (!user) {
@@ -47,7 +49,7 @@ const ProductsPage = () => {
       return;
     }
     if (!user.approved) {
-      setToast('บัญชีของคุณอยู่ระหว่างรอการอนุมัติจากแอดมิน จึงยังจองไม่ได้');
+      setToast(t('products.toastWaiting'));
       return;
     }
     setSelected(product);
@@ -70,12 +72,12 @@ const ProductsPage = () => {
   return (
     <>
       <div className="section-heading">
-        <h2>สินค้า — ราคารับซื้อ</h2>
+        <h2>{t('products.heading')}</h2>
         <span className="en">Touch to Book</span>
       </div>
 
       {error && <div className="error-box">{error}</div>}
-      {!products && !error && <div className="empty-state">กำลังโหลดสินค้า…</div>}
+      {!products && !error && <div className="empty-state">{t('products.loading')}</div>}
 
       {products &&
         MATERIAL_ORDER.map((material) => {
@@ -83,7 +85,7 @@ const ProductsPage = () => {
           if (group.length === 0) return null;
           return (
             <section key={material} style={{ marginBottom: 28 }}>
-              <h3 style={{ margin: '18px 0 10px' }}>{MATERIAL_LABEL[material]}</h3>
+              <h3 style={{ margin: '18px 0 10px' }}>{t(`material.${material}`)}</h3>
               <div className="trade-board">
                 {group.map((p) => (
                   <ProductRow key={p.id} product={p} hint={hint} onClick={() => handleTap(p)} />

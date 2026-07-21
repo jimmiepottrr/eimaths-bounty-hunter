@@ -2,12 +2,6 @@
 
 export type Material = 'copper' | 'brass' | 'aluminium';
 
-export const MATERIAL_LABEL: Record<Material, string> = {
-  copper: 'ทองแดง',
-  brass: 'ทองเหลือง',
-  aluminium: 'อลูมิเนียม',
-};
-
 export type User = {
   id: number;
   email: string;
@@ -31,8 +25,6 @@ export type Product = {
 
 export type Unit = 'kg' | 'ton';
 
-export const UNIT_LABEL: Record<Unit, string> = { kg: 'กิโลกรัม', ton: 'ตัน' };
-
 export type BookingStatus = 'pending' | 'confirmed';
 
 export type Booking = {
@@ -50,6 +42,16 @@ export type Booking = {
 };
 
 export type AuthResult = { user: User; token: string };
+
+export type LanguageInfo = {
+  code: string;
+  name_native: string;
+  enabled: boolean;
+  built_in: boolean;
+  sort_order: number;
+  /** dict เต็มเฉพาะภาษาที่แอดมินเพิ่มเอง — ภาษา built-in (th/en/zh) dict อยู่ใน bundle จึงเป็น null */
+  dict: Record<string, string> | null;
+};
 
 // ---------- Error ----------
 
@@ -87,4 +89,17 @@ export interface DataService {
     product_id: number,
     input: { price_per_kg: number; high_of_day: number; low_of_day: number },
   ): Promise<void>;
+  // ---- languages ----
+  /** ภาษาที่เปิดใช้งาน (สาธารณะ) */
+  listLanguages(): Promise<LanguageInfo[]>;
+  /** ทุกภาษา รวมที่ปิดอยู่ (admin) */
+  listAllLanguages(): Promise<LanguageInfo[]>;
+  addLanguage(input: { code: string; name_native: string; dict: Record<string, string> }): Promise<void>;
+  updateLanguage(
+    code: string,
+    input: { name_native?: string; dict?: Record<string, string> },
+  ): Promise<void>;
+  setLanguageEnabled(code: string, enabled: boolean): Promise<void>;
+  /** ลบได้เฉพาะภาษาที่เพิ่มเอง — ภาษา built-in ทำได้แค่ปิด */
+  deleteLanguage(code: string): Promise<void>;
 }

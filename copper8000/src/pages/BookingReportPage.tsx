@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import StatusBadge from '../components/StatusBadge';
 import { dataService } from '../data/service';
-import { UNIT_LABEL, type Booking } from '../data/types';
+import type { Booking } from '../data/types';
 import { fmtDateTime, fmtNumber } from '../format';
+import { useT } from '../i18n';
 
 const BookingReportPage = () => {
+  const t = useT();
   const [bookings, setBookings] = useState<Booking[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,16 +23,17 @@ const BookingReportPage = () => {
   return (
     <>
       <div className="section-heading">
-        <h2>รายงานการจอง</h2>
-        <span className="en">10 รายการล่าสุด</span>
+        <h2>{t('report.heading')}</h2>
+        <span className="en">{t('report.latest10')}</span>
       </div>
 
       {error && <div className="error-box">{error}</div>}
-      {!bookings && !error && <div className="empty-state">กำลังโหลดรายการจอง…</div>}
+      {!bookings && !error && <div className="empty-state">{t('report.loading')}</div>}
 
       {bookings && bookings.length === 0 && (
         <div className="empty-state">
-          ยังไม่มีรายการจอง — ไปที่หน้า <Link to="/products">สินค้า</Link> เพื่อจองราคา
+          {t('report.emptyPrefix')} <Link to="/products">{t('nav.products')}</Link>{' '}
+          {t('report.emptySuffix')}
         </div>
       )}
 
@@ -39,12 +42,12 @@ const BookingReportPage = () => {
           <table className="report-table">
             <thead>
               <tr>
-                <th>สินค้า</th>
-                <th>จำนวน</th>
-                <th>ราคา ณ วันจอง (บาท/กก.)</th>
-                <th>ยอดประมาณการ (บาท)</th>
-                <th>วันที่จอง</th>
-                <th>สถานะ</th>
+                <th>{t('report.colProduct')}</th>
+                <th>{t('report.colQty')}</th>
+                <th>{t('report.colPrice')}</th>
+                <th>{t('report.colTotal')}</th>
+                <th>{t('report.colDate')}</th>
+                <th>{t('report.colStatus')}</th>
               </tr>
             </thead>
             <tbody>
@@ -52,7 +55,7 @@ const BookingReportPage = () => {
                 <tr key={b.id}>
                   <td>{b.product_name}</td>
                   <td>
-                    {fmtNumber(b.quantity)} {UNIT_LABEL[b.unit]}
+                    {fmtNumber(b.quantity)} {t(`unit.${b.unit}`)}
                   </td>
                   <td>{fmtNumber(b.price_at_booking)}</td>
                   <td>{fmtNumber(b.total_estimate)}</td>

@@ -1,4 +1,4 @@
-import type { Booking, Product, User } from './types';
+import type { Booking, LanguageInfo, Product, User } from './types';
 
 /** ข้อมูลตั้งต้นของโหมดสาธิต (mock adapter) — ราคาเป็นบาท/กก. */
 
@@ -45,6 +45,12 @@ export const SEED_PRODUCTS: Product[] = [
   { id: 6, material: 'aluminium', name_th: 'อลูมิเนียมหนา', name_en: 'Heavy Aluminium', price_per_kg: 62, prev_price_per_kg: 61, high_of_day: 63, low_of_day: 60, updated_at: now() },
   { id: 7, material: 'aluminium', name_th: 'อลูมิเนียมฉาก / เส้น', name_en: 'Aluminium Profile', price_per_kg: 55, prev_price_per_kg: 55, high_of_day: 56, low_of_day: 54, updated_at: now() },
   { id: 8, material: 'aluminium', name_th: 'กระป๋องอลูมิเนียม', name_en: 'Aluminium Cans', price_per_kg: 38, prev_price_per_kg: 39, high_of_day: 40, low_of_day: 37, updated_at: now() },
+];
+
+export const SEED_LANGUAGES: LanguageInfo[] = [
+  { code: 'th', name_native: 'ไทย', enabled: true, built_in: true, sort_order: 1, dict: null },
+  { code: 'en', name_native: 'English', enabled: true, built_in: true, sort_order: 2, dict: null },
+  { code: 'zh', name_native: '中文(简体)', enabled: true, built_in: true, sort_order: 3, dict: null },
 ];
 
 const daysAgo = (n: number) => new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();

@@ -5,6 +5,13 @@
 
 import { expect, test, type Page } from '@playwright/test';
 
+// stub geo-IP ให้เป็นไทยเสมอ — กันเทสเปลี่ยนภาษาเองตามตำแหน่งเครื่องที่รัน CI
+test.beforeEach(async ({ page }) => {
+  await page.route('https://ipwho.is/**', (route) =>
+    route.fulfill({ json: { country_code: 'TH' } }),
+  );
+});
+
 const NEW_EMAIL = 'newuser@test.co.th';
 const NEW_PASSWORD = 'test1234';
 const NEW_NAME = 'ทดสอบ อัตโนมัติ';
