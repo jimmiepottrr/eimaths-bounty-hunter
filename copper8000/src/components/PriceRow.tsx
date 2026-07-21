@@ -18,7 +18,7 @@ const METAL_ROWS: Record<Material, { strong: RowStyle; soft: RowStyle }> = {
       light: true,
     },
     soft: {
-      background: 'linear-gradient(90deg, #f0dcc9 0%, #f9efe4 50%, #f0dcc9 100%)',
+      background: 'linear-gradient(90deg, #d9a97c 0%, #eed3b8 50%, #d9a97c 100%)',
       light: false,
     },
   },
@@ -29,7 +29,7 @@ const METAL_ROWS: Record<Material, { strong: RowStyle; soft: RowStyle }> = {
       light: false,
     },
     soft: {
-      background: 'linear-gradient(90deg, #f6edcf 0%, #fbf6e6 50%, #f6edcf 100%)',
+      background: 'linear-gradient(90deg, #ddc372 0%, #f0e2b4 50%, #ddc372 100%)',
       light: false,
     },
   },
@@ -40,7 +40,7 @@ const METAL_ROWS: Record<Material, { strong: RowStyle; soft: RowStyle }> = {
       light: true,
     },
     soft: {
-      background: 'linear-gradient(90deg, #e9edf0 0%, #f6f8f9 50%, #e9edf0 100%)',
+      background: 'linear-gradient(90deg, #b7bfc6 0%, #dde2e6 50%, #b7bfc6 100%)',
       light: false,
     },
   },

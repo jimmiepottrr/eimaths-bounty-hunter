@@ -23,7 +23,7 @@ const MATERIAL_ACCENT: Record<Material, { bar: string; rgb: string }> = {
 
 const rowAccent = (material: Material, index: number) => {
   const { bar, rgb } = MATERIAL_ACCENT[material];
-  const alpha = Math.max(0.05, 0.2 - index * 0.06);
+  const alpha = Math.max(0.14, 0.38 - index * 0.1);
   return {
     bar,
     background: `linear-gradient(90deg, rgba(${rgb}, ${alpha}) 0%, rgba(${rgb}, 0) 62%) #fff`,
