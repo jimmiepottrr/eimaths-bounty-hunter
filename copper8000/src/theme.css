@@ -1,6 +1,38 @@
 /* ============ Copper 8000 — theme ============ */
 
+/* ---------- ธีมสี (แอดมินเลือกได้ที่แท็บ "ตั้งค่า") ----------
+   หมายเหตุ: --copper/--brass เป็นชื่อ "สี accent ของธีม" — ค่าจริงเปลี่ยนตามธีม
+   สีแถบสินค้า (สีจริงของโลหะ) และสีราคาขึ้น/ลง ไม่ผูกกับธีม จึงคงเดิมทุกธีม */
+
+/* ธีมทอง (ค่าเริ่มต้น) */
 :root {
+  --copper: #c9a227;
+  --copper-dark: #8f6f14;
+  --copper-light: #e0c14f;
+  --brass: #e6d391;
+  --brass-dark: #c4ab55;
+  --cream-1: #f6efd9;
+  --cream-2: #fbf7ea;
+  --cream-3: #fdfbf3;
+  --ink: #2b2416;
+  --ink-soft: #6f6142;
+  --line: #eadfb8;
+  --up: #0f9d58;
+  --down: #d93025;
+  --pending: #b8860b;
+  --confirmed: #2e7d32;
+  --radius: 14px;
+  --shadow: 0 10px 30px rgba(143, 111, 20, 0.12);
+  --btn-shadow: rgba(143, 111, 20, 0.35);
+  --btn-shadow-hover: rgba(143, 111, 20, 0.45);
+  --focus-ring: rgba(201, 162, 39, 0.18);
+  --glow-a: rgba(201, 162, 39, 0.15);
+  --glow-b: rgba(230, 211, 145, 0.22);
+  --glow-c: rgba(143, 111, 20, 0.08);
+}
+
+/* ธีมทองแดง */
+:root[data-theme='copper'] {
   --copper: #a76a3a;
   --copper-dark: #7c4a24;
   --copper-light: #c98d5c;
@@ -12,12 +44,35 @@
   --ink: #2b2118;
   --ink-soft: #6b5b4c;
   --line: #e7ddcd;
-  --up: #0f9d58;
-  --down: #d93025;
-  --pending: #b8860b;
-  --confirmed: #2e7d32;
-  --radius: 14px;
   --shadow: 0 10px 30px rgba(124, 74, 36, 0.12);
+  --btn-shadow: rgba(124, 74, 36, 0.35);
+  --btn-shadow-hover: rgba(124, 74, 36, 0.45);
+  --focus-ring: rgba(167, 106, 58, 0.15);
+  --glow-a: rgba(201, 141, 92, 0.16);
+  --glow-b: rgba(216, 199, 154, 0.2);
+  --glow-c: rgba(167, 106, 58, 0.1);
+}
+
+/* ธีมเงิน */
+:root[data-theme='silver'] {
+  --copper: #7c8794;
+  --copper-dark: #4e5a66;
+  --copper-light: #a6b0bb;
+  --brass: #cfd6dc;
+  --brass-dark: #9aa5ae;
+  --cream-1: #eef1f4;
+  --cream-2: #f6f8fa;
+  --cream-3: #fbfcfd;
+  --ink: #232a30;
+  --ink-soft: #5c6770;
+  --line: #dde3e8;
+  --shadow: 0 10px 30px rgba(78, 90, 102, 0.14);
+  --btn-shadow: rgba(78, 90, 102, 0.35);
+  --btn-shadow-hover: rgba(78, 90, 102, 0.45);
+  --focus-ring: rgba(124, 135, 148, 0.18);
+  --glow-a: rgba(124, 135, 148, 0.14);
+  --glow-b: rgba(207, 214, 220, 0.28);
+  --glow-c: rgba(78, 90, 102, 0.08);
 }
 
 * {
@@ -33,11 +88,11 @@ body {
 body {
   font-family: 'Noto Sans Thai', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
   color: var(--ink);
-  /* แบ็กกราวนด์โทนทองแดง: แสงนวลมุมจอ + ไล่ครีม */
+  /* แบ็กกราวนด์ตามธีม: แสงนวลมุมจอ + ไล่ครีม */
   background:
-    radial-gradient(1100px 480px at 88% -8%, rgba(201, 141, 92, 0.16), transparent 60%),
-    radial-gradient(900px 420px at -12% 28%, rgba(216, 199, 154, 0.2), transparent 55%),
-    radial-gradient(760px 380px at 50% 108%, rgba(167, 106, 58, 0.1), transparent 60%),
+    radial-gradient(1100px 480px at 88% -8%, var(--glow-a), transparent 60%),
+    radial-gradient(900px 420px at -12% 28%, var(--glow-b), transparent 55%),
+    radial-gradient(760px 380px at 50% 108%, var(--glow-c), transparent 60%),
     linear-gradient(180deg, var(--cream-3) 0%, var(--cream-2) 100%);
   background-attachment: fixed;
   min-height: 100vh;
@@ -227,11 +282,11 @@ button {
 .btn-primary {
   background: linear-gradient(135deg, var(--copper-light) 0%, var(--copper) 45%, var(--copper-dark) 100%);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(124, 74, 36, 0.35);
+  box-shadow: 0 4px 14px var(--btn-shadow);
 }
 
 .btn-primary:hover:not(:disabled) {
-  box-shadow: 0 6px 20px rgba(124, 74, 36, 0.45);
+  box-shadow: 0 6px 20px var(--btn-shadow-hover);
   filter: brightness(1.05);
 }
 
@@ -286,7 +341,7 @@ button {
 .field select:focus {
   outline: none;
   border-color: var(--copper);
-  box-shadow: 0 0 0 3px rgba(167, 106, 58, 0.15);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .card {
@@ -779,7 +834,7 @@ button {
 .dict-editor:focus {
   outline: none;
   border-color: var(--copper);
-  box-shadow: 0 0 0 3px rgba(167, 106, 58, 0.15);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 /* ---------- แผงรอดำเนินการ (แอดมิน) ---------- */
@@ -826,6 +881,58 @@ button {
 
 .pending-card .topic {
   font-weight: 600;
+}
+
+/* ---------- ตัวเลือกธีม (แอดมิน) ---------- */
+
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.theme-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #fff;
+  border: 2px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.theme-card:hover:not(:disabled) {
+  border-color: var(--copper-light);
+  box-shadow: var(--shadow);
+}
+
+.theme-card.selected {
+  border-color: var(--copper);
+  background: var(--cream-1);
+}
+
+.theme-card .swatches {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.theme-card .dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.theme-card .check {
+  margin-left: auto;
+  color: var(--copper-dark);
+  font-weight: 800;
 }
 
 /* ---------- Toast ---------- */

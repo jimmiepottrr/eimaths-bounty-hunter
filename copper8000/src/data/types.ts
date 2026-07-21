@@ -44,6 +44,8 @@ export type Booking = {
 
 export type AuthResult = { user: User; token: string };
 
+export type AppSettings = { theme: string };
+
 export type LanguageInfo = {
   code: string;
   name_native: string;
@@ -109,4 +111,9 @@ export interface DataService {
   setLanguageEnabled(code: string, enabled: boolean): Promise<void>;
   /** ลบได้เฉพาะภาษาที่เพิ่มเอง — ภาษา built-in ทำได้แค่ปิด */
   deleteLanguage(code: string): Promise<void>;
+  // ---- settings ----
+  /** ตั้งค่าเว็บ (สาธารณะ เช่น ธีมสี) */
+  getSettings(): Promise<AppSettings>;
+  /** เปลี่ยนธีมทั้งเว็บ (admin) */
+  setTheme(theme: string): Promise<void>;
 }

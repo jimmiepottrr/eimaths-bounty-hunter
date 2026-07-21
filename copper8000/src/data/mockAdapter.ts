@@ -7,6 +7,7 @@
 import { SEED_BOOKINGS, SEED_LANGUAGES, SEED_PRODUCTS, SEED_USERS, type SeedUser } from './seed';
 import {
   ApiError,
+  type AppSettings,
   type AuthResult,
   type Booking,
   type DataService,
@@ -24,6 +25,7 @@ type Db = {
   bookings: Booking[];
   sessions: Record<string, number>; // token -> user id
   languages: LanguageInfo[];
+  settings: AppSettings;
   nextUserId: number;
   nextBookingId: number;
 };
@@ -33,11 +35,17 @@ const loadDb = (): Db => {
   if (raw) {
     try {
       const db = JSON.parse(raw) as Db;
-      // db เวอร์ชันก่อนหน้าไม่มี languages — backfill โดยไม่ล้างข้อมูลเดิม
+      // db เวอร์ชันก่อนหน้าไม่มี languages/settings — backfill โดยไม่ล้างข้อมูลเดิม
+      let dirty = false;
       if (!db.languages) {
         db.languages = [...SEED_LANGUAGES];
-        localStorage.setItem(DB_KEY, JSON.stringify(db));
+        dirty = true;
       }
+      if (!db.settings) {
+        db.settings = { theme: 'gold' };
+        dirty = true;
+      }
+      if (dirty) localStorage.setItem(DB_KEY, JSON.stringify(db));
       return db;
     } catch {
       /* seed ใหม่ */
@@ -49,6 +57,7 @@ const loadDb = (): Db => {
     bookings: [...SEED_BOOKINGS],
     sessions: {},
     languages: [...SEED_LANGUAGES],
+    settings: { theme: 'gold' },
     nextUserId: 100,
     nextBookingId: 100,
   };
@@ -289,6 +298,20 @@ export const mockAdapter: DataService = {
       throw new ApiError('ต้องมีอย่างน้อย 1 ภาษาที่เปิดใช้งาน', 400);
     }
     db.languages = db.languages.filter((l) => l.code !== code);
+    saveDb(db);
+  },
+
+  async getSettings(): Promise<AppSettings> {
+    await delay(100);
+    return { ...loadDb().settings };
+  },
+
+  async setTheme(theme): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    if (!['gold', 'copper', 'silver'].includes(theme)) throw new ApiError('ธีมไม่ถูกต้อง', 400);
+    db.settings.theme = theme;
     saveDb(db);
   },
 

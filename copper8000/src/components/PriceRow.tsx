@@ -1,32 +1,54 @@
 /**
- * แถวราคาหน้าแรก — ไล่สีตามรูปอ้างอิง: ทองแดง metallic → ทองเหลืองอ่อน → ขาวนวล 3 ขั้น
- * แสดงอย่างเดียว (ไม่มี onClick — จองไม่ได้จากหน้านี้)
+ * แถวราคาหน้าแรก — ใช้ "สีจริงของโลหะ" ประจำกลุ่ม: แถวแรกเมทัลลิกเต็ม แถวถัดไปเฉดอ่อน
+ * (2 เฉดต่อประเภทสินค้า) แสดงอย่างเดียว (ไม่มี onClick — จองไม่ได้จากหน้านี้)
+ * สีชุดนี้คงที่ทุกธีมของเว็บ — เป็นสีของตัวสินค้า ไม่ใช่สีตกแต่ง
  */
 
 import { fmtNumber } from '../format';
 import { productName, productSubName, useI18n } from '../i18n';
-import type { Product } from '../data/types';
+import type { Material, Product } from '../data/types';
 
-/** ไล่เฉดตามลำดับแถวรวมทั้งบอร์ด (ตามรูป 1: เข้ม → อ่อน) */
-const ROW_STYLES: { background: string; light: boolean }[] = [
-  {
-    background:
-      'linear-gradient(90deg, #8a5628 0%, #c98d5c 18%, #a76a3a 40%, #d9a06a 62%, #a76a3a 82%, #8a5628 100%)',
-    light: true,
+type RowStyle = { background: string; light: boolean };
+
+const METAL_ROWS: Record<Material, { strong: RowStyle; soft: RowStyle }> = {
+  copper: {
+    strong: {
+      background:
+        'linear-gradient(90deg, #8a5628 0%, #c98d5c 18%, #a76a3a 40%, #d9a06a 62%, #a76a3a 82%, #8a5628 100%)',
+      light: true,
+    },
+    soft: {
+      background: 'linear-gradient(90deg, #f0dcc9 0%, #f9efe4 50%, #f0dcc9 100%)',
+      light: false,
+    },
   },
-  {
-    background:
-      'linear-gradient(90deg, #c4b078 0%, #e8dcb4 22%, #d8c79a 45%, #efe5c2 68%, #d8c79a 88%, #c4b078 100%)',
-    light: false,
+  brass: {
+    strong: {
+      background:
+        'linear-gradient(90deg, #a8862e 0%, #e8d492 22%, #c9a94f 45%, #eeda9a 68%, #c9a94f 88%, #a8862e 100%)',
+      light: false,
+    },
+    soft: {
+      background: 'linear-gradient(90deg, #f6edcf 0%, #fbf6e6 50%, #f6edcf 100%)',
+      light: false,
+    },
   },
-  { background: 'linear-gradient(90deg, #f2ecdd 0%, #f8f4ea 50%, #f5f1e6 100%)', light: false },
-  { background: 'linear-gradient(90deg, #f7f3e9 0%, #fcf9f2 50%, #faf7f0 100%)', light: false },
-  { background: 'linear-gradient(90deg, #fbf9f3 0%, #fefdfa 50%, #fdfcf8 100%)', light: false },
-];
+  aluminium: {
+    strong: {
+      background:
+        'linear-gradient(90deg, #7e868d 0%, #c3c9ce 20%, #98a0a7 45%, #d7dcdf 70%, #98a0a7 88%, #7e868d 100%)',
+      light: true,
+    },
+    soft: {
+      background: 'linear-gradient(90deg, #e9edf0 0%, #f6f8f9 50%, #e9edf0 100%)',
+      light: false,
+    },
+  },
+};
 
 const PriceRow = ({ product, index, order }: { product: Product; index: number; order: number }) => {
   const { lang, t } = useI18n();
-  const style = ROW_STYLES[Math.min(index, ROW_STYLES.length - 1)];
+  const style = index === 0 ? METAL_ROWS[product.material].strong : METAL_ROWS[product.material].soft;
   const sub = productSubName(product, lang);
   return (
     <div className={`price-row ${style.light ? 'row-light' : 'row-dark'}`} style={{ background: style.background }}>

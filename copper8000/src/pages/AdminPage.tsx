@@ -7,8 +7,9 @@ import type { Booking, LanguageInfo, Product, User } from '../data/types';
 import { fmtDateTime, fmtNumber } from '../format';
 import { DICT_TEMPLATE } from '../i18n/core';
 import { bookingProductName, productName, productSubName, useI18n } from '../i18n';
+import { applyTheme, currentTheme, type ThemeCode } from '../themeManager';
 
-type Tab = 'users' | 'bookings' | 'prices' | 'languages';
+type Tab = 'users' | 'bookings' | 'prices' | 'languages' | 'settings';
 
 const PendingUsersTab = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t } = useI18n();
@@ -399,6 +400,64 @@ const LanguagesTab = ({ onToast }: { onToast: (m: string) => void }) => {
   );
 };
 
+// ---------- แท็บตั้งค่า (ธีมสีของเว็บ) ----------
+
+const THEME_SWATCHES: Record<ThemeCode, string[]> = {
+  gold: ['#c9a227', '#e0c14f', '#f6efd9'],
+  copper: ['#a76a3a', '#c98d5c', '#f5f1e6'],
+  silver: ['#7c8794', '#a6b0bb', '#eef1f4'],
+};
+
+const SettingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
+  const { t } = useI18n();
+  const [theme, setThemeState] = useState<ThemeCode>(currentTheme());
+  const [busy, setBusy] = useState(false);
+
+  const choose = async (code: ThemeCode) => {
+    if (busy || code === theme) return;
+    const previous = theme;
+    applyTheme(code); // เห็นผลทันทีทั้งเว็บ
+    setThemeState(code);
+    setBusy(true);
+    try {
+      await dataService.setTheme(code);
+      onToast(t('adminTheme.saved'));
+    } catch (e) {
+      applyTheme(previous); // บันทึกไม่สำเร็จ → ย้อนกลับ
+      setThemeState(previous);
+      onToast((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="card">
+      <h3 style={{ marginTop: 0 }}>{t('adminTheme.title')}</h3>
+      <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginTop: 0 }}>{t('adminTheme.note')}</p>
+      <div className="theme-grid">
+        {(Object.keys(THEME_SWATCHES) as ThemeCode[]).map((code) => (
+          <button
+            key={code}
+            type="button"
+            className={`theme-card ${theme === code ? 'selected' : ''}`}
+            onClick={() => choose(code)}
+            disabled={busy}
+          >
+            <span className="swatches">
+              {THEME_SWATCHES[code].map((c) => (
+                <span key={c} className="dot" style={{ background: c }} />
+              ))}
+            </span>
+            <span className="name">{t(`theme.${code}`)}</span>
+            {theme === code && <span className="check">✓</span>}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 /** แผงหัวข้อแจ้งว่ามีเรื่องอะไรรอ approve บ้าง — กดการ์ดเพื่อกระโดดไปแท็บนั้น */
 const PendingSummary = ({
   refreshKey,
@@ -498,12 +557,16 @@ const AdminPage = () => {
         <button type="button" className={tab === 'languages' ? 'active' : ''} onClick={() => setTab('languages')}>
           {t('admin.tabLanguages')}
         </button>
+        <button type="button" className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>
+          {t('admin.tabSettings')}
+        </button>
       </div>
 
       {tab === 'users' && <PendingUsersTab onToast={notify} />}
       {tab === 'bookings' && <BookingsTab onToast={notify} />}
       {tab === 'prices' && <PricesTab onToast={notify} />}
       {tab === 'languages' && <LanguagesTab onToast={notify} />}
+      {tab === 'settings' && <SettingsTab onToast={notify} />}
 
       {toast && <div className="toast">{toast}</div>}
     </>
