@@ -81,7 +81,8 @@ const Layout = () => {
             )}
           </div>
         </div>
-        <nav className="tabs">
+        <div className="tabs-band">
+          <nav className="tabs">
           <NavLink to="/" end className={tabClass}>
             {t('nav.home')}
           </NavLink>
@@ -105,7 +106,8 @@ const Layout = () => {
               {pendingCount > 0 && <span className="nav-badge">{pendingCount}</span>}
             </NavLink>
           )}
-        </nav>
+          </nav>
+        </div>
       </header>
 
       <main className="page">
