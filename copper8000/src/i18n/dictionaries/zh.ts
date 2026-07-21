@@ -52,6 +52,7 @@ export const zh: Dict = {
   'booking.cancel': '取消',
   'booking.confirm': '确认预订',
   'booking.confirming': '正在预订…',
+  'booking.priceChanged': '价格已变动，请确认新价格后再提交',
 
   'status.pending': '待确认',
   'status.confirmed': '已确认',

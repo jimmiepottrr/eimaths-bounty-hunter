@@ -52,6 +52,7 @@ export const th: Dict = {
   'booking.cancel': 'ยกเลิก',
   'booking.confirm': 'ยืนยันการจอง',
   'booking.confirming': 'กำลังจอง…',
+  'booking.priceChanged': 'ราคามีการเปลี่ยนแปลง กรุณาตรวจสอบราคาใหม่ก่อนยืนยันอีกครั้ง',
 
   'status.pending': 'รอการยืนยัน',
   'status.confirmed': 'ได้รับการยืนยันแล้ว',

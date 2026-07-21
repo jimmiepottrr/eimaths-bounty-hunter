@@ -141,6 +141,7 @@ function booking_public(array $b): array {
     'user_name'        => $b['user_name'] ?? null,
     'product_id'       => (int) $b['product_id'],
     'product_name'     => $b['product_name'],
+    'product_name_en'  => $b['product_name_en'] ?? null,
     'quantity'         => (float) $b['quantity'],
     'unit'             => $b['unit'],
     'price_at_booking' => (float) $b['price_at_booking'],

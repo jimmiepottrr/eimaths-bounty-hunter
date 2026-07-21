@@ -6,10 +6,10 @@ import StatusBadge from '../components/StatusBadge';
 import { dataService } from '../data/service';
 import type { Booking } from '../data/types';
 import { fmtDateTime, fmtNumber } from '../format';
-import { useT } from '../i18n';
+import { bookingProductName, useI18n } from '../i18n';
 
 const BookingReportPage = () => {
-  const t = useT();
+  const { lang, t } = useI18n();
   const [bookings, setBookings] = useState<Booking[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,7 +53,7 @@ const BookingReportPage = () => {
             <tbody>
               {bookings.map((b) => (
                 <tr key={b.id}>
-                  <td>{b.product_name}</td>
+                  <td>{bookingProductName(b, lang)}</td>
                   <td>
                     {fmtNumber(b.quantity)} {t(`unit.${b.unit}`)}
                   </td>

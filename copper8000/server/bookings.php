@@ -13,7 +13,7 @@ $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 if ($method === 'GET') {
   $st = pdo()->prepare(
-    'SELECT b.*, p.name_th AS product_name, u.name AS user_name
+    'SELECT b.*, p.name_th AS product_name, p.name_en AS product_name_en, u.name AS user_name
      FROM bookings b JOIN products p ON p.id = b.product_id JOIN users u ON u.id = b.user_id
      WHERE b.user_id = ? ORDER BY b.created_at DESC, b.id DESC LIMIT 10'
   );
@@ -41,6 +41,13 @@ if (!$product) json_err('ไม่พบสินค้า', 404);
 
 $kg = $unit === 'ton' ? $quantity * 1000 : $quantity;
 $price = (float) $product['price_per_kg'];
+
+// กันจองติดราคาที่เปลี่ยนไประหว่างเปิดหน้าจอ: client ส่งราคาที่เห็นมาเทียบ ไม่ตรง = 409
+$expected = $body['expected_price_per_kg'] ?? null;
+if ($expected !== null && abs(((float) $expected) - $price) > 0.001) {
+  json_err('ราคามีการเปลี่ยนแปลง กรุณาตรวจสอบราคาใหม่', 409);
+}
+
 $total = round($kg * $price, 2);
 
 pdo()->prepare(
@@ -50,7 +57,7 @@ pdo()->prepare(
 $bookingId = (int) pdo()->lastInsertId();
 
 $st = pdo()->prepare(
-  'SELECT b.*, p.name_th AS product_name, u.name AS user_name
+  'SELECT b.*, p.name_th AS product_name, p.name_en AS product_name_en, u.name AS user_name
    FROM bookings b JOIN products p ON p.id = b.product_id JOIN users u ON u.id = b.user_id
    WHERE b.id = ?'
 );

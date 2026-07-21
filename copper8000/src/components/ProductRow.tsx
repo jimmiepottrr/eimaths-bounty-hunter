@@ -17,13 +17,15 @@ const ProductRow = ({
   const diff = product.price_per_kg - product.prev_price_per_kg;
   const dirClass = diff > 0 ? 't-up' : diff < 0 ? 't-down' : '';
   const arrow = diff > 0 ? '▲' : diff < 0 ? '▼' : '—';
+  const sub = productSubName(product, lang);
 
   return (
     <button type="button" className="trade-row" onClick={onClick}>
       <div>
         <div className="t-name">{productName(product, lang)}</div>
         <div className="t-sub">
-          {productSubName(product, lang)} · {t('row.updated', { time: fmtDateTime(product.updated_at) })}
+          {sub ? `${sub} · ` : ''}
+          {t('row.updated', { time: fmtDateTime(product.updated_at) })}
         </div>
       </div>
       <div>

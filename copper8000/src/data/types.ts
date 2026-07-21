@@ -33,6 +33,7 @@ export type Booking = {
   user_name?: string;
   product_id: number;
   product_name: string;
+  product_name_en?: string | null;
   quantity: number;
   unit: Unit;
   price_at_booking: number; // บาท/กก. ณ เวลาจอง
@@ -77,7 +78,13 @@ export interface DataService {
   login(email: string, password: string): Promise<AuthResult>;
   me(): Promise<User>;
   listProducts(): Promise<Product[]>;
-  createBooking(input: { product_id: number; quantity: number; unit: Unit }): Promise<Booking>;
+  /** expected_price_per_kg = ราคาที่ผู้ใช้เห็นบนจอ — เซิร์ฟเวอร์ปฏิเสธ (409) ถ้าราคาปัจจุบันไม่ตรง */
+  createBooking(input: {
+    product_id: number;
+    quantity: number;
+    unit: Unit;
+    expected_price_per_kg?: number;
+  }): Promise<Booking>;
   /** 10 รายการล่าสุดของผู้ใช้ที่ login อยู่ */
   listMyBookings(): Promise<Booking[]>;
   // ---- admin ----
