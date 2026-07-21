@@ -53,6 +53,7 @@ export const en: Dict = {
   'booking.cancel': 'Cancel',
   'booking.confirm': 'Confirm booking',
   'booking.confirming': 'Booking…',
+  'booking.priceChanged': 'The price has changed — please review the new price before confirming again',
 
   'status.pending': 'Awaiting confirmation',
   'status.confirmed': 'Confirmed',

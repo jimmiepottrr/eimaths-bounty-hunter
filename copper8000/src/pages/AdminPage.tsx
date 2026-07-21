@@ -6,7 +6,7 @@ import { dataService } from '../data/service';
 import type { Booking, LanguageInfo, Product, User } from '../data/types';
 import { fmtDateTime, fmtNumber } from '../format';
 import { DICT_TEMPLATE } from '../i18n/core';
-import { useI18n } from '../i18n';
+import { bookingProductName, productName, productSubName, useI18n } from '../i18n';
 
 type Tab = 'users' | 'bookings' | 'prices' | 'languages';
 
@@ -70,7 +70,7 @@ const PendingUsersTab = ({ onToast }: { onToast: (m: string) => void }) => {
 };
 
 const BookingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
   const [bookings, setBookings] = useState<Booking[] | null>(null);
 
   const reload = useCallback(() => {
@@ -114,7 +114,7 @@ const BookingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
           {bookings.map((b) => (
             <tr key={b.id}>
               <td>{b.user_name ?? `#${b.user_id}`}</td>
-              <td>{b.product_name}</td>
+              <td>{bookingProductName(b, lang)}</td>
               <td>
                 {fmtNumber(b.quantity)} {t(`unit.${b.unit}`)}
               </td>
@@ -140,7 +140,7 @@ const BookingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
 };
 
 const PriceEditRow = ({ product, onToast }: { product: Product; onToast: (m: string) => void }) => {
-  const { t } = useI18n();
+  const { lang, t } = useI18n();
   const [price, setPrice] = useState(String(product.price_per_kg));
   const [high, setHigh] = useState(String(product.high_of_day));
   const [low, setLow] = useState(String(product.low_of_day));
@@ -154,7 +154,7 @@ const PriceEditRow = ({ product, onToast }: { product: Product; onToast: (m: str
         high_of_day: Number(high),
         low_of_day: Number(low),
       });
-      onToast(t('admin.toastPriceSaved', { name: product.name_th }));
+      onToast(t('admin.toastPriceSaved', { name: productName(product, lang) }));
     } catch (e) {
       onToast((e as Error).message);
     } finally {
@@ -165,8 +165,10 @@ const PriceEditRow = ({ product, onToast }: { product: Product; onToast: (m: str
   return (
     <div className="price-edit-row">
       <div>
-        <strong>{product.name_th}</strong>
-        <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{product.name_en}</div>
+        <strong>{productName(product, lang)}</strong>
+        {productSubName(product, lang) && (
+          <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{productSubName(product, lang)}</div>
+        )}
       </div>
       <input aria-label="price" type="number" step="any" value={price} onChange={(e) => setPrice(e.target.value)} />
       <input aria-label="high" type="number" step="any" value={high} onChange={(e) => setHigh(e.target.value)} />

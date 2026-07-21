@@ -136,5 +136,12 @@ export const useT = () => useI18n().t;
 export const productName = (p: { name_th: string; name_en: string }, lang: string): string =>
   lang === 'th' ? p.name_th : p.name_en || p.name_th;
 
+/** ชื่อรอง: โชว์ชื่ออังกฤษเฉพาะตอนดูภาษาไทย — ภาษาอื่นไม่โชว์ (กันตัวไทยโผล่หน้า EN/中文) */
 export const productSubName = (p: { name_th: string; name_en: string }, lang: string): string =>
-  lang === 'th' ? p.name_en : p.name_th;
+  lang === 'th' ? p.name_en : '';
+
+/** ชื่อสินค้าในรายการจอง (backend ส่งทั้ง product_name ไทย + product_name_en) */
+export const bookingProductName = (
+  b: { product_name: string; product_name_en?: string | null },
+  lang: string,
+): string => (lang === 'th' ? b.product_name : b.product_name_en || b.product_name);

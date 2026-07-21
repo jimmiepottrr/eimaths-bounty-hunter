@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import BookingModal from '../components/BookingModal';
 import ProductRow from '../components/ProductRow';
 import { dataService } from '../data/service';
-import type { Material, Product, Unit } from '../data/types';
+import { ApiError, type Material, type Product, type Unit } from '../data/types';
 import { useT } from '../i18n';
 import { useAuth } from '../store';
 
@@ -59,11 +59,28 @@ const ProductsPage = () => {
     if (!selected) return;
     setSubmitting(true);
     try {
-      await dataService.createBooking({ product_id: selected.id, quantity, unit });
+      await dataService.createBooking({
+        product_id: selected.id,
+        quantity,
+        unit,
+        // ส่งราคาที่ผู้ใช้เห็นบนจอไปตรวจ — ราคาเปลี่ยนระหว่างเปิด modal = server ตอบ 409
+        expected_price_per_kg: selected.price_per_kg,
+      });
       setSelected(null);
       navigate('/booking-report');
     } catch (e) {
-      setToast((e as Error).message);
+      if (e instanceof ApiError && e.status === 409) {
+        // ราคาเปลี่ยน: รีเฟรชราคาใหม่เข้า modal แล้วให้ผู้ใช้ตัดสินใจอีกครั้ง
+        const fresh = await dataService.listProducts().catch(() => null);
+        if (fresh) {
+          setProducts(fresh);
+          const updated = fresh.find((p) => p.id === selected.id);
+          if (updated) setSelected(updated);
+        }
+        setToast(t('booking.priceChanged'));
+      } else {
+        setToast((e as Error).message);
+      }
     } finally {
       setSubmitting(false);
     }

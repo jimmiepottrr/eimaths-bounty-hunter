@@ -24,7 +24,7 @@ if ($method === 'GET') {
 
   if ($view === 'bookings') {
     $rows = pdo()->query(
-      'SELECT b.*, p.name_th AS product_name, u.name AS user_name
+      'SELECT b.*, p.name_th AS product_name, p.name_en AS product_name_en, u.name AS user_name
        FROM bookings b JOIN products p ON p.id = b.product_id JOIN users u ON u.id = b.user_id
        ORDER BY b.created_at DESC, b.id DESC LIMIT 200'
     )->fetchAll();

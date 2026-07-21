@@ -139,7 +139,7 @@ export const mockAdapter: DataService = {
     return loadDb().products;
   },
 
-  async createBooking({ product_id, quantity, unit }): Promise<Booking> {
+  async createBooking({ product_id, quantity, unit, expected_price_per_kg }): Promise<Booking> {
     await delay();
     const db = loadDb();
     const user = requireUser(db);
@@ -149,6 +149,12 @@ export const mockAdapter: DataService = {
     const product = db.products.find((p) => p.id === product_id);
     if (!product) throw new ApiError('ไม่พบสินค้า', 404);
     if (!(quantity > 0)) throw new ApiError('จำนวนต้องมากกว่า 0', 400);
+    if (
+      expected_price_per_kg !== undefined &&
+      Math.abs(product.price_per_kg - expected_price_per_kg) > 0.001
+    ) {
+      throw new ApiError('ราคามีการเปลี่ยนแปลง กรุณาตรวจสอบราคาใหม่', 409);
+    }
     const kg = unit === 'ton' ? quantity * 1000 : quantity;
     const booking: Booking = {
       id: db.nextBookingId++,
@@ -156,6 +162,7 @@ export const mockAdapter: DataService = {
       user_name: user.name,
       product_id,
       product_name: product.name_th,
+      product_name_en: product.name_en,
       quantity,
       unit: unit as Unit,
       price_at_booking: product.price_per_kg,

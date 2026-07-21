@@ -27,6 +27,7 @@ const ROW_STYLES: { background: string; light: boolean }[] = [
 const PriceRow = ({ product, index, order }: { product: Product; index: number; order: number }) => {
   const { lang, t } = useI18n();
   const style = ROW_STYLES[Math.min(index, ROW_STYLES.length - 1)];
+  const sub = productSubName(product, lang);
   return (
     <div className={`price-row ${style.light ? 'row-light' : 'row-dark'}`} style={{ background: style.background }}>
       <div>
@@ -34,7 +35,7 @@ const PriceRow = ({ product, index, order }: { product: Product; index: number; 
           {order}. {productName(product, lang)}
         </h3>
         <span className="row-underline" />
-        <div className="row-sub">{productSubName(product, lang)}</div>
+        {sub && <div className="row-sub">{sub}</div>}
       </div>
       <div className="row-price">
         {fmtNumber(product.price_per_kg)} <small>{t('unit.bahtPerKg')}</small>

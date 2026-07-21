@@ -1,4 +1,7 @@
-/** โลโก้ C8 hexagon ทองแดง (วาดใหม่เป็น SVG ตามอาร์ตเวิร์กบริษัท) + wordmark */
+/** โลโก้ C8 hexagon ทองแดง (วาดใหม่เป็น SVG ตามอาร์ตเวิร์กบริษัท) + wordmark
+ *  wordmark หลักเป็นไทยเฉพาะตอนดูภาษาไทย — ภาษาอื่นใช้ COPPER 8000 (กันตัวไทยโผล่หน้า EN/中文) */
+
+import { useI18n } from '../i18n';
 
 const Mark = ({ size = 44 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden="true">
@@ -35,7 +38,9 @@ const Mark = ({ size = 44 }: { size?: number }) => (
   </svg>
 );
 
-const Logo = ({ compact = false }: { compact?: boolean }) => (
+const Logo = ({ compact = false }: { compact?: boolean }) => {
+  const { lang } = useI18n();
+  return (
   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
     <Mark size={compact ? 36 : 44} />
     <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
@@ -45,9 +50,10 @@ const Logo = ({ compact = false }: { compact?: boolean }) => (
           fontWeight: 700,
           fontSize: compact ? 16 : 19,
           color: '#7c4a24',
+          letterSpacing: lang === 'th' ? undefined : '0.06em',
         }}
       >
-        คอปเปอร์ 8000
+        {lang === 'th' ? 'คอปเปอร์ 8000' : 'COPPER 8000'}
       </span>
       <span
         style={{
@@ -62,6 +68,7 @@ const Logo = ({ compact = false }: { compact?: boolean }) => (
       </span>
     </span>
   </span>
-);
+  );
+};
 
 export default Logo;
