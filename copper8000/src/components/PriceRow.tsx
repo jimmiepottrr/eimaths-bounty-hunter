@@ -10,37 +10,37 @@ import type { Material, Product } from '../data/types';
 
 type RowStyle = { background: string; light: boolean };
 
+/* satin metal: เลเยอร์ sheen ขาวจางด้านบน + ไล่สีโลหะแนวตั้ง — เรียบหรู ไม่เป็นริ้ว */
+const sheen = 'linear-gradient(180deg, rgba(255, 255, 255, 0.30) 0%, rgba(255, 255, 255, 0) 55%)';
+
 const METAL_ROWS: Record<Material, { strong: RowStyle; soft: RowStyle }> = {
   copper: {
     strong: {
-      background:
-        'linear-gradient(90deg, #8a5628 0%, #c98d5c 18%, #a76a3a 40%, #d9a06a 62%, #a76a3a 82%, #8a5628 100%)',
+      background: `${sheen}, linear-gradient(180deg, #c08a55 0%, #a76a3a 55%, #8a5628 100%)`,
       light: true,
     },
     soft: {
-      background: 'linear-gradient(90deg, #d9a97c 0%, #eed3b8 50%, #d9a97c 100%)',
+      background: `${sheen}, linear-gradient(180deg, #e8c8a6 0%, #d9a97c 100%)`,
       light: false,
     },
   },
   brass: {
     strong: {
-      background:
-        'linear-gradient(90deg, #a8862e 0%, #e8d492 22%, #c9a94f 45%, #eeda9a 68%, #c9a94f 88%, #a8862e 100%)',
+      background: `${sheen}, linear-gradient(180deg, #dcbd58 0%, #c9a94f 50%, #a8862e 100%)`,
       light: false,
     },
     soft: {
-      background: 'linear-gradient(90deg, #ddc372 0%, #f0e2b4 50%, #ddc372 100%)',
+      background: `${sheen}, linear-gradient(180deg, #efe0ab 0%, #ddc372 100%)`,
       light: false,
     },
   },
   aluminium: {
     strong: {
-      background:
-        'linear-gradient(90deg, #7e868d 0%, #c3c9ce 20%, #98a0a7 45%, #d7dcdf 70%, #98a0a7 88%, #7e868d 100%)',
+      background: `${sheen}, linear-gradient(180deg, #bcc4ca 0%, #98a0a7 55%, #7e868d 100%)`,
       light: true,
     },
     soft: {
-      background: 'linear-gradient(90deg, #b7bfc6 0%, #dde2e6 50%, #b7bfc6 100%)',
+      background: `${sheen}, linear-gradient(180deg, #e3e8eb 0%, #b7bfc6 100%)`,
       light: false,
     },
   },
