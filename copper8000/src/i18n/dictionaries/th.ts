@@ -127,6 +127,10 @@ export const th: Dict = {
   'admin.colPriceBahtKg': 'ราคา (บาท/กก.)',
   'admin.save': 'บันทึก',
   'admin.toastPriceSaved': 'บันทึกราคา {name} แล้ว',
+  'admin.pendingTitle': 'รายการรอดำเนินการ',
+  'admin.topicUsers': 'สมัครสมาชิกใหม่ — รอการอนุมัติ',
+  'admin.topicBookings': 'การจองใหม่ — รอการยืนยัน',
+  'admin.nonePending': 'ไม่มีรายการค้าง — จัดการครบทุกเรื่องแล้ว',
 
   'adminLang.colCode': 'รหัส',
   'adminLang.colName': 'ชื่อภาษา',

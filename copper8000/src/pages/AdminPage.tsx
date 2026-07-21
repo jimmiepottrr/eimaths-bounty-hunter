@@ -399,10 +399,76 @@ const LanguagesTab = ({ onToast }: { onToast: (m: string) => void }) => {
   );
 };
 
+/** แผงหัวข้อแจ้งว่ามีเรื่องอะไรรอ approve บ้าง — กดการ์ดเพื่อกระโดดไปแท็บนั้น */
+const PendingSummary = ({
+  refreshKey,
+  onNavigate,
+}: {
+  refreshKey: number;
+  onNavigate: (tab: Tab) => void;
+}) => {
+  const { t } = useI18n();
+  const [counts, setCounts] = useState<{ users: number; bookings: number } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([dataService.listPendingUsers(), dataService.listAllBookings()])
+      .then(([users, bookings]) => {
+        if (!cancelled) {
+          setCounts({
+            users: users.length,
+            bookings: bookings.filter((b) => b.status === 'pending').length,
+          });
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setCounts(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+
+  if (!counts) return null;
+
+  return (
+    <>
+      <h3 style={{ margin: '0 0 10px' }}>{t('admin.pendingTitle')}</h3>
+      {counts.users === 0 && counts.bookings === 0 ? (
+        <div className="success-box" style={{ marginBottom: 20 }}>
+          ✓ {t('admin.nonePending')}
+        </div>
+      ) : (
+        <div className="pending-grid">
+          {counts.users > 0 && (
+            <button type="button" className="pending-card" onClick={() => onNavigate('users')}>
+              <span className="cnt">{counts.users}</span>
+              <span className="topic">{t('admin.topicUsers')}</span>
+            </button>
+          )}
+          {counts.bookings > 0 && (
+            <button type="button" className="pending-card" onClick={() => onNavigate('bookings')}>
+              <span className="cnt">{counts.bookings}</span>
+              <span className="topic">{t('admin.topicBookings')}</span>
+            </button>
+          )}
+        </div>
+      )}
+    </>
+  );
+};
+
 const AdminPage = () => {
   const { t } = useI18n();
   const [tab, setTab] = useState<Tab>('users');
   const [toast, setToast] = useState<string | null>(null);
+  const [refresh, setRefresh] = useState(0);
+
+  // ทุก action ในแท็บ (อนุมัติ/ยืนยัน/ฯลฯ) เด้ง toast + รีเฟรชแผงรอดำเนินการ
+  const notify = useCallback((message: string) => {
+    setToast(message);
+    setRefresh((r) => r + 1);
+  }, []);
 
   useEffect(() => {
     if (!toast) return;
@@ -416,6 +482,8 @@ const AdminPage = () => {
         <h2>{t('nav.admin')}</h2>
         <span className="en">Admin Console</span>
       </div>
+
+      <PendingSummary refreshKey={refresh} onNavigate={setTab} />
 
       <div className="admin-tabs">
         <button type="button" className={tab === 'users' ? 'active' : ''} onClick={() => setTab('users')}>
@@ -432,10 +500,10 @@ const AdminPage = () => {
         </button>
       </div>
 
-      {tab === 'users' && <PendingUsersTab onToast={setToast} />}
-      {tab === 'bookings' && <BookingsTab onToast={setToast} />}
-      {tab === 'prices' && <PricesTab onToast={setToast} />}
-      {tab === 'languages' && <LanguagesTab onToast={setToast} />}
+      {tab === 'users' && <PendingUsersTab onToast={notify} />}
+      {tab === 'bookings' && <BookingsTab onToast={notify} />}
+      {tab === 'prices' && <PricesTab onToast={notify} />}
+      {tab === 'languages' && <LanguagesTab onToast={notify} />}
 
       {toast && <div className="toast">{toast}</div>}
     </>

@@ -4,13 +4,17 @@ import { fmtDateTime, fmtNumber } from '../format';
 import { productName, productSubName, useI18n } from '../i18n';
 import type { Product } from '../data/types';
 
+export type RowAccent = { bar: string; background: string };
+
 const ProductRow = ({
   product,
   hint,
+  accent,
   onClick,
 }: {
   product: Product;
   hint: string;
+  accent?: RowAccent;
   onClick: () => void;
 }) => {
   const { lang, t } = useI18n();
@@ -20,7 +24,12 @@ const ProductRow = ({
   const sub = productSubName(product, lang);
 
   return (
-    <button type="button" className="trade-row" onClick={onClick}>
+    <button
+      type="button"
+      className="trade-row"
+      style={accent ? { background: accent.background, borderLeft: `5px solid ${accent.bar}` } : undefined}
+      onClick={onClick}
+    >
       <div>
         <div className="t-name">{productName(product, lang)}</div>
         <div className="t-sub">

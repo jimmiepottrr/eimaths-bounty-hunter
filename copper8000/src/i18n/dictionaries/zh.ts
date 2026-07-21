@@ -125,6 +125,10 @@ export const zh: Dict = {
   'admin.colPriceBahtKg': '价格（泰铢/公斤）',
   'admin.save': '保存',
   'admin.toastPriceSaved': '已保存 {name} 的价格',
+  'admin.pendingTitle': '待处理事项',
+  'admin.topicUsers': '新会员注册 — 待审核',
+  'admin.topicBookings': '新预订 — 待确认',
+  'admin.nonePending': '暂无待处理事项 — 已全部处理完毕',
 
   'adminLang.colCode': '代码',
   'adminLang.colName': '语言名称',

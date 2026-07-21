@@ -1,5 +1,6 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
-import { IS_DEMO } from '../data/service';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { dataService, IS_DEMO } from '../data/service';
 import { useT } from '../i18n';
 import { useAuth } from '../store';
 import LanguagePicker from './LanguagePicker';
@@ -10,6 +11,27 @@ const tabClass = ({ isActive }: { isActive: boolean }) => (isActive ? 'active' :
 const Layout = () => {
   const { user, logout } = useAuth();
   const t = useT();
+  const location = useLocation();
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // badge บนแท็บ "แอดมิน": จำนวนเรื่องที่รอ approve (สมาชิกใหม่ + การจองใหม่)
+  useEffect(() => {
+    if (user?.role !== 'admin') {
+      setPendingCount(0);
+      return;
+    }
+    let cancelled = false;
+    Promise.all([dataService.listPendingUsers(), dataService.listAllBookings()])
+      .then(([users, bookings]) => {
+        if (!cancelled) {
+          setPendingCount(users.length + bookings.filter((b) => b.status === 'pending').length);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [user, location.pathname]);
 
   return (
     <>
@@ -74,6 +96,7 @@ const Layout = () => {
           {user?.role === 'admin' && (
             <NavLink to="/admin" className={tabClass}>
               {t('nav.admin')}
+              {pendingCount > 0 && <span className="nav-badge">{pendingCount}</span>}
             </NavLink>
           )}
         </nav>
