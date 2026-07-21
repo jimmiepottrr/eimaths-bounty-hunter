@@ -29,6 +29,12 @@
   --glow-a: rgba(201, 162, 39, 0.15);
   --glow-b: rgba(230, 211, 145, 0.22);
   --glow-c: rgba(143, 111, 20, 0.08);
+  --header-hi: #fce9a0;
+  --header-mid: #f3cf58;
+  --header-lo: #e5b930;
+  --band-a: #e3b433;
+  --band-b: #d5a527;
+  --header-ink: #6b520e;
 }
 
 /* ธีมทองแดง */
@@ -51,6 +57,12 @@
   --glow-a: rgba(201, 141, 92, 0.16);
   --glow-b: rgba(216, 199, 154, 0.2);
   --glow-c: rgba(167, 106, 58, 0.1);
+  --header-hi: #ecc9a4;
+  --header-mid: #d69e69;
+  --header-lo: #bf8148;
+  --band-a: #b1743c;
+  --band-b: #a26834;
+  --header-ink: #4f2e14;
 }
 
 /* ธีมเงิน */
@@ -73,6 +85,12 @@
   --glow-a: rgba(124, 135, 148, 0.14);
   --glow-b: rgba(207, 214, 220, 0.28);
   --glow-c: rgba(78, 90, 102, 0.08);
+  --header-hi: #f0f3f6;
+  --header-mid: #cfd7dd;
+  --header-lo: #b0bac2;
+  --band-a: #a7b2bb;
+  --band-b: #98a3ac;
+  --header-ink: #2f3a44;
 }
 
 * {
@@ -135,85 +153,40 @@ button {
 
 /* ---------- Layout ---------- */
 
-/* เฮดเดอร์ satin gold (ตามสี accent ของธีม) — เงาไฮไลท์ด้านบน + hairline ด้านล่าง */
+/* เฮดเดอร์ทองสดใส (ตามธีม) — โลโก้สีแบรนด์เดิม + ขอบล่างโค้งตรงกลางถึงแถบเมนู */
 .topbar {
   position: sticky;
   top: 0;
   z-index: 40;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 45%),
-    linear-gradient(180deg, var(--copper) 0%, var(--copper-dark) 100%);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.18);
+    linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 50%),
+    linear-gradient(180deg, var(--header-hi) 0%, var(--header-mid) 48%, var(--header-lo) 100%);
+  border-radius: 0 0 48% 48% / 0 0 26px 26px;
+  overflow: hidden;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.35),
-    0 2px 16px rgba(0, 0, 0, 0.16);
-  --logo-main: #fff;
-  --logo-sub: rgba(255, 255, 255, 0.88);
-  --logo-line: rgba(255, 255, 255, 0.45);
-}
-
-.topbar .logo-mark {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
-}
-
-/* บนพื้นทอง mark C8 สีทองแดงจะจม — สลับเป็นขาวเฉพาะในเฮดเดอร์ (ที่อื่นคงสีแบรนด์เดิม) */
-.topbar .logo-mark path {
-  stroke: rgba(255, 255, 255, 0.96);
-}
-
-.topbar .logo-mark text {
-  fill: #fff;
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 6px 20px rgba(0, 0, 0, 0.14);
 }
 
 .topbar .userbox .name {
-  color: #fff;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-.topbar .status-approved {
-  color: #d9f7e0;
-}
-
-.topbar .status-waiting {
-  color: #ffe9b0;
+  color: var(--header-ink);
 }
 
 .topbar .btn-outline {
-  border-color: rgba(255, 255, 255, 0.75);
-  color: #fff;
+  border-color: var(--header-ink);
+  color: var(--header-ink);
 }
 
 .topbar .btn-outline:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.topbar .btn-primary {
-  background: #fff;
-  color: var(--copper-dark);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
-}
-
-.topbar .btn-primary:hover:not(:disabled) {
-  background: var(--cream-1);
-  filter: none;
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .topbar .demo-badge {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .topbar .lang-picker {
-  background: rgba(255, 255, 255, 0.14);
-  border-color: rgba(255, 255, 255, 0.55);
-}
-
-.topbar .lang-picker select {
-  color: #fff;
-}
-
-.topbar .lang-picker select option {
-  color: var(--ink);
-  background: #fff;
+  background: rgba(255, 255, 255, 0.85);
 }
 
 .topbar-inner {
@@ -258,12 +231,12 @@ button {
   color: var(--pending);
 }
 
-/* แถบเมนู — แถบสีเข้มของธีมเต็มความกว้างจอ (satin เข้มซ้อนบนทองของ header) */
+/* แถบเมนู — ทองสดเข้มกว่าเฮดเดอร์หนึ่งสเต็ป (โค้งตามขอบล่างของ header อัตโนมัติ) */
 .tabs-band {
   width: 100%;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.24) 0%, rgba(0, 0, 0, 0.14) 100%);
-  border-top: 1px solid rgba(255, 255, 255, 0.18);
-  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.12);
+  background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 100%);
+  border-top: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .tabs {
@@ -279,7 +252,7 @@ button {
 .tabs a {
   padding: 8px 16px;
   text-decoration: none;
-  color: rgba(255, 255, 255, 0.82);
+  color: var(--header-ink);
   font-weight: 500;
   font-size: 14.5px;
   letter-spacing: 0.01em;
@@ -289,8 +262,7 @@ button {
 }
 
 .tabs a:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .tabs a.active {
