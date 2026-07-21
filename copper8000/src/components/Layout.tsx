@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { dataService, IS_DEMO } from '../data/service';
 import { useT } from '../i18n';
 import { useAuth } from '../store';
+import { syncThemeFromServer } from '../themeManager';
 import LanguagePicker from './LanguagePicker';
 import Logo from './Logo';
 
@@ -13,6 +14,11 @@ const Layout = () => {
   const t = useT();
   const location = useLocation();
   const [pendingCount, setPendingCount] = useState(0);
+
+  // ธีมของเว็บ (แอดมินตั้ง) — sync จาก backend ครั้งเดียวตอนเปิดแอป
+  useEffect(() => {
+    syncThemeFromServer();
+  }, []);
 
   // badge บนแท็บ "แอดมิน": จำนวนเรื่องที่รอ approve (สมาชิกใหม่ + การจองใหม่)
   useEffect(() => {

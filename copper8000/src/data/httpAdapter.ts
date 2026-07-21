@@ -8,6 +8,7 @@ import { API_BASE, API_KEY, REQUEST_TIMEOUT_MS } from '../config';
 import { t } from '../i18n/core';
 import {
   ApiError,
+  type AppSettings,
   type AuthResult,
   type Booking,
   type DataService,
@@ -175,5 +176,14 @@ export const httpAdapter: DataService = {
 
   async deleteLanguage(code): Promise<void> {
     await request('/languages.php', { method: 'POST', body: { action: 'delete', code } });
+  },
+
+  async getSettings(): Promise<AppSettings> {
+    const res = await request<{ settings: AppSettings }>('/settings.php');
+    return res.settings;
+  },
+
+  async setTheme(theme): Promise<void> {
+    await request('/settings.php', { method: 'POST', body: { action: 'set_theme', theme } });
   },
 };

@@ -61,6 +61,13 @@ INSERT IGNORE INTO languages (code, name_native, dict, enabled, built_in, sort_o
 ('en', 'English',    NULL, 1, 1, 2),
 ('zh', '中文(简体)',  NULL, 1, 1, 3);
 
+CREATE TABLE IF NOT EXISTS settings (
+  skey VARCHAR(64) PRIMARY KEY,
+  sval VARCHAR(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+INSERT IGNORE INTO settings (skey, sval) VALUES ('theme', 'gold');
+
 -- สินค้าเริ่มต้น (ราคา บาท/กก. — แอดมินแก้ได้จากหน้าเว็บ)
 INSERT INTO products (material, name_th, name_en, price_per_kg, prev_price_per_kg, high_of_day, low_of_day, sort_order) VALUES
 ('copper',    'ทองแดงเงา (เบอร์ 1)',   'Bright Copper #1',  285, 282, 288, 280, 1),
