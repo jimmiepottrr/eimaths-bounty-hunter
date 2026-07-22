@@ -192,7 +192,7 @@ button {
 .topbar-inner {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 8px 16px 8px 8px; /* ชิดซ้าย: ลด padding ซ้ายให้โลโก้ขยับไปทางซ้าย */
+  padding: 8px 16px 8px 2px; /* ชิดซ้ายเกือบสุดขอบ */
   display: flex;
   align-items: center;
   gap: 16px;
@@ -1199,10 +1199,10 @@ button {
   gap: 10px;
 }
 
-/* โลโก้ดีไซน์เดิม — ขยายทั้งอันให้ใหญ่ที่สุดเท่าที่ไม่ทับเมนู/ปุ่ม */
+/* โลโก้ดีไซน์เดิม — ขยายใหญ่สุดเท่าที่ไม่ทับเมนู/ปุ่ม + ชิดซ้ายเกือบสุดขอบ */
 .logo-mark {
-  width: 64px;
-  height: 64px;
+  width: 78px;
+  height: 78px;
   flex-shrink: 0;
 }
 
@@ -1215,7 +1215,7 @@ button {
 .logo-word-main {
   font-family: 'Noto Serif Thai', serif;
   font-weight: 700;
-  font-size: 25px;
+  font-size: 30px;
   color: var(--logo-main, #7c4a24);
 }
 
@@ -1224,7 +1224,7 @@ button {
 }
 
 .logo-word-sub {
-  font-size: 13px;
+  font-size: 14.5px;
   letter-spacing: 0.16em;
   color: var(--logo-sub, #a76a3a);
   border-top: 1px solid var(--logo-line, #d8c79a);
@@ -1313,12 +1313,12 @@ a.userbox:hover .name {
   }
 
   .topbar .logo-mark {
-    width: 46px;
-    height: 46px;
+    width: 56px;
+    height: 56px;
   }
 
   .topbar .logo-word-main {
-    font-size: 16px;
+    font-size: 18px;
   }
 
   .topbar .logo-word-sub {
