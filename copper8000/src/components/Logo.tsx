@@ -17,22 +17,20 @@ const Mark = () => (
         <stop offset="100%" stopColor="#d9a06a" />
       </linearGradient>
     </defs>
-    {/* hexagon เปิดด้านขวา = ตัว C */}
+    {/* hexagon เปิดด้านขวา = ตัว C (ดีไซน์ต้นฉบับ) */}
     <path
-      d="M78 14 L34 14 L12 60 L34 106 L78 106"
+      d="M88 22 L38 22 L14 60 L38 98 L88 98"
       fill="none"
       stroke="url(#c8-copper)"
-      strokeWidth="16"
+      strokeWidth="17"
       strokeLinejoin="miter"
     />
-    {/* trick: เลข 8 ใหญ่เกือบเต็มความสูง — เด่นพอดีกับ header */}
     <text
-      x="72"
-      y="98"
-      textAnchor="middle"
+      x="74"
+      y="83"
       fontFamily="'Noto Sans Thai', sans-serif"
-      fontSize="108"
-      fontWeight="800"
+      fontSize="64"
+      fontWeight="700"
       fill="url(#c8-copper-2)"
     >
       8
