@@ -192,7 +192,7 @@ button {
 .topbar-inner {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 10px 16px;
+  padding: 8px 16px 8px 8px; /* ชิดซ้าย: ลด padding ซ้ายให้โลโก้ขยับไปทางซ้าย */
   display: flex;
   align-items: center;
   gap: 16px;
@@ -1199,10 +1199,10 @@ button {
   gap: 10px;
 }
 
-/* mark ขนาดพอดีความสูง header (เลข 8 เกือบเต็มแถบ) */
+/* โลโก้ดีไซน์เดิม — ขยายทั้งอันให้ใหญ่ที่สุดเท่าที่ไม่ทับเมนู/ปุ่ม */
 .logo-mark {
-  width: 54px;
-  height: 54px;
+  width: 64px;
+  height: 64px;
   flex-shrink: 0;
 }
 
@@ -1215,7 +1215,7 @@ button {
 .logo-word-main {
   font-family: 'Noto Serif Thai', serif;
   font-weight: 700;
-  font-size: 19px;
+  font-size: 25px;
   color: var(--logo-main, #7c4a24);
 }
 
@@ -1224,8 +1224,8 @@ button {
 }
 
 .logo-word-sub {
-  font-size: 10.5px;
-  letter-spacing: 0.18em;
+  font-size: 13px;
+  letter-spacing: 0.16em;
   color: var(--logo-sub, #a76a3a);
   border-top: 1px solid var(--logo-line, #d8c79a);
   padding-top: 2px;
@@ -1313,12 +1313,12 @@ a.userbox:hover .name {
   }
 
   .topbar .logo-mark {
-    width: 40px;
-    height: 40px;
+    width: 46px;
+    height: 46px;
   }
 
   .topbar .logo-word-main {
-    font-size: 15px;
+    font-size: 16px;
   }
 
   .topbar .logo-word-sub {
