@@ -1199,6 +1199,13 @@ button {
   gap: 10px;
 }
 
+/* mark ขนาดพอดีความสูง header (เลข 8 เกือบเต็มแถบ) */
+.logo-mark {
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+}
+
 .logo-word {
   display: flex;
   flex-direction: column;
@@ -1306,12 +1313,12 @@ a.userbox:hover .name {
   }
 
   .topbar .logo-mark {
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
   }
 
   .topbar .logo-word-main {
-    font-size: 14px;
+    font-size: 15px;
   }
 
   .topbar .logo-word-sub {
