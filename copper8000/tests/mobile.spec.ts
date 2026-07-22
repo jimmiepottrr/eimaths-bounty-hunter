@@ -19,10 +19,10 @@ test('มือถือ: เฮดเดอร์เตี้ย + ภาษา
   await expect(page.locator('.lang-select-full')).toBeHidden();
   await expect(page.locator('.lang-select-code')).toHaveValue('th');
 
-  // แถบแท็บเดสก์ท็อปซ่อน + เฮดเดอร์ไม่กินครึ่งจอ
+  // แถบแท็บเดสก์ท็อปซ่อน + เฮดเดอร์กะทัดรัด ไม่กินครึ่งจอ (โลโก้ใหญ่ → ~122px บนจอ 844)
   await expect(page.locator('.tabs-band')).toBeHidden();
   const headerBox = await page.locator('.topbar').boundingBox();
-  expect(headerBox!.height).toBeLessThan(120);
+  expect(headerBox!.height).toBeLessThan(160);
 
   // แฮมเบอร์เกอร์เปิดเมนู → นำทางไปหน้าสินค้า → เมนูปิดเอง
   await page.locator('.hamburger').click();
