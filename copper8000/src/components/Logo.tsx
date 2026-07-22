@@ -19,18 +19,20 @@ const Mark = () => (
     </defs>
     {/* hexagon เปิดด้านขวา = ตัว C */}
     <path
-      d="M88 22 L38 22 L14 60 L38 98 L88 98"
+      d="M78 14 L34 14 L12 60 L34 106 L78 106"
       fill="none"
       stroke="url(#c8-copper)"
-      strokeWidth="17"
+      strokeWidth="16"
       strokeLinejoin="miter"
     />
+    {/* trick: เลข 8 ใหญ่เกือบเต็มความสูง — เด่นพอดีกับ header */}
     <text
-      x="74"
-      y="83"
+      x="72"
+      y="98"
+      textAnchor="middle"
       fontFamily="'Noto Sans Thai', sans-serif"
-      fontSize="64"
-      fontWeight="700"
+      fontSize="108"
+      fontWeight="800"
       fill="url(#c8-copper-2)"
     >
       8
