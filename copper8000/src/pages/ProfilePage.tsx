@@ -67,6 +67,8 @@ const ProfilePage = () => {
           <span>
             {user.role === 'admin' ? (
               t('auth.adminRole')
+            ) : user.role === 'agent' ? (
+              t('auth.agentRole')
             ) : user.approved ? (
               <span className="badge badge-confirmed">{t('auth.approved')}</span>
             ) : (

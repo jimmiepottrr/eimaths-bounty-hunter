@@ -95,9 +95,11 @@ const Layout = () => {
                   <span className={`status ${user.approved ? 'status-approved' : 'status-waiting'}`}>
                     {user.role === 'admin'
                       ? t('auth.adminRole')
-                      : user.approved
-                        ? t('auth.approved')
-                        : t('auth.waiting')}
+                      : user.role === 'agent'
+                        ? t('auth.agentRole')
+                        : user.approved
+                          ? t('auth.approved')
+                          : t('auth.waiting')}
                   </span>
                 </Link>
                 <button type="button" className="btn btn-outline btn-small logout-btn" onClick={logout}>

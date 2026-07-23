@@ -20,6 +20,7 @@ export const th: Dict = {
   'auth.signup': 'สมัครสมาชิก',
   'auth.logout': 'ออกจากระบบ',
   'auth.adminRole': 'ผู้ดูแลระบบ',
+  'auth.agentRole': 'พนักงาน',
   'auth.approved': 'อนุมัติแล้ว — จองได้',
   'auth.waiting': 'รอการอนุมัติ',
   'auth.demoBadge': 'โหมดสาธิต',

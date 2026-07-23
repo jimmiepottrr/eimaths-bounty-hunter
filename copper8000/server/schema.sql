@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   name VARCHAR(190) NOT NULL,
   phone VARCHAR(32) NOT NULL DEFAULT '',
-  role ENUM('user','admin') NOT NULL DEFAULT 'user',
+  role ENUM('user','agent','admin') NOT NULL DEFAULT 'user',
   approved TINYINT(1) NOT NULL DEFAULT 0,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

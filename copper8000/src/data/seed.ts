@@ -15,6 +15,15 @@ export const SEED_USERS: SeedUser[] = [
     approved: true,
   },
   {
+    id: 4,
+    email: 'agent@copper8000.co.th',
+    password: 'agent1234',
+    name: 'คุณตัวแทน พนักงานขาย',
+    phone: '081-000-0004',
+    role: 'agent',
+    approved: true,
+  },
+  {
     id: 2,
     email: 'demo@copper8000.co.th',
     password: 'demo1234',
