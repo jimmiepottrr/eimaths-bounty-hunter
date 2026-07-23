@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
 import { RequireAdmin, RequireAuth } from './components/Protected';
 import AdminPage from './pages/AdminPage';
+import AgentLoginPage from './pages/AgentLoginPage';
 import BookingReportPage from './pages/BookingReportPage';
 import CompanyPage from './pages/CompanyPage';
 import ContactPage from './pages/ContactPage';
@@ -19,6 +20,7 @@ const App = () => (
       <Route path="company" element={<CompanyPage />} />
       <Route path="contact" element={<ContactPage />} />
       <Route path="login" element={<LoginPage />} />
+      <Route path="agent-login" element={<AgentLoginPage />} />
       <Route path="signup" element={<SignupPage />} />
       <Route
         path="profile"

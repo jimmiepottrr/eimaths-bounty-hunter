@@ -22,6 +22,13 @@ if ($method === 'GET') {
     json_out(['users' => array_map('user_public', $rows)]);
   }
 
+  if ($view === 'agents') {
+    $rows = pdo()->query(
+      "SELECT * FROM users WHERE role = 'agent' ORDER BY created_at DESC"
+    )->fetchAll();
+    json_out(['users' => array_map('user_public', $rows)]);
+  }
+
   if ($view === 'products') {
     $rows = pdo()->query(
       "SELECT * FROM products ORDER BY FIELD(material,'copper','brass','aluminium'), sort_order, id"
@@ -58,6 +65,38 @@ if ($action === 'set_approval') {
     if (!$chk->fetch()) json_err('ไม่พบผู้ใช้', 404);
   }
   audit_log($approved ? 'approve_user' : 'reject_user', ['user' => $admin, 'entity' => 'user', 'entity_id' => $userId, 'detail' => ['approved' => $approved]]);
+  json_out([]);
+}
+
+if ($action === 'create_agent') {
+  // สร้างบัญชีพนักงาน (agent) — เฉพาะแอดมิน · agent สมัครเองไม่ได้ · อนุมัติอัตโนมัติ
+  $email = strtolower(trim((string) ($body['email'] ?? '')));
+  $password = (string) ($body['password'] ?? '');
+  $name = trim((string) ($body['name'] ?? ''));
+  $phone = trim((string) ($body['phone'] ?? ''));
+
+  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) json_err('รูปแบบอีเมลไม่ถูกต้อง');
+  if (mb_strlen($password) < 6) json_err('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร');
+  if ($name === '') json_err('กรุณากรอกชื่อ');
+
+  $st = pdo()->prepare('SELECT id FROM users WHERE email = ?');
+  $st->execute([$email]);
+  if ($st->fetch()) json_err('อีเมลนี้ถูกใช้แล้ว', 409);
+
+  pdo()->prepare(
+    "INSERT INTO users (email, password_hash, name, phone, role, approved) VALUES (?, ?, ?, ?, 'agent', 1)"
+  )->execute([$email, password_hash($password, PASSWORD_DEFAULT), $name, $phone]);
+  $newId = (int) pdo()->lastInsertId();
+  audit_log('create_agent', ['user' => $admin, 'entity' => 'user', 'entity_id' => $newId, 'detail' => ['email' => $email, 'name' => $name]]);
+  json_out([], 201);
+}
+
+if ($action === 'delete_agent') {
+  $userId = (int) ($body['user_id'] ?? 0);
+  $st = pdo()->prepare("DELETE FROM users WHERE id = ? AND role = 'agent'");
+  $st->execute([$userId]);
+  if ($st->rowCount() === 0) json_err('ไม่พบพนักงาน', 404);
+  audit_log('delete_agent', ['user' => $admin, 'entity' => 'user', 'entity_id' => $userId]);
   json_out([]);
 }
 

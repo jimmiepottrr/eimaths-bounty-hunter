@@ -53,15 +53,23 @@ const ProductsPage = () => {
     return () => clearTimeout(timer);
   }, [toast]);
 
+  const isAgent = user?.role === 'agent';
+
   const hint = !user
     ? t('products.hintLogin')
-    : user.approved
-      ? t('products.hintTap')
-      : t('products.hintWaiting');
+    : isAgent
+      ? t('products.hintStaff')
+      : user.approved
+        ? t('products.hintTap')
+        : t('products.hintWaiting');
 
   const handleTap = (product: Product) => {
     if (!user) {
       navigate('/login');
+      return;
+    }
+    if (isAgent) {
+      // พนักงาน (agent) ดูราคาอย่างเดียว — จองไม่ได้ (รวมถึงจองแทนลูกค้า)
       return;
     }
     if (!user.approved) {

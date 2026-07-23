@@ -116,6 +116,46 @@ test('role พนักงาน (agent): login แล้วแถบหัว�
   await expect(page).toHaveURL(/#\/$/);
 });
 
+test('แอดมินสร้างพนักงาน → พนักงานล็อกอินผ่านหน้า login พนักงาน · เห็นมุมมองพนักงาน · จองไม่ได้', async ({
+  page,
+}) => {
+  const AGENT_EMAIL = 'newagent@copper8000.co.th';
+  const AGENT_PW = 'agent5678';
+
+  // แอดมินสร้างบัญชีพนักงานจากแท็บ "พนักงาน"
+  await login(page, 'admin@copper8000.co.th', 'admin1234');
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: 'พนักงาน', exact: true }).click();
+  await page.fill('#agent-name', 'พนักงานใหม่ ทดสอบ');
+  await page.fill('#agent-email', AGENT_EMAIL);
+  await page.fill('#agent-phone', '081-000-0009');
+  await page.fill('#agent-password', AGENT_PW);
+  await page.getByRole('button', { name: 'สร้างบัญชีพนักงาน' }).click();
+  await expect(page.locator('tr', { hasText: AGENT_EMAIL })).toBeVisible();
+  await logout(page);
+
+  // พนักงานล็อกอินผ่านหน้า login พนักงานแยกต่างหาก
+  await page.goto('/#/agent-login');
+  await page.fill('#email', AGENT_EMAIL);
+  await page.fill('#password', AGENT_PW);
+  await page.locator('form button[type="submit"]').click();
+  await expect(page).toHaveURL(/#\/products/);
+  await expect(page.locator('a.userbox .status')).toHaveText('พนักงาน');
+
+  // แตะสินค้า → ไม่มี modal จอง (พนักงานดูราคาอย่างเดียว)
+  await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
+  await expect(page.locator('.modal')).toHaveCount(0);
+});
+
+test('หน้า login พนักงาน: ผู้ใช้ทั่วไปถูกปฏิเสธ (ไม่พาเข้าระบบ)', async ({ page }) => {
+  await page.goto('/#/agent-login');
+  await page.fill('#email', 'demo@copper8000.co.th');
+  await page.fill('#password', 'demo1234');
+  await page.locator('form button[type="submit"]').click();
+  await expect(page.locator('.error-box')).toContainText('ไม่ใช่พนักงาน');
+  await expect(page).toHaveURL(/#\/agent-login/);
+});
+
 test('ราคาเปลี่ยนระหว่างเปิด modal → โดนบล็อก + โชว์ราคาใหม่ให้ยืนยันอีกครั้ง', async ({ page }) => {
   await login(page, 'demo@copper8000.co.th', 'demo1234');
   await page.getByRole('button', { name: /Bright Copper|ทองแดงเงา/ }).click();
