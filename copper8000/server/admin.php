@@ -22,6 +22,13 @@ if ($method === 'GET') {
     json_out(['users' => array_map('user_public', $rows)]);
   }
 
+  if ($view === 'agents') {
+    $rows = pdo()->query(
+      "SELECT * FROM users WHERE role = 'agent' ORDER BY created_at DESC"
+    )->fetchAll();
+    json_out(['users' => array_map('user_public', $rows)]);
+  }
+
   if ($view === 'bookings') {
     $rows = pdo()->query(
       'SELECT b.*, p.name_th AS product_name, p.name_en AS product_name_en, u.name AS user_name
@@ -50,6 +57,35 @@ if ($action === 'set_approval') {
     $chk->execute([$userId]);
     if (!$chk->fetch()) json_err('ไม่พบผู้ใช้', 404);
   }
+  json_out([]);
+}
+
+if ($action === 'create_agent') {
+  // สร้างบัญชีพนักงาน (agent) — เฉพาะแอดมิน · agent สมัครเองไม่ได้ · อนุมัติอัตโนมัติ
+  $email = strtolower(trim((string) ($body['email'] ?? '')));
+  $password = (string) ($body['password'] ?? '');
+  $name = trim((string) ($body['name'] ?? ''));
+  $phone = trim((string) ($body['phone'] ?? ''));
+
+  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) json_err('รูปแบบอีเมลไม่ถูกต้อง');
+  if (mb_strlen($password) < 6) json_err('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร');
+  if ($name === '') json_err('กรุณากรอกชื่อ');
+
+  $st = pdo()->prepare('SELECT id FROM users WHERE email = ?');
+  $st->execute([$email]);
+  if ($st->fetch()) json_err('อีเมลนี้ถูกใช้แล้ว', 409);
+
+  pdo()->prepare(
+    "INSERT INTO users (email, password_hash, name, phone, role, approved) VALUES (?, ?, ?, ?, 'agent', 1)"
+  )->execute([$email, password_hash($password, PASSWORD_DEFAULT), $name, $phone]);
+  json_out([], 201);
+}
+
+if ($action === 'delete_agent') {
+  $userId = (int) ($body['user_id'] ?? 0);
+  $st = pdo()->prepare("DELETE FROM users WHERE id = ? AND role = 'agent'");
+  $st->execute([$userId]);
+  if ($st->rowCount() === 0) json_err('ไม่พบพนักงาน', 404);
   json_out([]);
 }
 

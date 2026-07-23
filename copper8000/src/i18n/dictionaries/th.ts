@@ -45,6 +45,7 @@ export const th: Dict = {
   'products.hintLogin': 'เข้าสู่ระบบเพื่อจอง',
   'products.hintTap': 'แตะเพื่อจอง',
   'products.hintWaiting': 'บัญชีรอการอนุมัติ — ยังจองไม่ได้',
+  'products.hintStaff': 'มุมมองพนักงาน — ดูราคาอย่างเดียว',
   'products.toastWaiting': 'บัญชีของคุณอยู่ระหว่างรอการอนุมัติจากแอดมิน จึงยังจองไม่ได้',
   'products.loading': 'กำลังโหลดสินค้า…',
 
@@ -84,6 +85,13 @@ export const th: Dict = {
   'login.demoTitle': 'บัญชีทดลอง (โหมดสาธิต):',
   'login.demoUser': 'ผู้ใช้',
   'login.demoAdmin': 'แอดมิน',
+  'login.agentLink': 'เข้าสู่ระบบสำหรับพนักงาน',
+
+  'agentLogin.title': 'เข้าสู่ระบบพนักงาน',
+  'agentLogin.subtitle': 'สำหรับพนักงานที่แอดมินสร้างบัญชีให้เท่านั้น',
+  'agentLogin.submit': 'เข้าสู่ระบบพนักงาน',
+  'agentLogin.notStaff': 'บัญชีนี้ไม่ใช่พนักงาน — กรุณาเข้าสู่ระบบที่หน้าผู้ใช้ทั่วไป',
+  'agentLogin.backToUser': 'กลับไปหน้าเข้าสู่ระบบผู้ใช้',
 
   'signup.note': 'บัญชีใหม่ต้องผ่านการอนุมัติจากแอดมินก่อนจึงจะจองราคาได้',
   'signup.name': 'ชื่อ-นามสกุล / ชื่อบริษัท',
@@ -137,6 +145,7 @@ export const th: Dict = {
   'contact.fullMap': 'เปิดแผนที่เต็มจอ',
 
   'admin.tabUsers': 'อนุมัติสมาชิก',
+  'admin.tabAgents': 'พนักงาน',
   'admin.tabBookings': 'ยืนยันการจอง',
   'admin.tabPrices': 'แก้ไขราคา',
   'admin.tabLanguages': 'ภาษา',
@@ -169,6 +178,16 @@ export const th: Dict = {
   'admin.topicUsers': 'สมัครสมาชิกใหม่ — รอการอนุมัติ',
   'admin.topicBookings': 'การจองใหม่ — รอการยืนยัน',
   'admin.nonePending': 'ไม่มีรายการค้าง — จัดการครบทุกเรื่องแล้ว',
+
+  'adminAgent.addTitle': 'เพิ่มพนักงานใหม่',
+  'adminAgent.nameLabel': 'ชื่อพนักงาน',
+  'adminAgent.addBtn': 'สร้างบัญชีพนักงาน',
+  'adminAgent.adding': 'กำลังสร้าง…',
+  'adminAgent.remove': 'ลบ',
+  'adminAgent.none': 'ยังไม่มีพนักงาน — เพิ่มได้จากฟอร์มด้านล่าง',
+  'adminAgent.confirmDelete': 'ลบพนักงาน {name}?',
+  'adminAgent.toastCreated': 'สร้างบัญชีพนักงานแล้ว',
+  'adminAgent.toastDeleted': 'ลบพนักงานแล้ว',
 
   'adminLang.colCode': 'รหัส',
   'adminLang.colName': 'ชื่อภาษา',

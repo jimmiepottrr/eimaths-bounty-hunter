@@ -4,9 +4,10 @@ import { IS_DEMO } from '../data/service';
 import { useT } from '../i18n';
 import { useAuth } from '../store';
 
-const LoginPage = () => {
+/** หน้าเข้าสู่ระบบสำหรับพนักงาน (agent) แยกต่างหาก — คนที่ไม่ใช่พนักงาน/แอดมินจะถูกปฏิเสธ */
+const AgentLoginPage = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, clearSession } = useAuth();
   const t = useT();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -18,7 +19,13 @@ const LoginPage = () => {
     setError(null);
     setBusy(true);
     try {
-      await login(email, password);
+      const user = await login(email, password);
+      if (user.role !== 'agent' && user.role !== 'admin') {
+        // ล็อกอินสำเร็จแต่ไม่ใช่พนักงาน — เคลียร์เซสชันแล้วแจ้งเตือน (ไม่พาเข้าระบบ)
+        clearSession();
+        setError(t('agentLogin.notStaff'));
+        return;
+      }
       navigate('/products');
     } catch (err) {
       setError((err as Error).message);
@@ -29,7 +36,8 @@ const LoginPage = () => {
 
   return (
     <div className="card auth-card">
-      <h2 style={{ marginTop: 0 }}>{t('auth.login')}</h2>
+      <h2 style={{ marginTop: 0 }}>{t('agentLogin.title')}</h2>
+      <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginTop: 0 }}>{t('agentLogin.subtitle')}</p>
       {error && <div className="error-box">{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="field">
@@ -55,26 +63,21 @@ const LoginPage = () => {
           />
         </div>
         <button type="submit" className="btn btn-primary" disabled={busy} style={{ width: '100%' }}>
-          {busy ? t('login.submitting') : t('auth.login')}
+          {busy ? t('login.submitting') : t('agentLogin.submit')}
         </button>
       </form>
       <p style={{ textAlign: 'center', fontSize: 14 }}>
-        {t('login.noAccount')} <Link to="/signup">{t('auth.signup')}</Link>
-      </p>
-      <p style={{ textAlign: 'center', fontSize: 14 }}>
-        <Link to="/agent-login">{t('login.agentLink')}</Link>
+        <Link to="/login">{t('agentLogin.backToUser')}</Link>
       </p>
       {IS_DEMO && (
         <div className="info-box">
           <strong>{t('login.demoTitle')}</strong>
           <br />
-          {t('login.demoUser')}: demo@copper8000.co.th / demo1234
-          <br />
-          {t('login.demoAdmin')}: admin@copper8000.co.th / admin1234
+          {t('auth.agentRole')}: agent@copper8000.co.th / agent1234
         </div>
       )}
     </div>
   );
 };
 
-export default LoginPage;
+export default AgentLoginPage;

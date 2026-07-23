@@ -94,6 +94,10 @@ export interface DataService {
   // ---- admin ----
   listPendingUsers(): Promise<User[]>;
   setUserApproval(user_id: number, approved: boolean): Promise<void>;
+  /** พนักงาน (agent) — สร้าง/ดู/ลบ ได้เฉพาะแอดมิน (agent สมัครเองไม่ได้) */
+  listAgents(): Promise<User[]>;
+  createAgent(input: { email: string; password: string; name: string; phone: string }): Promise<void>;
+  deleteAgent(user_id: number): Promise<void>;
   listAllBookings(): Promise<Booking[]>;
   confirmBooking(booking_id: number): Promise<void>;
   updatePrice(

@@ -137,6 +137,19 @@ export const httpAdapter: DataService = {
     });
   },
 
+  async listAgents(): Promise<User[]> {
+    const res = await request<{ users: User[] }>('/admin.php?view=agents');
+    return res.users;
+  },
+
+  async createAgent(input): Promise<void> {
+    await request('/admin.php', { method: 'POST', body: { action: 'create_agent', ...input } });
+  },
+
+  async deleteAgent(user_id): Promise<void> {
+    await request('/admin.php', { method: 'POST', body: { action: 'delete_agent', user_id } });
+  },
+
   async listAllBookings(): Promise<Booking[]> {
     const res = await request<{ bookings: Booking[] }>('/admin.php?view=bookings');
     return res.bookings;

@@ -45,6 +45,7 @@ export const zh: Dict = {
   'products.hintLogin': '登录后可预订',
   'products.hintTap': '点击预订',
   'products.hintWaiting': '账户待审核 — 暂不能预订',
+  'products.hintStaff': '员工视图 — 仅查看价格',
   'products.toastWaiting': '您的账户正在等待管理员审核，暂时无法预订',
   'products.loading': '正在加载产品…',
 
@@ -84,6 +85,13 @@ export const zh: Dict = {
   'login.demoTitle': '演示账户（演示模式）：',
   'login.demoUser': '用户',
   'login.demoAdmin': '管理员',
+  'login.agentLink': '员工（业务员）登录',
+
+  'agentLogin.title': '员工登录',
+  'agentLogin.subtitle': '仅供由管理员创建账户的员工使用',
+  'agentLogin.submit': '员工登录',
+  'agentLogin.notStaff': '此账户不是员工账户 — 请使用普通用户登录页',
+  'agentLogin.backToUser': '返回用户登录',
 
   'signup.note': '新账户须经管理员审核后方可预订',
   'signup.name': '姓名 / 公司名称',
@@ -135,6 +143,7 @@ export const zh: Dict = {
   'contact.fullMap': '打开完整地图',
 
   'admin.tabUsers': '会员审核',
+  'admin.tabAgents': '员工',
   'admin.tabBookings': '确认预订',
   'admin.tabPrices': '修改价格',
   'admin.tabLanguages': '语言',
@@ -166,6 +175,16 @@ export const zh: Dict = {
   'admin.topicUsers': '新会员注册 — 待审核',
   'admin.topicBookings': '新预订 — 待确认',
   'admin.nonePending': '暂无待处理事项 — 已全部处理完毕',
+
+  'adminAgent.addTitle': '添加员工',
+  'adminAgent.nameLabel': '员工姓名',
+  'adminAgent.addBtn': '创建员工账户',
+  'adminAgent.adding': '正在创建…',
+  'adminAgent.remove': '删除',
+  'adminAgent.none': '暂无员工 — 可用下方表单添加',
+  'adminAgent.confirmDelete': '删除员工 {name}？',
+  'adminAgent.toastCreated': '已创建员工账户',
+  'adminAgent.toastDeleted': '已删除员工',
 
   'adminLang.colCode': '代码',
   'adminLang.colName': '语言名称',

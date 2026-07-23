@@ -221,6 +221,48 @@ export const mockAdapter: DataService = {
     saveDb(db);
   },
 
+  async listAgents(): Promise<User[]> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    return db.users.filter((u) => u.role === 'agent').map(publicUser);
+  },
+
+  async createAgent({ email, password, name, phone }): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    const normEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normEmail)) throw new ApiError('รูปแบบอีเมลไม่ถูกต้อง', 400);
+    if (password.length < 6) throw new ApiError('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร', 400);
+    if (!name.trim()) throw new ApiError('กรุณากรอกชื่อ', 400);
+    if (db.users.some((u) => u.email === normEmail)) throw new ApiError('อีเมลนี้ถูกใช้แล้ว', 409);
+    db.users.push({
+      id: db.nextUserId++,
+      email: normEmail,
+      password,
+      name: name.trim(),
+      phone: phone.trim(),
+      role: 'agent',
+      approved: true,
+    });
+    saveDb(db);
+  },
+
+  async deleteAgent(user_id): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    const agent = db.users.find((u) => u.id === user_id && u.role === 'agent');
+    if (!agent) throw new ApiError('ไม่พบพนักงาน', 404);
+    db.users = db.users.filter((u) => u.id !== user_id);
+    // เคลียร์เซสชันของพนักงานที่ถูกลบ
+    for (const [token, uid] of Object.entries(db.sessions)) {
+      if (uid === user_id) delete db.sessions[token];
+    }
+    saveDb(db);
+  },
+
   async listAllBookings(): Promise<Booking[]> {
     await delay();
     const db = loadDb();

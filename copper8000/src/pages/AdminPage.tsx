@@ -9,7 +9,7 @@ import { DICT_TEMPLATE } from '../i18n/core';
 import { bookingProductName, productName, productSubName, useI18n } from '../i18n';
 import { applyTheme, currentTheme, type ThemeCode } from '../themeManager';
 
-type Tab = 'users' | 'bookings' | 'prices' | 'languages' | 'settings';
+type Tab = 'users' | 'agents' | 'bookings' | 'prices' | 'languages' | 'settings';
 
 const PendingUsersTab = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t } = useI18n();
@@ -67,6 +67,123 @@ const PendingUsersTab = ({ onToast }: { onToast: (m: string) => void }) => {
         </tbody>
       </table>
     </div>
+  );
+};
+
+const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
+  const { t } = useI18n();
+  const [agents, setAgents] = useState<User[] | null>(null);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const reload = useCallback(() => {
+    dataService
+      .listAgents()
+      .then(setAgents)
+      .catch((e) => onToast((e as Error).message));
+  }, [onToast]);
+
+  useEffect(reload, [reload]);
+
+  const resetForm = () => {
+    setName('');
+    setEmail('');
+    setPhone('');
+    setPassword('');
+  };
+
+  const create = async () => {
+    setBusy(true);
+    try {
+      await dataService.createAgent({ email, password, name, phone });
+      onToast(t('adminAgent.toastCreated'));
+      resetForm();
+      reload();
+    } catch (e) {
+      onToast((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const remove = async (a: User) => {
+    if (!window.confirm(t('adminAgent.confirmDelete', { name: a.name }))) return;
+    try {
+      await dataService.deleteAgent(a.id);
+      onToast(t('adminAgent.toastDeleted'));
+      reload();
+    } catch (e) {
+      onToast((e as Error).message);
+    }
+  };
+
+  return (
+    <>
+      <div className="table-wrap" style={{ marginBottom: 20 }}>
+        {!agents ? (
+          <div className="empty-state">{t('admin.loading')}</div>
+        ) : agents.length === 0 ? (
+          <div className="empty-state">{t('adminAgent.none')}</div>
+        ) : (
+          <table className="report-table">
+            <thead>
+              <tr>
+                <th>{t('admin.colName')}</th>
+                <th>{t('login.email')}</th>
+                <th>{t('admin.colPhone')}</th>
+                <th>{t('admin.colManage')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {agents.map((a) => (
+                <tr key={a.id}>
+                  <td>{a.name}</td>
+                  <td>{a.email}</td>
+                  <td>{a.phone || '—'}</td>
+                  <td>
+                    <button type="button" className="btn btn-outline btn-small" onClick={() => remove(a)}>
+                      {t('adminAgent.remove')}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>{t('adminAgent.addTitle')}</h3>
+        <div className="field">
+          <label htmlFor="agent-name">{t('adminAgent.nameLabel')}</label>
+          <input id="agent-name" value={name} onChange={(e) => setName(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="agent-email">{t('login.email')}</label>
+          <input id="agent-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="agent-phone">{t('signup.phone')}</label>
+          <input id="agent-phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="agent-password">{t('signup.password6')}</label>
+          <input
+            id="agent-password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            autoComplete="new-password"
+          />
+        </div>
+        <button type="button" className="btn btn-primary" onClick={create} disabled={busy}>
+          {busy ? t('adminAgent.adding') : t('adminAgent.addBtn')}
+        </button>
+      </div>
+    </>
   );
 };
 
@@ -548,6 +665,9 @@ const AdminPage = () => {
         <button type="button" className={tab === 'users' ? 'active' : ''} onClick={() => setTab('users')}>
           {t('admin.tabUsers')}
         </button>
+        <button type="button" className={tab === 'agents' ? 'active' : ''} onClick={() => setTab('agents')}>
+          {t('admin.tabAgents')}
+        </button>
         <button type="button" className={tab === 'bookings' ? 'active' : ''} onClick={() => setTab('bookings')}>
           {t('admin.tabBookings')}
         </button>
@@ -563,6 +683,7 @@ const AdminPage = () => {
       </div>
 
       {tab === 'users' && <PendingUsersTab onToast={notify} />}
+      {tab === 'agents' && <AgentsTab onToast={notify} />}
       {tab === 'bookings' && <BookingsTab onToast={notify} />}
       {tab === 'prices' && <PricesTab onToast={notify} />}
       {tab === 'languages' && <LanguagesTab onToast={notify} />}

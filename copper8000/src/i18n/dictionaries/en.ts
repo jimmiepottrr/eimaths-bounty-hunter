@@ -46,6 +46,7 @@ export const en: Dict = {
   'products.hintLogin': 'Log in to book',
   'products.hintTap': 'Tap to book',
   'products.hintWaiting': 'Account pending approval — cannot book yet',
+  'products.hintStaff': 'Staff view — prices are read-only',
   'products.toastWaiting': 'Your account is awaiting admin approval, so you cannot book yet',
   'products.loading': 'Loading products…',
 
@@ -85,6 +86,13 @@ export const en: Dict = {
   'login.demoTitle': 'Demo accounts (demo mode):',
   'login.demoUser': 'User',
   'login.demoAdmin': 'Admin',
+  'login.agentLink': 'Staff (agent) login',
+
+  'agentLogin.title': 'Staff Login',
+  'agentLogin.subtitle': 'For staff whose accounts were created by an administrator',
+  'agentLogin.submit': 'Log in as staff',
+  'agentLogin.notStaff': 'This account is not a staff account — please use the regular user login',
+  'agentLogin.backToUser': 'Back to user login',
 
   'signup.note': 'New accounts must be approved by an admin before booking',
   'signup.name': 'Full name / Company name',
@@ -138,6 +146,7 @@ export const en: Dict = {
   'contact.fullMap': 'Open full map',
 
   'admin.tabUsers': 'Approve members',
+  'admin.tabAgents': 'Staff',
   'admin.tabBookings': 'Confirm bookings',
   'admin.tabPrices': 'Edit prices',
   'admin.tabLanguages': 'Languages',
@@ -170,6 +179,16 @@ export const en: Dict = {
   'admin.topicUsers': 'New member signups — awaiting approval',
   'admin.topicBookings': 'New bookings — awaiting confirmation',
   'admin.nonePending': 'Nothing pending — all caught up',
+
+  'adminAgent.addTitle': 'Add a staff member',
+  'adminAgent.nameLabel': 'Staff name',
+  'adminAgent.addBtn': 'Create staff account',
+  'adminAgent.adding': 'Creating…',
+  'adminAgent.remove': 'Remove',
+  'adminAgent.none': 'No staff yet — add one using the form below',
+  'adminAgent.confirmDelete': 'Remove staff member {name}?',
+  'adminAgent.toastCreated': 'Staff account created',
+  'adminAgent.toastDeleted': 'Staff member removed',
 
   'adminLang.colCode': 'Code',
   'adminLang.colName': 'Language name',
