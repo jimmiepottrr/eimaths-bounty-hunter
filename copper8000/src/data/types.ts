@@ -7,7 +7,7 @@ export type User = {
   email: string;
   name: string;
   phone: string;
-  role: 'user' | 'admin';
+  role: 'user' | 'agent' | 'admin';
   approved: boolean;
 };
 

@@ -103,6 +103,19 @@ test('flow ครบวงจร: สมัคร → รออนุมัต�
   await expect(page.locator('tr', { hasText: 'ทองแดงเงา' })).toContainText('ได้รับการยืนยันแล้ว');
 });
 
+test('role พนักงาน (agent): login แล้วแถบหัวขึ้นป้าย "พนักงาน" · ไม่มีแท็บแอดมิน · เข้า /admin ไม่ได้', async ({
+  page,
+}) => {
+  await login(page, 'agent@copper8000.co.th', 'agent1234');
+  // แถบหัวแสดง role ว่าเป็น "พนักงาน" (ไม่ใช่ "อนุมัติแล้ว" ของลูกค้า)
+  await expect(page.locator('a.userbox .status')).toHaveText('พนักงาน');
+  // agent ไม่เห็นแท็บแอดมิน
+  await expect(page.getByRole('link', { name: 'แอดมิน' })).toHaveCount(0);
+  // เข้า /admin ตรงๆ ก็ถูก redirect ออก (เฉพาะแอดมินเท่านั้น)
+  await page.goto('/#/admin');
+  await expect(page).toHaveURL(/#\/$/);
+});
+
 test('ราคาเปลี่ยนระหว่างเปิด modal → โดนบล็อก + โชว์ราคาใหม่ให้ยืนยันอีกครั้ง', async ({ page }) => {
   await login(page, 'demo@copper8000.co.th', 'demo1234');
   await page.getByRole('button', { name: /Bright Copper|ทองแดงเงา/ }).click();

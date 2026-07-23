@@ -20,6 +20,7 @@ export const en: Dict = {
   'auth.signup': 'Sign up',
   'auth.logout': 'Log out',
   'auth.adminRole': 'Administrator',
+  'auth.agentRole': 'Agent',
   'auth.approved': 'Approved — can book',
   'auth.waiting': 'Pending approval',
   'auth.demoBadge': 'Demo mode',

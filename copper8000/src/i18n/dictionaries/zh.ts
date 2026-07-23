@@ -20,6 +20,7 @@ export const zh: Dict = {
   'auth.signup': '注册',
   'auth.logout': '退出登录',
   'auth.adminRole': '管理员',
+  'auth.agentRole': '业务员',
   'auth.approved': '已批准 — 可预订',
   'auth.waiting': '待审核',
   'auth.demoBadge': '演示模式',
