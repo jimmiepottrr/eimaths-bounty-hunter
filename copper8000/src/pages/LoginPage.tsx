@@ -58,7 +58,7 @@ const LoginPage = () => {
           {busy ? t('login.submitting') : t('auth.login')}
         </button>
       </form>
-      <p style={{ textAlign: 'center', fontSize: 14 }}>
+      <p style={{ textAlign: 'center', fontSize: 21 }}>
         {t('login.noAccount')} <Link to="/signup">{t('auth.signup')}</Link>
       </p>
       {IS_DEMO && (

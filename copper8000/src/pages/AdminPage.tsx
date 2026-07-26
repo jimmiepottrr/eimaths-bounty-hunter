@@ -231,7 +231,7 @@ const PriceEditRow = ({ product, onToast }: { product: Product; onToast: (m: str
       <div>
         <strong>{productName(product, lang)}</strong>
         {productSubName(product, lang) && (
-          <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{productSubName(product, lang)}</div>
+          <div style={{ fontSize: 18, color: 'var(--ink-soft)' }}>{productSubName(product, lang)}</div>
         )}
       </div>
       <input aria-label="price" type="number" step="any" value={price} onChange={(e) => setPrice(e.target.value)} />
@@ -261,7 +261,7 @@ const PricesTab = ({ onToast }: { onToast: (m: string) => void }) => {
     <div className="card">
       <div
         className="price-edit-row"
-        style={{ fontSize: 13, color: 'var(--ink-soft)', borderBottom: '2px solid var(--line)' }}
+        style={{ fontSize: 19.5, color: 'var(--ink-soft)', borderBottom: '2px solid var(--line)' }}
       >
         <div>{t('report.colProduct')}</div>
         <div>{t('admin.colPriceBahtKg')}</div>
@@ -348,7 +348,7 @@ const ReportTab = ({ onToast }: { onToast: (m: string) => void }) => {
           </tr>
         </tbody>
       </table>
-      <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 10 }}>{t('adminReport.note')}</p>
+      <p style={{ fontSize: 19.5, color: 'var(--ink-soft)', marginTop: 10 }}>{t('adminReport.note')}</p>
     </div>
   );
 };
@@ -574,7 +574,7 @@ const SettingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
   return (
     <div className="card">
       <h3 style={{ marginTop: 0 }}>{t('adminTheme.title')}</h3>
-      <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginTop: 0 }}>{t('adminTheme.note')}</p>
+      <p style={{ color: 'var(--ink-soft)', fontSize: 21, marginTop: 0 }}>{t('adminTheme.note')}</p>
       <div className="theme-grid">
         {(Object.keys(THEME_SWATCHES) as ThemeCode[]).map((code) => (
           <button
@@ -761,7 +761,7 @@ const ProductsManageTab = ({ onToast }: { onToast: (m: string) => void }) => {
                     <td>
                       <strong>{productName(p, lang)}</strong>
                       {productSubName(p, lang) && (
-                        <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
+                        <div style={{ fontSize: 18, color: 'var(--ink-soft)' }}>
                           {productSubName(p, lang)}
                         </div>
                       )}
@@ -825,7 +825,7 @@ const ProductsManageTab = ({ onToast }: { onToast: (m: string) => void }) => {
           </div>
         )}
         {editing && (
-          <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 0 }}>{t('adminProd.priceHint')}</p>
+          <p style={{ fontSize: 19.5, color: 'var(--ink-soft)', marginTop: 0 }}>{t('adminProd.priceHint')}</p>
         )}
         <div style={{ display: 'flex', gap: 10 }}>
           <button type="button" className="btn btn-primary" onClick={submit} disabled={busy}>
