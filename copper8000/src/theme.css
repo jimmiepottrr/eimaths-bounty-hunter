@@ -1268,9 +1268,12 @@ button {
   flex-shrink: 0;
 }
 
-/* โลโก้ภาพจริง (lockup เต็ม: มาร์ค+ชื่อบริษัท) — คุมด้วยความสูง */
+/* โลโก้ภาพจริง (lockup เต็ม: มาร์ค+ชื่อบริษัท) — คุมด้วยความสูง
+   ขยายเป็น 2 เท่า (60→120px). แถวโลโก้ (topbar-inner) จัดกึ่งกลางแนวตั้ง +
+   ปุ่ม/ภาษาชิดขวาด้วย margin-left:auto ส่วนแถบเมนู (tabs-band) อยู่คนละแถวด้านล่าง
+   โลโก้จึงสูงขึ้นได้โดยไม่ทับเมนูหรือปุ่ม */
 .logo-img {
-  height: 60px;
+  height: 120px;
   width: auto;
   display: block;
   flex-shrink: 0;
@@ -1393,7 +1396,7 @@ a.userbox:hover .name {
   }
 
   .topbar .logo-img {
-    height: 42px;
+    height: 84px;
   }
 
   .topbar .logo-word-main {
