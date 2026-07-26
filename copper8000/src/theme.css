@@ -1515,25 +1515,27 @@ a.userbox:hover .name {
     gap: 11px;
     width: auto;
     margin-top: 0; /* ยกเลิก tuck ของ desktop */
-    padding: 12px 12px 12px 14px;
-    background: var(--marquee-bg);
+    padding: 12px 12px 12px 12px;
+    background: #fff; /* พื้นการ์ดสีขาว */
+    color: var(--ink);
     border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
     overflow: visible;
   }
 
   .marquee-fab-icon {
     display: flex;
-    align-items: center;
-    justify-content: center;
     flex-shrink: 0;
-    width: 42px;
-    height: 42px;
-    font-size: 22px;
-    line-height: 1;
-    background: linear-gradient(180deg, var(--copper-light), var(--copper));
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
-    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.22);
+    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.2);
+  }
+
+  .marquee-bot {
+    width: 44px;
+    height: 44px;
+    display: block;
   }
 
   .marquee-viewport {
@@ -1566,7 +1568,7 @@ a.userbox:hover .name {
     background: transparent;
     font-size: 22px;
     line-height: 1;
-    color: var(--header-ink);
+    color: var(--ink-soft);
     cursor: pointer;
     border-radius: 50%;
   }

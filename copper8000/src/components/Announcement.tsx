@@ -80,7 +80,18 @@ const Announcement = () => {
   return (
     <div className="marquee-bar" role="status" aria-label={t('announce.barLabel')}>
       <span className="marquee-fab-icon" aria-hidden="true">
-        📢
+        <svg viewBox="0 0 48 48" className="marquee-bot" role="img">
+          <circle cx="24" cy="24" r="24" fill="#2a2e48" />
+          <path d="M13 23a11 11 0 0 1 22 0" fill="none" stroke="#cfd6e6" strokeWidth="2.4" />
+          <rect x="8.5" y="22" width="5" height="8.5" rx="2.5" fill="#cfd6e6" />
+          <rect x="34.5" y="22" width="5" height="8.5" rx="2.5" fill="#cfd6e6" />
+          <line x1="24" y1="18" x2="24" y2="12.5" stroke="#cfd6e6" strokeWidth="2" />
+          <circle cx="24" cy="11.5" r="2.1" fill="#4aa8ff" />
+          <rect x="13.5" y="18" width="21" height="16.5" rx="7.5" fill="#eef2fb" />
+          <circle cx="19.5" cy="26" r="2.7" fill="#3aa0ff" />
+          <circle cx="28.5" cy="26" r="2.7" fill="#3aa0ff" />
+          <path d="M19.5 30.5q4.5 3 9 0" fill="none" stroke="#9fb2d4" strokeWidth="1.6" strokeLinecap="round" />
+        </svg>
       </span>
       <div className="marquee-viewport">
         <div className="marquee-track">{data.text}</div>
