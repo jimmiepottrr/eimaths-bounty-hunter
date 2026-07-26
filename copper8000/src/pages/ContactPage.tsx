@@ -61,7 +61,7 @@ const ContactPage = () => {
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />
-          <p style={{ fontSize: 18, color: 'var(--ink-soft)', textAlign: 'center' }}>
+          <p style={{ fontSize: 12, color: 'var(--ink-soft)', textAlign: 'center' }}>
             {t('contact.mapCaption')}{' '}
             <a href={MAP_LINK} target="_blank" rel="noreferrer">
               {t('contact.fullMap')}
