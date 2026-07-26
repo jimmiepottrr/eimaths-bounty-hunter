@@ -5,7 +5,7 @@
  * ข้อความในการ์ด/popup พิมพ์ทีละตัวเหมือนบอทกำลังพิมพ์ แล้วค้างไว้จนกดปิด
  * ดึงค่าจาก backend ครั้งเดียวตอนเปิดแอป — พังก็เงียบ (ไม่มีประกาศ)
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { dataService } from '../data/service';
 import type { Announcement as AnnouncementData } from '../data/types';
 import { useT } from '../i18n';
@@ -47,17 +47,17 @@ const useTypewriter = (text: string, active: boolean, speed = 78) => {
 };
 
 const BotAvatar = () => (
+  // วงกลมพื้นหลัง = สีเมนู (ทอง) จาก .marquee-fab-icon · หุ่นยนต์สีเข้มตัดกับพื้นทอง
   <svg viewBox="0 0 48 48" className="marquee-bot" role="img" aria-hidden="true">
-    <circle cx="24" cy="24" r="24" fill="#2a2e48" />
-    <path d="M13 23a11 11 0 0 1 22 0" fill="none" stroke="#cfd6e6" strokeWidth="2.4" />
-    <rect x="8.5" y="22" width="5" height="8.5" rx="2.5" fill="#cfd6e6" />
-    <rect x="34.5" y="22" width="5" height="8.5" rx="2.5" fill="#cfd6e6" />
-    <line x1="24" y1="18" x2="24" y2="12.5" stroke="#cfd6e6" strokeWidth="2" />
-    <circle cx="24" cy="11.5" r="2.1" fill="#4aa8ff" />
-    <rect x="13.5" y="18" width="21" height="16.5" rx="7.5" fill="#eef2fb" />
-    <circle cx="19.5" cy="26" r="2.7" fill="#3aa0ff" />
-    <circle cx="28.5" cy="26" r="2.7" fill="#3aa0ff" />
-    <path d="M19.5 30.5q4.5 3 9 0" fill="none" stroke="#9fb2d4" strokeWidth="1.6" strokeLinecap="round" />
+    <path d="M13 23a11 11 0 0 1 22 0" fill="none" stroke="#4a3410" strokeWidth="2.4" />
+    <rect x="8.5" y="22" width="5" height="8.5" rx="2.5" fill="#4a3410" />
+    <rect x="34.5" y="22" width="5" height="8.5" rx="2.5" fill="#4a3410" />
+    <line x1="24" y1="18" x2="24" y2="12.5" stroke="#4a3410" strokeWidth="2" />
+    <circle cx="24" cy="11.5" r="2.1" fill="#2a2e48" />
+    <rect x="13.5" y="18" width="21" height="16.5" rx="7.5" fill="#2f3350" />
+    <circle cx="19.5" cy="26" r="2.7" fill="#7fd0ff" />
+    <circle cx="28.5" cy="26" r="2.7" fill="#7fd0ff" />
+    <path d="M19.5 30.5q4.5 3 9 0" fill="none" stroke="#aab8d6" strokeWidth="1.6" strokeLinecap="round" />
   </svg>
 );
 
@@ -67,6 +67,7 @@ const Announcement = () => {
   const [data, setData] = useState<AnnouncementData | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
   const [marqueeClosed, setMarqueeClosed] = useState(false);
+  const viewportRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,6 +100,12 @@ const Announcement = () => {
   // popup: พิมพ์ทีละตัวตอนเปิด · การ์ดมือถือ: พิมพ์ทีละตัว · แถบวิ่ง PC: แสดงเต็ม (วิ่ง)
   const popupType = useTypewriter(text, !!data && data.mode === 'popup' && popupOpen);
   const cardType = useTypewriter(text, isMarquee && isMobile && !marqueeClosed);
+
+  // มือถือ: เลื่อนกล่องตามตัวอักษรที่กำลังพิมพ์เสมอ (เหมือนแชท)
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (el && isMobile) el.scrollTop = el.scrollHeight;
+  }, [cardType.shown, isMobile]);
 
   if (!data) return null;
 
@@ -136,16 +143,17 @@ const Announcement = () => {
   }
 
   // marquee mode
-  if (marqueeClosed) return null;
   const marqueeText = isMobile ? cardType.shown : text;
   const showCaret = isMobile && !cardType.done;
+
+  if (marqueeClosed) return null;
   return (
     <div className="marquee-bar" role="status" aria-label={t('announce.barLabel')}>
       <span className="marquee-fab-icon">
         <BotAvatar />
       </span>
       <div className="marquee-bubble">
-        <div className="marquee-viewport">
+        <div className="marquee-viewport" ref={viewportRef}>
           <div className="marquee-track">
             {marqueeText}
             {showCaret && <span className="type-caret" aria-hidden="true" />}
