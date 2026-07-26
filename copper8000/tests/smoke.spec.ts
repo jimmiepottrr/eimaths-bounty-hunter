@@ -40,7 +40,7 @@ test('หน้าแรกแสดงบอร์ดราคาครบ 3 �
   await expect(page.locator('.modal')).toHaveCount(0);
 });
 
-test('flow ครบวงจร: สมัคร → รออนุมัติ → แอดมินอนุมัติ → จอง (default ตัน) → รายงาน → แอดมินยืนยัน', async ({
+test('flow ครบวงจร: สมัคร → รออนุมัติ → แอดมินอนุมัติ → จอง (กก. + ตรวจสอบ 2 สเต็ป) → รายงาน → แอดมินยืนยัน', async ({
   page,
 }) => {
   // 1) สมัครสมาชิกใหม่ → ขึ้นข้อความรอการอนุมัติ
@@ -68,19 +68,24 @@ test('flow ครบวงจร: สมัคร → รออนุมัต�
   await expect(page.locator('tr', { hasText: NEW_EMAIL })).toHaveCount(0);
   await logout(page);
 
-  // 4) ผู้ใช้ใหม่จองสินค้า — modal default หน่วยตัน
+  // 4) ผู้ใช้ใหม่จองสินค้า — หน่วยกิโลกรัม, จำนวนเริ่มว่าง, ต้องตรวจสอบอีก 1 สเต็ป
   await login(page, NEW_EMAIL, NEW_PASSWORD);
   await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
   const modal = page.locator('.modal');
   await expect(modal).toBeVisible();
-  await expect(modal.locator('.unit-choice label.selected')).toHaveText(/ตัน/);
-  await modal.locator('#qty').fill('2');
+  await expect(modal.locator('#qty')).toHaveValue(''); // จำนวนเริ่มว่าง
+  await expect(modal.locator('.unit-choice')).toHaveCount(0); // ไม่มีตัวเลือกหน่วยแล้ว
+  await modal.locator('#qty').fill('2000');
+  await modal.getByRole('button', { name: 'ถัดไป' }).click();
+  // สเต็ปตรวจสอบ (double check) — โชว์สรุปก่อนยืนยัน
+  await expect(modal.getByText('ตรวจสอบก่อนยืนยัน')).toBeVisible();
+  await expect(modal.locator('.review-row.total')).toContainText('570,000');
   await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
 
   // 5) เด้งไปหน้ารายงานการจอง — มีแถวใหม่สถานะ "รอการยืนยัน"
   await expect(page).toHaveURL(/#\/booking-report/);
   const bookingRow = page.locator('tr', { hasText: 'ทองแดงเงา' });
-  await expect(bookingRow).toContainText('2 ตัน');
+  await expect(bookingRow).toContainText('2,000 กิโลกรัม');
   await expect(bookingRow).toContainText('รอการยืนยัน');
   await logout(page);
 
@@ -104,6 +109,9 @@ test('ราคาเปลี่ยนระหว่างเปิด modal �
   const modal = page.locator('.modal');
   await expect(modal).toBeVisible();
   await expect(modal.locator('.m-price')).toContainText('285');
+  await modal.locator('#qty').fill('1000');
+  await modal.getByRole('button', { name: 'ถัดไป' }).click();
+  await expect(modal.getByText('ตรวจสอบก่อนยืนยัน')).toBeVisible();
 
   // จำลองแอดมินเปลี่ยนราคาระหว่างที่ modal เปิดค้าง (แก้ตรงใน mock db)
   await page.evaluate(() => {
@@ -114,10 +122,11 @@ test('ราคาเปลี่ยนระหว่างเปิด modal �
 
   await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
   await expect(page.locator('.toast')).toContainText('ราคามีการเปลี่ยนแปลง');
-  // modal ยังเปิดอยู่ และรีเฟรชเป็นราคาใหม่แล้ว
+  // modal เด้งกลับสเต็ปกรอก + รีเฟรชเป็นราคาใหม่แล้ว
   await expect(modal.locator('.m-price')).toContainText('300');
 
-  // ยืนยันอีกครั้งด้วยราคาใหม่ → สำเร็จ และรายงานบันทึกราคา 300
+  // ตรวจสอบใหม่แล้วยืนยันอีกครั้งด้วยราคาใหม่ → สำเร็จ และรายงานบันทึกราคา 300
+  await modal.getByRole('button', { name: 'ถัดไป' }).click();
   await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
   await expect(page).toHaveURL(/#\/booking-report/);
   await expect(page.locator('tr', { hasText: /ทองแดงเงา/ }).first()).toContainText('300');
