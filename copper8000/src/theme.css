@@ -1497,6 +1497,15 @@ a.userbox:hover .name {
   display: none;
 }
 
+/* PC: bubble เป็น passthrough (viewport วิ่งเต็มแถบ) · หางลูกศรเฉพาะมือถือ */
+.marquee-bubble {
+  display: block;
+}
+
+.marquee-bubble::before {
+  display: none;
+}
+
 @keyframes marquee-rtl {
   0% {
     transform: translateX(100vw);
@@ -1509,7 +1518,7 @@ a.userbox:hover .name {
   }
 }
 
-/* มือถือ: แถบประกาศเป็น "การ์ดแจ้งเตือนลอย" ด้านล่าง (ไอคอน + ข้อความ + ปุ่มปิด) */
+/* มือถือ: 2 ส่วนแยกกัน — (1) วงกลมหุ่นยนต์ยืนเดี่ยว (2) กล่องข้อความมีหางชี้ไปที่หุ่นยนต์ */
 @media (max-width: 680px) {
   .marquee-bar {
     position: fixed;
@@ -1518,31 +1527,57 @@ a.userbox:hover .name {
     bottom: 14px;
     z-index: 50;
     display: flex;
-    align-items: center;
+    align-items: flex-end;
     gap: 11px;
     width: auto;
     margin-top: 0; /* ยกเลิก tuck ของ desktop */
-    padding: 12px 12px 12px 12px;
-    background: #fff; /* พื้นการ์ดสีขาว */
-    color: var(--ink);
-    border-radius: 18px;
-    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
+    padding: 0;
+    background: transparent; /* คอนเทนเนอร์โปร่งใส — 2 ส่วนไม่เชื่อมกัน */
+    box-shadow: none;
     overflow: visible;
   }
 
+  /* ส่วนที่ 1: วงกลมหุ่นยนต์ (ยืนเดี่ยว) */
   .marquee-fab-icon {
     display: flex;
     flex-shrink: 0;
-    width: 44px;
-    height: 44px;
+    width: 46px;
+    height: 46px;
     border-radius: 50%;
-    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.28);
   }
 
   .marquee-bot {
-    width: 44px;
-    height: 44px;
+    width: 46px;
+    height: 46px;
     display: block;
+  }
+
+  /* ส่วนที่ 2: กล่องข้อความสีขาว + หางลูกศรชี้ไปหุ่นยนต์ */
+  .marquee-bubble {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    background: #fff;
+    color: var(--ink);
+    border-radius: 16px;
+    padding: 11px 12px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+  }
+
+  .marquee-bubble::before {
+    display: block;
+    content: '';
+    position: absolute;
+    left: -7px;
+    bottom: 15px;
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid #fff;
   }
 
   .marquee-viewport {
@@ -1552,7 +1587,7 @@ a.userbox:hover .name {
     mask-image: none;
   }
 
-  /* บนการ์ด: ข้อความนิ่ง ตัดบรรทัด (ไม่วิ่ง) */
+  /* ข้อความนิ่ง ตัดบรรทัด (ไม่วิ่ง) */
   .marquee-track {
     display: block;
     white-space: normal;
@@ -1569,11 +1604,12 @@ a.userbox:hover .name {
     justify-content: center;
     flex-shrink: 0;
     align-self: flex-start;
-    width: 26px;
-    height: 26px;
+    width: 24px;
+    height: 24px;
+    margin: -2px -2px 0 0;
     border: none;
     background: transparent;
-    font-size: 22px;
+    font-size: 20px;
     line-height: 1;
     color: var(--ink-soft);
     cursor: pointer;
@@ -1584,9 +1620,9 @@ a.userbox:hover .name {
     background: rgba(0, 0, 0, 0.08);
   }
 
-  /* เว้นที่ท้ายเนื้อหาไม่ให้การ์ดลอยบังฟุตเตอร์ */
+  /* เว้นที่ท้ายเนื้อหาไม่ให้บังฟุตเตอร์ */
   body.has-bottom-marquee {
-    padding-bottom: 92px;
+    padding-bottom: 96px;
   }
 }
 

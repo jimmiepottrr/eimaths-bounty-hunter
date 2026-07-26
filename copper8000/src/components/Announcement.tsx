@@ -26,7 +26,7 @@ const useIsMobile = (): boolean => {
 };
 
 /** พิมพ์ข้อความทีละตัว (เหมือนบอทกำลังพิมพ์) — พิมพ์ครบแล้วค้างไว้ ไม่วนซ้ำ */
-const useTypewriter = (text: string, active: boolean, speed = 95) => {
+const useTypewriter = (text: string, active: boolean, speed = 78) => {
   const [count, setCount] = useState(active ? 0 : text.length);
   useEffect(() => {
     if (!active) {
@@ -144,20 +144,22 @@ const Announcement = () => {
       <span className="marquee-fab-icon">
         <BotAvatar />
       </span>
-      <div className="marquee-viewport">
-        <div className="marquee-track">
-          {marqueeText}
-          {showCaret && <span className="type-caret" aria-hidden="true" />}
+      <div className="marquee-bubble">
+        <div className="marquee-viewport">
+          <div className="marquee-track">
+            {marqueeText}
+            {showCaret && <span className="type-caret" aria-hidden="true" />}
+          </div>
         </div>
+        <button
+          type="button"
+          className="marquee-close"
+          aria-label={t('announce.close')}
+          onClick={() => setMarqueeClosed(true)}
+        >
+          ×
+        </button>
       </div>
-      <button
-        type="button"
-        className="marquee-close"
-        aria-label={t('announce.close')}
-        onClick={() => setMarqueeClosed(true)}
-      >
-        ×
-      </button>
     </div>
   );
 };
