@@ -37,14 +37,14 @@ export const SEED_USERS: SeedUser[] = [
 const now = () => new Date().toISOString();
 
 export const SEED_PRODUCTS: Product[] = [
-  { id: 1, material: 'copper', name_th: 'ทองแดงเงา (เบอร์ 1)', name_en: 'Bright Copper #1', price_per_kg: 285, prev_price_per_kg: 282, high_of_day: 288, low_of_day: 280, updated_at: now() },
-  { id: 2, material: 'copper', name_th: 'ทองแดงช็อต', name_en: 'Copper Shot', price_per_kg: 272, prev_price_per_kg: 273, high_of_day: 275, low_of_day: 270, updated_at: now() },
-  { id: 3, material: 'copper', name_th: 'ทองแดงหนา (เบอร์ 2)', name_en: 'Heavy Copper #2', price_per_kg: 260, prev_price_per_kg: 258, high_of_day: 263, low_of_day: 256, updated_at: now() },
-  { id: 4, material: 'brass', name_th: 'ทองเหลืองหนา', name_en: 'Heavy Brass', price_per_kg: 185, prev_price_per_kg: 183, high_of_day: 187, low_of_day: 181, updated_at: now() },
-  { id: 5, material: 'brass', name_th: 'ทองเหลืองบาง / ฝอย', name_en: 'Light Brass', price_per_kg: 172, prev_price_per_kg: 173, high_of_day: 175, low_of_day: 170, updated_at: now() },
-  { id: 6, material: 'aluminium', name_th: 'อลูมิเนียมหนา', name_en: 'Heavy Aluminium', price_per_kg: 62, prev_price_per_kg: 61, high_of_day: 63, low_of_day: 60, updated_at: now() },
-  { id: 7, material: 'aluminium', name_th: 'อลูมิเนียมฉาก / เส้น', name_en: 'Aluminium Profile', price_per_kg: 55, prev_price_per_kg: 55, high_of_day: 56, low_of_day: 54, updated_at: now() },
-  { id: 8, material: 'aluminium', name_th: 'กระป๋องอลูมิเนียม', name_en: 'Aluminium Cans', price_per_kg: 38, prev_price_per_kg: 39, high_of_day: 40, low_of_day: 37, updated_at: now() },
+  { id: 1, material: 'copper', name_th: 'ทองแดงเงา (เบอร์ 1)', name_en: 'Bright Copper #1', price_per_kg: 285, prev_price_per_kg: 282, high_of_day: 288, low_of_day: 280, sort_order: 1, active: true, updated_at: now() },
+  { id: 2, material: 'copper', name_th: 'ทองแดงช็อต', name_en: 'Copper Shot', price_per_kg: 272, prev_price_per_kg: 273, high_of_day: 275, low_of_day: 270, sort_order: 2, active: true, updated_at: now() },
+  { id: 3, material: 'copper', name_th: 'ทองแดงหนา (เบอร์ 2)', name_en: 'Heavy Copper #2', price_per_kg: 260, prev_price_per_kg: 258, high_of_day: 263, low_of_day: 256, sort_order: 3, active: true, updated_at: now() },
+  { id: 4, material: 'brass', name_th: 'ทองเหลืองหนา', name_en: 'Heavy Brass', price_per_kg: 185, prev_price_per_kg: 183, high_of_day: 187, low_of_day: 181, sort_order: 4, active: true, updated_at: now() },
+  { id: 5, material: 'brass', name_th: 'ทองเหลืองบาง / ฝอย', name_en: 'Light Brass', price_per_kg: 172, prev_price_per_kg: 173, high_of_day: 175, low_of_day: 170, sort_order: 5, active: true, updated_at: now() },
+  { id: 6, material: 'aluminium', name_th: 'อลูมิเนียมหนา', name_en: 'Heavy Aluminium', price_per_kg: 62, prev_price_per_kg: 61, high_of_day: 63, low_of_day: 60, sort_order: 6, active: true, updated_at: now() },
+  { id: 7, material: 'aluminium', name_th: 'อลูมิเนียมฉาก / เส้น', name_en: 'Aluminium Profile', price_per_kg: 55, prev_price_per_kg: 55, high_of_day: 56, low_of_day: 54, sort_order: 7, active: true, updated_at: now() },
+  { id: 8, material: 'aluminium', name_th: 'กระป๋องอลูมิเนียม', name_en: 'Aluminium Cans', price_per_kg: 38, prev_price_per_kg: 39, high_of_day: 40, low_of_day: 37, sort_order: 8, active: true, updated_at: now() },
 ];
 
 export const SEED_LANGUAGES: LanguageInfo[] = [
