@@ -39,6 +39,9 @@ export type Booking = {
   price_at_booking: number; // บาท/กก. ณ เวลาจอง
   total_estimate: number; // ยอดประมาณการ (บาท)
   status: BookingStatus;
+  delivery_date?: string | null; // วันที่ลูกค้าจะส่งของ (YYYY-MM-DD)
+  actual_weight_kg?: number | null; // น้ำหนักส่งจริง (แอดมินกรอก)
+  qc_weight_kg?: number | null; // น้ำหนักสุทธิหลัง QC (แอดมินกรอก)
   created_at: string;
 };
 
@@ -88,6 +91,7 @@ export interface DataService {
     quantity: number;
     unit: Unit;
     expected_price_per_kg?: number;
+    delivery_date?: string | null;
   }): Promise<Booking>;
   /** 10 รายการล่าสุดของผู้ใช้ที่ login อยู่ */
   listMyBookings(): Promise<Booking[]>;
@@ -96,6 +100,11 @@ export interface DataService {
   setUserApproval(user_id: number, approved: boolean): Promise<void>;
   listAllBookings(): Promise<Booking[]>;
   confirmBooking(booking_id: number): Promise<void>;
+  /** แอดมินบันทึกน้ำหนักส่งจริง + น้ำหนักสุทธิหลัง QC (ส่ง null เพื่อล้างค่า) */
+  setBookingWeights(
+    booking_id: number,
+    input: { actual_weight_kg: number | null; qc_weight_kg: number | null },
+  ): Promise<void>;
   updatePrice(
     product_id: number,
     input: { price_per_kg: number; high_of_day: number; low_of_day: number },

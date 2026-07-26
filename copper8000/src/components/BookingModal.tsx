@@ -2,7 +2,7 @@
  *  2 สเต็ป: กรอกจำนวน → ตรวจสอบอีกครั้ง (double check) → ยืนยัน */
 
 import { useEffect, useState } from 'react';
-import { fmtNumber } from '../format';
+import { fmtDate, fmtNumber } from '../format';
 import { productName, useI18n } from '../i18n';
 import type { Product, Unit } from '../data/types';
 
@@ -14,12 +14,14 @@ const BookingModal = ({
 }: {
   product: Product;
   submitting: boolean;
-  onConfirm: (quantity: number, unit: Unit) => void;
+  onConfirm: (quantity: number, unit: Unit, delivery_date: string | null) => void;
   onClose: () => void;
 }) => {
   const { lang, t } = useI18n();
   const [quantityText, setQuantityText] = useState(''); // เริ่มว่าง ไม่ default เป็น 1
+  const [deliveryDate, setDeliveryDate] = useState(''); // วันที่ลูกค้าจะส่งของ (ไม่บังคับ)
   const [step, setStep] = useState<'form' | 'review'>('form');
+  const todayStr = new Date().toISOString().slice(0, 10);
 
   // ราคาเปลี่ยนระหว่างเปิด modal (เช่นโดน 409) → เด้งกลับสเต็ปกรอกเพื่อให้ตรวจสอบราคาใหม่ก่อน
   useEffect(() => {
@@ -50,6 +52,17 @@ const BookingModal = ({
                 value={quantityText}
                 onChange={(e) => setQuantityText(e.target.value)}
                 autoFocus
+              />
+            </div>
+
+            <div className="field">
+              <label htmlFor="delivery">{t('booking.deliveryDate')}</label>
+              <input
+                id="delivery"
+                type="date"
+                min={todayStr}
+                value={deliveryDate}
+                onChange={(e) => setDeliveryDate(e.target.value)}
               />
             </div>
 
@@ -96,6 +109,10 @@ const BookingModal = ({
                   {fmtNumber(product.price_per_kg)} {t('unit.bahtPerKg')}
                 </strong>
               </div>
+              <div className="review-row">
+                <span>{t('booking.deliveryDate')}</span>
+                <strong>{deliveryDate ? fmtDate(deliveryDate) : t('booking.deliveryNotSet')}</strong>
+              </div>
               <div className="review-row total">
                 <span>{t('booking.estimate')}</span>
                 <strong>
@@ -112,7 +129,7 @@ const BookingModal = ({
                 type="button"
                 className="btn btn-primary"
                 disabled={!valid || submitting}
-                onClick={() => onConfirm(quantity, 'kg')}
+                onClick={() => onConfirm(quantity, 'kg', deliveryDate || null)}
               >
                 {submitting ? t('booking.confirming') : t('booking.confirm')}
               </button>

@@ -4,12 +4,12 @@ import { useCallback, useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import { dataService } from '../data/service';
 import type { Booking, LanguageInfo, Product, User } from '../data/types';
-import { fmtDateTime, fmtNumber } from '../format';
+import { fmtDate, fmtNumber } from '../format';
 import { DICT_TEMPLATE } from '../i18n/core';
 import { bookingProductName, productName, productSubName, useI18n } from '../i18n';
 import { applyTheme, currentTheme, type ThemeCode } from '../themeManager';
 
-type Tab = 'users' | 'bookings' | 'prices' | 'languages' | 'settings';
+type Tab = 'users' | 'bookings' | 'report' | 'prices' | 'languages' | 'settings';
 
 const PendingUsersTab = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t } = useI18n();
@@ -70,8 +70,90 @@ const PendingUsersTab = ({ onToast }: { onToast: (m: string) => void }) => {
   );
 };
 
-const BookingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
+/** แถวการจอง 1 รายการ — แอดมินกรอกน้ำหนักส่งจริง + QC ได้ในตัว (หลังยืนยันแล้ว) */
+const BookingRow = ({
+  b,
+  onConfirm,
+  onReload,
+  onToast,
+}: {
+  b: Booking;
+  onConfirm: (id: number) => void;
+  onReload: () => void;
+  onToast: (m: string) => void;
+}) => {
   const { lang, t } = useI18n();
+  const [actual, setActual] = useState(b.actual_weight_kg != null ? String(b.actual_weight_kg) : '');
+  const [qc, setQc] = useState(b.qc_weight_kg != null ? String(b.qc_weight_kg) : '');
+  const [busy, setBusy] = useState(false);
+
+  const saveWeights = async () => {
+    setBusy(true);
+    try {
+      await dataService.setBookingWeights(b.id, {
+        actual_weight_kg: actual.trim() === '' ? null : Number(actual),
+        qc_weight_kg: qc.trim() === '' ? null : Number(qc),
+      });
+      onToast(t('admin.toastWeightsSaved'));
+      onReload();
+    } catch (e) {
+      onToast((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <tr>
+      <td>{b.user_name ?? `#${b.user_id}`}</td>
+      <td>{bookingProductName(b, lang)}</td>
+      <td>
+        {fmtNumber(b.quantity)} {t(`unit.${b.unit}`)}
+      </td>
+      <td>{b.delivery_date ? fmtDate(b.delivery_date) : '—'}</td>
+      <td>
+        <StatusBadge status={b.status} />
+      </td>
+      <td>
+        <input
+          className="w-input"
+          aria-label="actual"
+          type="number"
+          step="any"
+          min="0"
+          placeholder={t('admin.wActual')}
+          value={actual}
+          onChange={(e) => setActual(e.target.value)}
+        />
+      </td>
+      <td>
+        <input
+          className="w-input"
+          aria-label="qc"
+          type="number"
+          step="any"
+          min="0"
+          placeholder={t('admin.wQc')}
+          value={qc}
+          onChange={(e) => setQc(e.target.value)}
+        />
+      </td>
+      <td style={{ display: 'flex', gap: 8 }}>
+        {b.status === 'pending' && (
+          <button type="button" className="btn btn-primary btn-small" onClick={() => onConfirm(b.id)}>
+            {t('admin.confirmBtn')}
+          </button>
+        )}
+        <button type="button" className="btn btn-outline btn-small" onClick={saveWeights} disabled={busy}>
+          {t('admin.saveWeights')}
+        </button>
+      </td>
+    </tr>
+  );
+};
+
+const BookingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
+  const { t } = useI18n();
   const [bookings, setBookings] = useState<Booking[] | null>(null);
 
   const reload = useCallback(() => {
@@ -104,35 +186,16 @@ const BookingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
             <th>{t('admin.colBooker')}</th>
             <th>{t('report.colProduct')}</th>
             <th>{t('report.colQty')}</th>
-            <th>{t('admin.colPriceAtBooking')}</th>
-            <th>{t('booking.estimate')}</th>
-            <th>{t('report.colDate')}</th>
+            <th>{t('admin.colDelivery')}</th>
             <th>{t('report.colStatus')}</th>
+            <th>{t('admin.colActualKg')}</th>
+            <th>{t('admin.colQcKg')}</th>
             <th>{t('admin.colManage')}</th>
           </tr>
         </thead>
         <tbody>
           {bookings.map((b) => (
-            <tr key={b.id}>
-              <td>{b.user_name ?? `#${b.user_id}`}</td>
-              <td>{bookingProductName(b, lang)}</td>
-              <td>
-                {fmtNumber(b.quantity)} {t(`unit.${b.unit}`)}
-              </td>
-              <td>{fmtNumber(b.price_at_booking)}</td>
-              <td>{fmtNumber(b.total_estimate)}</td>
-              <td>{fmtDateTime(b.created_at)}</td>
-              <td>
-                <StatusBadge status={b.status} />
-              </td>
-              <td>
-                {b.status === 'pending' && (
-                  <button type="button" className="btn btn-primary btn-small" onClick={() => confirm(b.id)}>
-                    {t('admin.confirmBtn')}
-                  </button>
-                )}
-              </td>
-            </tr>
+            <BookingRow key={b.id} b={b} onConfirm={confirm} onReload={reload} onToast={onToast} />
           ))}
         </tbody>
       </table>
@@ -209,6 +272,83 @@ const PricesTab = ({ onToast }: { onToast: (m: string) => void }) => {
       {products.map((p) => (
         <PriceEditRow key={p.id} product={p} onToast={onToast} />
       ))}
+    </div>
+  );
+};
+
+// ---------- แท็บรายงาน (สรุปจอง vs ส่งจริง vs QC ต่อสินค้า) ----------
+
+const toKg = (b: Booking) => (b.unit === 'ton' ? b.quantity * 1000 : b.quantity);
+
+const ReportTab = ({ onToast }: { onToast: (m: string) => void }) => {
+  const { lang, t } = useI18n();
+  const [data, setData] = useState<{ products: Product[]; bookings: Booking[] } | null>(null);
+
+  useEffect(() => {
+    Promise.all([dataService.listProducts(), dataService.listAllBookings()])
+      .then(([products, bookings]) => setData({ products, bookings }))
+      .catch((e) => onToast((e as Error).message));
+  }, [onToast]);
+
+  if (!data) return <div className="empty-state">{t('admin.loading')}</div>;
+
+  const rows = data.products
+    .map((p) => {
+      const bs = data.bookings.filter((b) => b.product_id === p.id);
+      return {
+        p,
+        count: bs.length,
+        booked: bs.reduce((s, b) => s + toKg(b), 0),
+        actual: bs.reduce((s, b) => s + (b.actual_weight_kg ?? 0), 0),
+        qc: bs.reduce((s, b) => s + (b.qc_weight_kg ?? 0), 0),
+      };
+    })
+    .filter((r) => r.count > 0);
+
+  if (rows.length === 0) return <div className="empty-state">{t('admin.noBookings')}</div>;
+
+  const tot = rows.reduce(
+    (a, r) => ({
+      count: a.count + r.count,
+      booked: a.booked + r.booked,
+      actual: a.actual + r.actual,
+      qc: a.qc + r.qc,
+    }),
+    { count: 0, booked: 0, actual: 0, qc: 0 },
+  );
+
+  return (
+    <div className="table-wrap">
+      <table className="report-table">
+        <thead>
+          <tr>
+            <th>{t('report.colProduct')}</th>
+            <th>{t('adminReport.count')}</th>
+            <th>{t('adminReport.booked')}</th>
+            <th>{t('adminReport.actual')}</th>
+            <th>{t('adminReport.qc')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.p.id}>
+              <td>{productName(r.p, lang)}</td>
+              <td>{fmtNumber(r.count)}</td>
+              <td>{fmtNumber(r.booked)}</td>
+              <td>{r.actual ? fmtNumber(r.actual) : '—'}</td>
+              <td>{r.qc ? fmtNumber(r.qc) : '—'}</td>
+            </tr>
+          ))}
+          <tr className="report-total-row">
+            <td>{t('adminReport.total')}</td>
+            <td>{fmtNumber(tot.count)}</td>
+            <td>{fmtNumber(tot.booked)}</td>
+            <td>{fmtNumber(tot.actual)}</td>
+            <td>{fmtNumber(tot.qc)}</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 10 }}>{t('adminReport.note')}</p>
     </div>
   );
 };
@@ -551,6 +691,9 @@ const AdminPage = () => {
         <button type="button" className={tab === 'bookings' ? 'active' : ''} onClick={() => setTab('bookings')}>
           {t('admin.tabBookings')}
         </button>
+        <button type="button" className={tab === 'report' ? 'active' : ''} onClick={() => setTab('report')}>
+          {t('admin.tabReport')}
+        </button>
         <button type="button" className={tab === 'prices' ? 'active' : ''} onClick={() => setTab('prices')}>
           {t('admin.tabPrices')}
         </button>
@@ -564,6 +707,7 @@ const AdminPage = () => {
 
       {tab === 'users' && <PendingUsersTab onToast={notify} />}
       {tab === 'bookings' && <BookingsTab onToast={notify} />}
+      {tab === 'report' && <ReportTab onToast={notify} />}
       {tab === 'prices' && <PricesTab onToast={notify} />}
       {tab === 'languages' && <LanguagesTab onToast={notify} />}
       {tab === 'settings' && <SettingsTab onToast={notify} />}

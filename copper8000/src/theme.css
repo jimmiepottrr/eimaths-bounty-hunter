@@ -808,6 +808,22 @@ button {
 
 /* ---------- ตารางรายงาน ---------- */
 
+/* ช่องกรอกน้ำหนักในตารางแอดมิน (แคบ พอดีตัวเลข) */
+.w-input {
+  width: 100px;
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  font: inherit;
+  background: var(--cream-0, #fff);
+}
+
+.report-total-row td {
+  font-weight: 800;
+  background: var(--cream-1);
+  border-top: 2px solid var(--line);
+}
+
 .table-wrap {
   overflow-x: auto;
   border-radius: var(--radius);
