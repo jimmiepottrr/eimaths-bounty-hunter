@@ -241,7 +241,8 @@ button {
 /* แถบเมนู — ทองสดเข้มกว่าเฮดเดอร์หนึ่งสเต็ป (โค้งตามขอบล่างของ header อัตโนมัติ) */
 .tabs-band {
   width: 100%;
-  background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 100%);
+  /* ไล่เป็นสีแถบวิ่งที่ขอบล่าง → มุมโค้งซ้าย/ขวาของเมนูเป็นสีเดียวกับแถบวิ่ง */
+  background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 68%, var(--marquee-bg) 100%);
   border-top: 1px solid rgba(255, 255, 255, 0.45);
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
 }
@@ -1487,6 +1488,24 @@ a.userbox:hover .name {
   }
   100% {
     transform: translateX(-100%);
+  }
+}
+
+/* มือถือ: แถบวิ่งย้ายไปเป็น "แถบล่าง" ติดขอบล่างจอ (fixed) */
+@media (max-width: 680px) {
+  .marquee-bar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 50;
+    padding: 11px 0;
+    border-radius: 16px 16px 0 0;
+    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.16);
+  }
+  /* เว้นที่ท้ายเนื้อหาไม่ให้แถบล่างบังฟุตเตอร์ */
+  body.has-bottom-marquee {
+    padding-bottom: 56px;
   }
 }
 

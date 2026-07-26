@@ -34,6 +34,13 @@ const Announcement = () => {
     };
   }, []);
 
+  const isMarquee = !!data && data.mode === 'marquee';
+  useEffect(() => {
+    // บนมือถือแถบวิ่งเป็น fixed ล่างจอ — ใส่คลาสที่ body เพื่อเว้นที่ท้ายเนื้อหาไม่ให้โดนบัง
+    document.body.classList.toggle('has-bottom-marquee', isMarquee);
+    return () => document.body.classList.remove('has-bottom-marquee');
+  }, [isMarquee]);
+
   if (!data) return null;
 
   if (data.mode === 'popup') {
