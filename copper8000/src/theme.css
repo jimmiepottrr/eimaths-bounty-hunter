@@ -760,6 +760,52 @@ button {
   margin-top: 8px;
 }
 
+/* ---------- สเต็ปตรวจสอบก่อนยืนยัน (double check) ---------- */
+
+.modal .m-review-note {
+  color: var(--ink-soft);
+  font-size: 14px;
+  margin: 0 0 14px;
+}
+
+.review-list {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.review-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.review-row:last-child {
+  border-bottom: none;
+}
+
+.review-row span {
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.review-row strong {
+  text-align: right;
+}
+
+.review-row.total {
+  background: var(--cream-1);
+  font-size: 17px;
+}
+
+.review-row.total strong {
+  color: var(--copper-dark);
+}
+
 /* ---------- ตารางรายงาน ---------- */
 
 .table-wrap {
