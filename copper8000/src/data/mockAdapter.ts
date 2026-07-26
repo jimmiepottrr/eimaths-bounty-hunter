@@ -158,7 +158,7 @@ export const mockAdapter: DataService = {
     return loadDb().products;
   },
 
-  async createBooking({ product_id, quantity, unit, expected_price_per_kg }): Promise<Booking> {
+  async createBooking({ product_id, quantity, unit, expected_price_per_kg, delivery_date }): Promise<Booking> {
     await delay();
     const db = loadDb();
     const user = requireUser(db);
@@ -187,6 +187,9 @@ export const mockAdapter: DataService = {
       price_at_booking: product.price_per_kg,
       total_estimate: Math.round(kg * product.price_per_kg * 100) / 100,
       status: 'pending',
+      delivery_date: delivery_date ?? null,
+      actual_weight_kg: null,
+      qc_weight_kg: null,
       created_at: new Date().toISOString(),
     };
     db.bookings.push(booking);
@@ -235,6 +238,22 @@ export const mockAdapter: DataService = {
     const booking = db.bookings.find((b) => b.id === booking_id);
     if (!booking) throw new ApiError('ไม่พบรายการจอง', 404);
     booking.status = 'confirmed';
+    saveDb(db);
+  },
+
+  async setBookingWeights(booking_id, { actual_weight_kg, qc_weight_kg }): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    const booking = db.bookings.find((b) => b.id === booking_id);
+    if (!booking) throw new ApiError('ไม่พบรายการจอง', 404);
+    const norm = (v: number | null) => {
+      if (v === null) return null;
+      if (v < 0) throw new ApiError('น้ำหนักต้องไม่ติดลบ', 400);
+      return v;
+    };
+    booking.actual_weight_kg = norm(actual_weight_kg);
+    booking.qc_weight_kg = norm(qc_weight_kg);
     saveDb(db);
   },
 

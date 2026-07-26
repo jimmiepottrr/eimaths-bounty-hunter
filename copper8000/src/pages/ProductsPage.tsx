@@ -71,7 +71,7 @@ const ProductsPage = () => {
     setSelected(product);
   };
 
-  const handleConfirm = async (quantity: number, unit: Unit) => {
+  const handleConfirm = async (quantity: number, unit: Unit, delivery_date: string | null) => {
     if (!selected) return;
     setSubmitting(true);
     try {
@@ -79,6 +79,7 @@ const ProductsPage = () => {
         product_id: selected.id,
         quantity,
         unit,
+        delivery_date,
         // ส่งราคาที่ผู้ใช้เห็นบนจอไปตรวจ — ราคาเปลี่ยนระหว่างเปิด modal = server ตอบ 409
         expected_price_per_kg: selected.price_per_kg,
       });

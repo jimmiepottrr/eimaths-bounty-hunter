@@ -147,6 +147,9 @@ function booking_public(array $b): array {
     'price_at_booking' => (float) $b['price_at_booking'],
     'total_estimate'   => (float) $b['total_estimate'],
     'status'           => $b['status'],
+    'delivery_date'    => $b['delivery_date'] ?? null,
+    'actual_weight_kg' => isset($b['actual_weight_kg']) ? (float) $b['actual_weight_kg'] : null,
+    'qc_weight_kg'     => isset($b['qc_weight_kg']) ? (float) $b['qc_weight_kg'] : null,
     'created_at'       => str_replace(' ', 'T', $b['created_at']),
   ];
 }

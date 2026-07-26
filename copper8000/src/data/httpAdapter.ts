@@ -149,6 +149,13 @@ export const httpAdapter: DataService = {
     });
   },
 
+  async setBookingWeights(booking_id, input): Promise<void> {
+    await request('/admin.php', {
+      method: 'POST',
+      body: { action: 'set_weights', booking_id, ...input },
+    });
+  },
+
   async updatePrice(product_id, input): Promise<void> {
     await request('/admin.php', {
       method: 'POST',
