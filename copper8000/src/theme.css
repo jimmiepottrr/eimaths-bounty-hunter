@@ -6,6 +6,8 @@
 
 /* ธีมทอง (ค่าเริ่มต้น) */
 :root {
+  /* ตัวคูณขนาดตัวอักษร: มือถือ=1, PC (>680px) override เป็น 1.5 (ดูท้ายไฟล์) */
+  --fs: 1;
   --copper: #c9a227;
   --copper-dark: #8f6f14;
   --copper-light: #e0c14f;
@@ -35,6 +37,7 @@
   --band-a: #e3b433;
   --band-b: #d5a527;
   --header-ink: #6b520e;
+  --marquee-bg: #fdeeba;
 }
 
 /* ธีมทองแดง */
@@ -63,6 +66,7 @@
   --band-a: #b1743c;
   --band-b: #a26834;
   --header-ink: #4f2e14;
+  --marquee-bg: #f0dcc4;
 }
 
 /* ธีมเงิน */
@@ -91,6 +95,7 @@
   --band-a: #a7b2bb;
   --band-b: #98a3ac;
   --header-ink: #2f3a44;
+  --marquee-bg: #eaf0f5;
 }
 
 * {
@@ -158,7 +163,11 @@ button {
   position: sticky;
   top: 0;
   z-index: 40;
+  /* แถบล่างสุดของเฮดเดอร์ = สีแถบวิ่ง → มุมโค้งใต้เมนูสีเดียวกับแถบวิ่ง (เฉพาะ PC)
+     มือถือไม่มีแถบวิ่งใต้เมนู (ไปอยู่การ์ดล่าง) จึงตั้ง shelf = transparent */
+  --header-shelf: var(--marquee-bg);
   background:
+    linear-gradient(0deg, var(--header-shelf) 0 34px, transparent 34px),
     linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 50%),
     linear-gradient(180deg, var(--header-hi) 0%, var(--header-mid) 48%, var(--header-lo) 100%);
   border-radius: 0 0 48% 48% / 0 0 26px 26px;
@@ -216,11 +225,11 @@ button {
 
 .userbox .name {
   font-weight: 600;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
 }
 
 .userbox .status {
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
 }
 
 .status-approved {
@@ -234,7 +243,8 @@ button {
 /* แถบเมนู — ทองสดเข้มกว่าเฮดเดอร์หนึ่งสเต็ป (โค้งตามขอบล่างของ header อัตโนมัติ) */
 .tabs-band {
   width: 100%;
-  background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 100%);
+  /* ไล่เป็นสีแถบวิ่งที่ขอบล่าง → มุมโค้งซ้าย/ขวาของเมนูเป็นสีเดียวกับแถบวิ่ง */
+  background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 68%, var(--marquee-bg) 100%);
   border-top: 1px solid rgba(255, 255, 255, 0.45);
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.08);
 }
@@ -254,7 +264,7 @@ button {
   text-decoration: none;
   color: var(--header-ink);
   font-weight: 500;
-  font-size: 14.5px;
+  font-size: calc(14.5px * var(--fs));
   letter-spacing: 0.01em;
   white-space: nowrap;
   transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
@@ -284,7 +294,7 @@ button {
   background: var(--down);
   color: #fff;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: calc(11px * var(--fs));
   font-weight: 700;
   padding: 1px 7px;
   margin-left: 6px;
@@ -296,14 +306,14 @@ button {
   padding: 24px 16px 40px;
   text-align: center;
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
 }
 
 .demo-badge {
   background: #fff3d6;
   border: 1px solid #e8cf8a;
   color: #8a6d1a;
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   padding: 3px 10px;
   border-radius: 999px;
   white-space: nowrap;
@@ -315,7 +325,7 @@ button {
   border: none;
   border-radius: 999px;
   padding: 10px 18px;
-  font-size: 15px;
+  font-size: calc(15px * var(--fs));
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.06s ease, box-shadow 0.15s ease, opacity 0.15s ease;
@@ -362,7 +372,7 @@ button {
 
 .btn-small {
   padding: 6px 14px;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
 }
 
 .field {
@@ -373,7 +383,7 @@ button {
 }
 
 .field label {
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   font-weight: 600;
   color: var(--ink-soft);
 }
@@ -383,7 +393,7 @@ button {
   border: 1.5px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
-  font-size: 15px;
+  font-size: calc(15px * var(--fs));
   font-family: inherit;
   background: #fff;
   color: var(--ink);
@@ -416,7 +426,7 @@ button {
   border-radius: 10px;
   padding: 10px 14px;
   margin-bottom: 14px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
 }
 
 .info-box {
@@ -424,7 +434,7 @@ button {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 12px 14px;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   color: var(--ink-soft);
 }
 
@@ -434,7 +444,7 @@ button {
   color: var(--confirmed);
   border-radius: 10px;
   padding: 12px 14px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
 }
 
 /* ---------- หน้าแรก: price rows ไล่สีตามรูปอ้างอิง ---------- */
@@ -467,13 +477,13 @@ button {
 
 .price-row .row-title {
   font-family: 'Noto Serif Thai', serif;
-  font-size: 20px;
+  font-size: calc(20px * var(--fs));
   font-weight: 600;
   margin: 0;
 }
 
 .price-row .row-sub {
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   letter-spacing: 0.12em;
   opacity: 0.75;
   margin-top: 6px;
@@ -490,13 +500,13 @@ button {
 }
 
 .price-row .row-price {
-  font-size: 26px;
+  font-size: calc(26px * var(--fs));
   font-weight: 700;
   white-space: nowrap;
 }
 
 .price-row .row-price small {
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   font-weight: 500;
   opacity: 0.8;
 }
@@ -529,12 +539,12 @@ button {
 
 .section-heading h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: calc(24px * var(--fs));
 }
 
 .section-heading .en {
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
@@ -545,7 +555,7 @@ button {
 }
 
 .hero h1 {
-  font-size: 34px;
+  font-size: calc(34px * var(--fs));
   letter-spacing: 0.01em;
   margin: 0 0 6px;
 }
@@ -569,7 +579,7 @@ button {
 .pricedate {
   display: inline-block;
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   margin-top: 14px;
   padding: 6px 16px;
   background: #fff;
@@ -613,17 +623,17 @@ button {
 
 .trade-row .t-name {
   font-weight: 700;
-  font-size: 16px;
+  font-size: calc(16px * var(--fs));
 }
 
 .trade-row .t-sub {
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   margin-top: 2px;
 }
 
 .trade-row .t-price {
-  font-size: 28px;
+  font-size: calc(28px * var(--fs));
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -631,14 +641,14 @@ button {
 }
 
 .trade-row .t-delta {
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   font-weight: 600;
   text-align: right;
 }
 
 .trade-row .t-hl {
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   text-align: right;
   min-width: 96px;
   font-variant-numeric: tabular-nums;
@@ -646,7 +656,7 @@ button {
 
 .trade-row .t-hint {
   grid-column: 1 / -1;
-  font-size: 12px;
+  font-size: calc(12px * var(--fs));
   color: var(--copper-dark);
   border-top: 1px dashed var(--line);
   padding-top: 8px;
@@ -712,7 +722,7 @@ button {
 
 .modal .m-price {
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   margin-bottom: 16px;
 }
 
@@ -764,7 +774,7 @@ button {
 
 .modal .m-review-note {
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   margin: 0 0 14px;
 }
 
@@ -790,7 +800,7 @@ button {
 
 .review-row span {
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
 }
 
 .review-row strong {
@@ -799,7 +809,7 @@ button {
 
 .review-row.total {
   background: var(--cream-1);
-  font-size: 17px;
+  font-size: calc(17px * var(--fs));
 }
 
 .review-row.total strong {
@@ -843,14 +853,14 @@ button {
   color: #fff;
   text-align: left;
   padding: 12px 14px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   white-space: nowrap;
 }
 
 .report-table td {
   padding: 12px 14px;
   border-top: 1px solid var(--line);
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   font-variant-numeric: tabular-nums;
 }
 
@@ -870,7 +880,7 @@ button {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   font-weight: 600;
   white-space: nowrap;
 }
@@ -925,7 +935,7 @@ button {
   border: 1.5px solid var(--line);
   border-radius: 8px;
   padding: 8px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   width: 100%;
 }
 
@@ -945,14 +955,14 @@ button {
   border-radius: 999px;
   padding: 5px 12px;
   background: #fff;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
 }
 
 .lang-picker select {
   border: none;
   background: transparent;
   font-family: inherit;
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   font-weight: 600;
   color: var(--copper-dark);
   cursor: pointer;
@@ -964,7 +974,7 @@ button {
 
 .dict-editor {
   font-family: ui-monospace, 'Cascadia Mono', 'Courier New', monospace;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--fs));
   width: 100%;
   border: 1.5px solid var(--line);
   border-radius: 10px;
@@ -1002,7 +1012,7 @@ button {
   padding: 14px 18px;
   cursor: pointer;
   font-family: inherit;
-  font-size: 14.5px;
+  font-size: calc(14.5px * var(--fs));
   color: var(--ink);
   transition: border-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
 }
@@ -1014,7 +1024,7 @@ button {
 }
 
 .pending-card .cnt {
-  font-size: 28px;
+  font-size: calc(28px * var(--fs));
   font-weight: 800;
   color: var(--copper-dark);
   min-width: 44px;
@@ -1044,7 +1054,7 @@ button {
   padding: 14px 16px;
   cursor: pointer;
   font-family: inherit;
-  font-size: 15px;
+  font-size: calc(15px * var(--fs));
   font-weight: 600;
   color: var(--ink);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -1100,7 +1110,7 @@ button {
   color: #fff;
   padding: 12px 20px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   z-index: 80;
   max-width: 90vw;
@@ -1133,14 +1143,14 @@ button {
 
 .stat .num {
   font-family: 'Noto Serif Thai', 'Noto Sans Thai', 'Noto Sans SC', serif;
-  font-size: 32px;
+  font-size: calc(32px * var(--fs));
   font-weight: 800;
   color: var(--copper-dark);
 }
 
 .stat .lbl {
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: calc(13px * var(--fs));
   margin-top: 4px;
 }
 
@@ -1178,7 +1188,7 @@ button {
 
 .reg-table {
   width: 100%;
-  font-size: 14px;
+  font-size: calc(14px * var(--fs));
   border-collapse: collapse;
 }
 
@@ -1293,7 +1303,7 @@ button {
 .logo-word-main {
   font-family: 'Noto Serif Thai', serif;
   font-weight: 700;
-  font-size: 30px;
+  font-size: calc(30px * var(--fs));
   color: var(--logo-main, #7c4a24);
 }
 
@@ -1302,7 +1312,7 @@ button {
 }
 
 .logo-word-sub {
-  font-size: 14.5px;
+  font-size: calc(14.5px * var(--fs));
   letter-spacing: 0.16em;
   color: var(--logo-sub, #a76a3a);
   border-top: 1px solid var(--logo-line, #d8c79a);
@@ -1356,6 +1366,11 @@ a.userbox:hover .name {
     display: none;
   }
 
+  /* มือถือไม่มีแถบวิ่งใต้เมนู → ไม่ต้องมีแถบสีอ่อนที่ขอบล่างเฮดเดอร์ */
+  .topbar {
+    --header-shelf: transparent;
+  }
+
   .hamburger {
     display: inline-flex;
   }
@@ -1400,7 +1415,7 @@ a.userbox:hover .name {
   }
 
   .topbar .logo-word-main {
-    font-size: 18px;
+    font-size: calc(18px * var(--fs));
   }
 
   .topbar .logo-word-sub {
@@ -1429,6 +1444,385 @@ a.userbox:hover .name {
 
   .lang-picker {
     padding: 4px 8px;
-    font-size: 12.5px;
+    font-size: calc(12.5px * var(--fs));
   }
+}
+
+/* ---------- ตัวอักษรใหญ่ขึ้น 50% เฉพาะจอ PC (>680px) — มือถือคงเดิม ---------- */
+@media (min-width: 681px) {
+  :root {
+    --fs: 1.5;
+  }
+}
+
+/* ---------- ข้อความประกาศ: แถบอักษรวิ่งเต็มจอใต้เมนู ---------- */
+/* พื้นสีอ่อน (โทนเดียวกับมุมโค้งใต้เมนู) · วิ่งขวา→ซ้าย · จบแล้วเว้น 5 วิค่อยวนใหม่ */
+.marquee-bar {
+  position: relative;
+  z-index: 0; /* อยู่หลัง header (sticky z-40) */
+  width: 100%;
+  /* ดันขึ้นไปซ้อนใต้ส่วนโค้งของ header (ลึก 26px) → มุมโค้งซ้าย/ขวาที่ถูกตัด
+     จะเผยสีแถบวิ่งโค้งขึ้นตามขอบ ไม่ใช่เส้นตรงอย่างเดียว */
+  margin-top: -26px;
+  padding: 35px 0 9px;
+  background: var(--marquee-bg);
+  color: var(--header-ink);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.marquee-viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.marquee-track {
+  display: inline-block;
+  white-space: nowrap;
+  will-change: transform;
+  font-size: calc(14.5px * var(--fs));
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  /* 20s รวม: วิ่ง 0–75% (15s) แล้วค้างนอกจอ 75–100% (5s) = เว้นระยะ 5 วิ ก่อนวนใหม่ */
+  animation: marquee-rtl 20s linear infinite;
+}
+
+.marquee-bar:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+/* ไอคอน + ปุ่มปิด แสดงเฉพาะการ์ดบนมือถือ (PC ซ่อน) */
+.marquee-fab-icon,
+.marquee-close {
+  display: none;
+}
+
+/* PC: bubble เป็น passthrough (viewport วิ่งเต็มแถบ) · หางลูกศรเฉพาะมือถือ */
+.marquee-bubble {
+  display: block;
+}
+
+.marquee-bubble::before {
+  display: none;
+}
+
+@keyframes marquee-rtl {
+  0% {
+    transform: translateX(100vw);
+  }
+  75% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+/* มือถือ: 2 ส่วนแยกกัน — (1) วงกลมหุ่นยนต์ยืนเดี่ยว (2) กล่องข้อความมีหางชี้ไปที่หุ่นยนต์ */
+@media (max-width: 680px) {
+  .marquee-bar {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 14px;
+    z-index: 50;
+    display: flex;
+    align-items: center; /* หุ่นยนต์อยู่กึ่งกลางแนวตั้งของกล่อง */
+    gap: 11px;
+    width: auto;
+    margin-top: 0; /* ยกเลิก tuck ของ desktop */
+    padding: 0;
+    background: transparent; /* คอนเทนเนอร์โปร่งใส — 2 ส่วนไม่เชื่อมกัน */
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  /* ส่วนที่ 1: วงกลมหุ่นยนต์ (ยืนเดี่ยว ตัวใหญ่ขึ้น) — พื้นวงกลมสีเมนู */
+  .marquee-fab-icon {
+    display: flex;
+    flex-shrink: 0;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .marquee-bot {
+    width: 60px;
+    height: 60px;
+    display: block;
+  }
+
+  /* ส่วนที่ 2: กล่องข้อความพื้นขาว + หางลูกศรชี้ไปหุ่นยนต์ · สูงคงที่ ถ้ายาวเกินเลื่อนได้ */
+  .marquee-bubble {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    background: #fff;
+    color: var(--ink);
+    border-radius: 16px;
+    padding: 11px 12px;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
+  }
+
+  .marquee-bubble::before {
+    display: block;
+    content: '';
+    position: absolute;
+    left: -7px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 0;
+    height: 0;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid #fff;
+  }
+
+  /* กล่องข้อความสูงคงที่ (~3 บรรทัด) ถ้ายาวเกินมี scroll เลื่อนขึ้น-ลง */
+  .marquee-viewport {
+    flex: 1;
+    max-height: 4.6em;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-mask-image: none;
+    mask-image: none;
+    scrollbar-width: thin;
+  }
+
+  /* ข้อความนิ่ง ตัดบรรทัด (ไม่วิ่ง) */
+  .marquee-track {
+    display: block;
+    white-space: normal;
+    animation: none;
+    transform: none;
+    font-size: calc(13.5px * var(--fs));
+    font-weight: 600;
+    line-height: 1.42;
+  }
+
+  .marquee-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    align-self: flex-start;
+    width: 24px;
+    height: 24px;
+    margin: -2px -2px 0 0;
+    border: none;
+    background: transparent;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--ink-soft);
+    cursor: pointer;
+    border-radius: 50%;
+  }
+
+  .marquee-close:hover {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  /* เว้นที่ท้ายเนื้อหาไม่ให้บังฟุตเตอร์ */
+  body.has-bottom-marquee {
+    padding-bottom: 96px;
+  }
+}
+
+/* ---------- ข้อความประกาศ: pop up (ดีไซน์การ์ด) ---------- */
+.announce-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(38, 28, 8, 0.5);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  animation: fadeUp 0.2s ease-out;
+}
+
+.announce-popup {
+  position: relative;
+  background: var(--cream-3);
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+  max-width: 440px;
+  width: 100%;
+  padding: 40px 30px 28px;
+  text-align: center;
+  overflow: hidden;
+  animation: announce-pop 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+}
+
+.announce-popup::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background: linear-gradient(90deg, var(--copper-dark), var(--copper-light), var(--copper-dark));
+}
+
+.announce-popup-badge {
+  width: 66px;
+  height: 66px;
+  margin: 4px auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  line-height: 1;
+  background: linear-gradient(180deg, var(--header-hi), var(--header-mid));
+  border: 3px solid var(--cream-3);
+  border-radius: 50%;
+  box-shadow: 0 6px 18px rgba(143, 111, 20, 0.25);
+}
+
+.announce-popup-title {
+  font-family: 'Noto Serif Thai', 'Noto Sans Thai', serif;
+  font-weight: 700;
+  font-size: calc(20px * var(--fs));
+  color: var(--copper-dark);
+  margin-bottom: 10px;
+}
+
+.announce-popup-text {
+  font-size: calc(15px * var(--fs));
+  color: var(--ink);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  margin: 0 0 24px;
+}
+
+.announce-popup-btn {
+  min-width: 150px;
+}
+
+.announce-popup-x {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.announce-popup-x:hover {
+  background: rgba(0, 0, 0, 0.07);
+  color: var(--ink);
+}
+
+@keyframes announce-pop {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.93);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* เคอร์เซอร์พิมพ์ (บอทกำลังพิมพ์) */
+.type-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: currentColor;
+  animation: type-blink 1s step-end infinite;
+}
+
+@keyframes type-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* เคารพผู้ที่ตั้งค่าลดการเคลื่อนไหว */
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+    transform: none;
+  }
+  .announce-popup {
+    animation: none;
+  }
+  .type-caret {
+    animation: none;
+  }
+}
+
+/* ---------- ฟอร์มตั้งข้อความประกาศ (หน้าตั้งค่าแอดมิน) ---------- */
+.announce-field-label {
+  display: block;
+  font-weight: 600;
+  font-size: calc(13.5px * var(--fs));
+  color: var(--ink);
+  margin: 14px 0 6px;
+}
+
+.announce-textarea {
+  width: 100%;
+  resize: vertical;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: calc(14px * var(--fs));
+  color: var(--ink);
+  background: #fff;
+}
+
+.announce-mode-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.announce-mode-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--line);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: calc(14px * var(--fs));
+  font-weight: 600;
+  background: #fff;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.announce-mode-opt.selected {
+  border-color: var(--copper);
+  background: var(--cream-1);
+}
+
+.announce-active-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: calc(14px * var(--fs));
+  font-weight: 600;
+  cursor: pointer;
 }

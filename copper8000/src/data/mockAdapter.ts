@@ -18,7 +18,19 @@ import {
   type User,
 } from './types';
 
-const DB_KEY = 'copper8000_db_v1';
+// v3: ประกาศเก็บข้อความ 3 ภาษา (ไทย/อังกฤษ/จีน)
+const DB_KEY = 'copper8000_db_v3';
+
+/** ประกาศตัวอย่างในโหมดสาธิต — เปิดไว้ให้เห็นทันทีตั้งแต่เปิดหน้าแรก (ไม่ต้องล็อกอิน) */
+const DEMO_ANNOUNCEMENT = {
+  text: {
+    th: '📢 ยินดีต้อนรับสู่ Copper 8000 — รับซื้อทองแดง ทองเหลือง อลูมิเนียม ราคาดีทุกวัน! สอบถามราคาโทร 08x-xxx-xxxx',
+    en: '📢 Welcome to Copper 8000 — we buy copper, brass and aluminium at great prices every day! Call 08x-xxx-xxxx',
+    zh: '📢 欢迎来到 Copper 8000 — 每天高价收购铜、黄铜、铝！咨询电话 08x-xxx-xxxx',
+  },
+  mode: 'marquee' as const,
+  active: true,
+};
 
 type Db = {
   users: SeedUser[];
@@ -56,7 +68,11 @@ const loadDb = (): Db => {
         dirty = true;
       }
       if (!db.settings) {
-        db.settings = { theme: 'gold' };
+        db.settings = { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT } };
+        dirty = true;
+      }
+      if (!db.settings.announcement) {
+        db.settings.announcement = { ...DEMO_ANNOUNCEMENT };
         dirty = true;
       }
       // db เวอร์ชันก่อนหน้าไม่มีคอลัมน์ sort_order/active ในสินค้า และไม่มี nextProductId
@@ -84,7 +100,7 @@ const loadDb = (): Db => {
     bookings: [...SEED_BOOKINGS],
     sessions: {},
     languages: [...SEED_LANGUAGES],
-    settings: { theme: 'gold' },
+    settings: { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT } },
     nextUserId: 100,
     nextBookingId: 100,
     nextProductId: 100,
@@ -360,7 +376,11 @@ export const mockAdapter: DataService = {
 
   async getSettings(): Promise<AppSettings> {
     await delay(100);
-    return { ...loadDb().settings };
+    const s = loadDb().settings;
+    return {
+      theme: s.theme,
+      announcement: { ...s.announcement, text: { ...s.announcement.text } },
+    };
   },
 
   async setTheme(theme): Promise<void> {
@@ -369,6 +389,22 @@ export const mockAdapter: DataService = {
     requireAdmin(db);
     if (!['gold', 'copper', 'silver'].includes(theme)) throw new ApiError('ธีมไม่ถูกต้อง', 400);
     db.settings.theme = theme;
+    saveDb(db);
+  },
+
+  async setAnnouncement({ text, mode, active }): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    if (!['marquee', 'popup'].includes(mode)) throw new ApiError('รูปแบบการแสดงไม่ถูกต้อง', 400);
+    const map: Record<string, string> = {};
+    for (const [lc, v] of Object.entries(text)) {
+      const tv = (v ?? '').trim();
+      if (!tv) continue; // เก็บเฉพาะภาษาที่มีข้อความ
+      if (tv.length > 500) throw new ApiError('ข้อความประกาศยาวเกินไป (สูงสุด 500 ตัวอักษร)', 400);
+      map[lc] = tv;
+    }
+    db.settings.announcement = { text: map, mode, active };
     saveDb(db);
   },
 

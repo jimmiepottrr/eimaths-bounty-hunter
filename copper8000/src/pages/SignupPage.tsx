@@ -42,7 +42,7 @@ const SignupPage = () => {
       <div className="card auth-card">
         <h2 style={{ marginTop: 0 }}>{t('signup.successTitle')}</h2>
         <div className="success-box">{t('signup.successBody')}</div>
-        <p style={{ fontSize: 14 }}>
+        <p style={{ fontSize: 'calc(14px * var(--fs))' }}>
           {t('signup.browseNote')} <Link to="/">{t('nav.home')}</Link> ·{' '}
           <Link to="/products">{t('nav.products')}</Link>
         </p>
@@ -53,7 +53,7 @@ const SignupPage = () => {
   return (
     <div className="card auth-card">
       <h2 style={{ marginTop: 0 }}>{t('auth.signup')}</h2>
-      <p style={{ fontSize: 14, color: 'var(--ink-soft)', marginTop: 0 }}>{t('signup.note')}</p>
+      <p style={{ fontSize: 'calc(14px * var(--fs))', color: 'var(--ink-soft)', marginTop: 0 }}>{t('signup.note')}</p>
       {error && <div className="error-box">{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="field">
@@ -101,7 +101,7 @@ const SignupPage = () => {
           {busy ? t('signup.submitting') : t('auth.signup')}
         </button>
       </form>
-      <p style={{ textAlign: 'center', fontSize: 14 }}>
+      <p style={{ textAlign: 'center', fontSize: 'calc(14px * var(--fs))' }}>
         {t('signup.haveAccount')} <Link to="/login">{t('auth.login')}</Link>
       </p>
     </div>

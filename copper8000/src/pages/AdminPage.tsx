@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import { dataService } from '../data/service';
-import type { Booking, LanguageInfo, Material, Product, User } from '../data/types';
+import type { AnnounceMode, Booking, LanguageInfo, Material, Product, User } from '../data/types';
 import { fmtDate, fmtNumber } from '../format';
 import { DICT_TEMPLATE } from '../i18n/core';
 import { bookingProductName, productName, productSubName, useI18n } from '../i18n';
@@ -231,7 +231,7 @@ const PriceEditRow = ({ product, onToast }: { product: Product; onToast: (m: str
       <div>
         <strong>{productName(product, lang)}</strong>
         {productSubName(product, lang) && (
-          <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>{productSubName(product, lang)}</div>
+          <div style={{ fontSize: 'calc(12px * var(--fs))', color: 'var(--ink-soft)' }}>{productSubName(product, lang)}</div>
         )}
       </div>
       <input aria-label="price" type="number" step="any" value={price} onChange={(e) => setPrice(e.target.value)} />
@@ -261,7 +261,7 @@ const PricesTab = ({ onToast }: { onToast: (m: string) => void }) => {
     <div className="card">
       <div
         className="price-edit-row"
-        style={{ fontSize: 13, color: 'var(--ink-soft)', borderBottom: '2px solid var(--line)' }}
+        style={{ fontSize: 'calc(13px * var(--fs))', color: 'var(--ink-soft)', borderBottom: '2px solid var(--line)' }}
       >
         <div>{t('report.colProduct')}</div>
         <div>{t('admin.colPriceBahtKg')}</div>
@@ -348,7 +348,7 @@ const ReportTab = ({ onToast }: { onToast: (m: string) => void }) => {
           </tr>
         </tbody>
       </table>
-      <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 10 }}>{t('adminReport.note')}</p>
+      <p style={{ fontSize: 'calc(13px * var(--fs))', color: 'var(--ink-soft)', marginTop: 10 }}>{t('adminReport.note')}</p>
     </div>
   );
 };
@@ -548,6 +548,163 @@ const THEME_SWATCHES: Record<ThemeCode, string[]> = {
   silver: ['#7c8794', '#a6b0bb', '#eef1f4'],
 };
 
+// ---------- บล็อกข้อความประกาศ (แถบวิ่ง / pop up) ----------
+
+/** แปลข้อความด้วย MyMemory (ฟรี ไม่ต้องใช้ key รองรับ CORS — รวมผล Google/Microsoft) */
+const MM_LANG: Record<string, string> = { zh: 'zh-CN' };
+const translateText = async (text: string, source: string, target: string): Promise<string> => {
+  const pair = `${MM_LANG[source] ?? source}|${MM_LANG[target] ?? target}`;
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(pair)}`;
+  const res = await fetch(url);
+  const data = (await res.json()) as { responseData?: { translatedText?: string } };
+  const out = data?.responseData?.translatedText;
+  if (!out || typeof out !== 'string') throw new Error('แปลไม่สำเร็จ');
+  return out;
+};
+
+const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => {
+  const { t, languages } = useI18n();
+  const [texts, setTexts] = useState<Record<string, string>>({});
+  const [mode, setMode] = useState<AnnounceMode>('marquee');
+  const [active, setActive] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [translating, setTranslating] = useState(false);
+
+  useEffect(() => {
+    dataService
+      .getSettings()
+      .then((s) => {
+        setTexts(s.announcement.text);
+        setMode(s.announcement.mode);
+        setActive(s.announcement.active);
+      })
+      .catch(() => {});
+  }, []);
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      await dataService.setAnnouncement({ text: texts, mode, active });
+      onToast(t('adminAnnounce.saved'));
+    } catch (e) {
+      onToast((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  // ช่องกรอกข้อความ 1 ช่องต่อ 1 ภาษาที่เปิดใช้งาน — เพิ่มภาษาใหม่ก็มีช่องอัตโนมัติ
+  const enabledLangs = languages.filter((l) => l.enabled);
+
+  // แปลจากภาษาไทย → เติมภาษาอื่นที่เปิดใช้งานอัตโนมัติ (แอดมินตรวจ/แก้ก่อนบันทึกได้)
+  const autoTranslate = async () => {
+    const src = (texts.th ?? '').trim();
+    if (!src) {
+      onToast(t('adminAnnounce.needThai'));
+      return;
+    }
+    setTranslating(true);
+    try {
+      const targets = enabledLangs.map((l) => l.code).filter((c) => c !== 'th');
+      const results = await Promise.all(
+        targets.map(async (c) => {
+          try {
+            return [c, await translateText(src, 'th', c)] as const;
+          } catch {
+            return [c, ''] as const;
+          }
+        }),
+      );
+      setTexts((prev) => {
+        const next = { ...prev };
+        for (const [c, v] of results) if (v) next[c] = v;
+        return next;
+      });
+      onToast(t('adminAnnounce.translated'));
+    } finally {
+      setTranslating(false);
+    }
+  };
+
+  return (
+    <div className="card">
+      <h3 style={{ marginTop: 0 }}>{t('adminAnnounce.title')}</h3>
+      <p style={{ color: 'var(--ink-soft)', fontSize: 'calc(14px * var(--fs))', marginTop: 0 }}>
+        {t('adminAnnounce.note')}
+      </p>
+
+      {enabledLangs.map((l) => (
+        <div key={l.code}>
+          <label className="announce-field-label">
+            {t('adminAnnounce.textLabel')} ({l.name_native})
+          </label>
+          <textarea
+            className="announce-textarea"
+            rows={2}
+            maxLength={500}
+            value={texts[l.code] ?? ''}
+            placeholder={l.code === 'th' ? t('adminAnnounce.placeholder') : ''}
+            onChange={(e) => setTexts((prev) => ({ ...prev, [l.code]: e.target.value }))}
+          />
+        </div>
+      ))}
+
+      {enabledLangs.some((l) => l.code !== 'th') && (
+        <div style={{ marginTop: 10 }}>
+          <button
+            type="button"
+            className="btn btn-outline btn-small"
+            onClick={autoTranslate}
+            disabled={translating}
+          >
+            🌐 {translating ? t('adminAnnounce.translating') : t('adminAnnounce.autoTranslate')}
+          </button>
+          <span style={{ fontSize: 'calc(12.5px * var(--fs))', color: 'var(--ink-soft)', marginLeft: 10 }}>
+            {t('adminAnnounce.translateHint')}
+          </span>
+        </div>
+      )}
+
+      <label className="announce-field-label" style={{ marginTop: 18 }}>
+        {t('adminAnnounce.modeLabel')}
+      </label>
+      <div className="announce-mode-row">
+        <label className={`announce-mode-opt ${mode === 'marquee' ? 'selected' : ''}`}>
+          <input
+            type="radio"
+            name="announce-mode"
+            checked={mode === 'marquee'}
+            onChange={() => setMode('marquee')}
+          />
+          <span>📢 {t('adminAnnounce.modeMarquee')}</span>
+        </label>
+        <label className={`announce-mode-opt ${mode === 'popup' ? 'selected' : ''}`}>
+          <input
+            type="radio"
+            name="announce-mode"
+            checked={mode === 'popup'}
+            onChange={() => setMode('popup')}
+          />
+          <span>🪧 {t('adminAnnounce.modePopup')}</span>
+        </label>
+      </div>
+
+      <label className="announce-active-row">
+        <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+        <span>{t('adminAnnounce.activeLabel')}</span>
+      </label>
+
+      <div style={{ marginTop: 16 }}>
+        <button type="button" className="btn btn-primary" onClick={save} disabled={busy}>
+          {t('adminAnnounce.save')}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ---------- แท็บตั้งค่า (ธีมสี + ข้อความประกาศ) ----------
+
 const SettingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t } = useI18n();
   const [theme, setThemeState] = useState<ThemeCode>(currentTheme());
@@ -572,29 +729,32 @@ const SettingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
   };
 
   return (
-    <div className="card">
-      <h3 style={{ marginTop: 0 }}>{t('adminTheme.title')}</h3>
-      <p style={{ color: 'var(--ink-soft)', fontSize: 14, marginTop: 0 }}>{t('adminTheme.note')}</p>
-      <div className="theme-grid">
-        {(Object.keys(THEME_SWATCHES) as ThemeCode[]).map((code) => (
-          <button
-            key={code}
-            type="button"
-            className={`theme-card ${theme === code ? 'selected' : ''}`}
-            onClick={() => choose(code)}
-            disabled={busy}
-          >
-            <span className="swatches">
-              {THEME_SWATCHES[code].map((c) => (
-                <span key={c} className="dot" style={{ background: c }} />
-              ))}
-            </span>
-            <span className="name">{t(`theme.${code}`)}</span>
-            {theme === code && <span className="check">✓</span>}
-          </button>
-        ))}
+    <>
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>{t('adminTheme.title')}</h3>
+        <p style={{ color: 'var(--ink-soft)', fontSize: 'calc(14px * var(--fs))', marginTop: 0 }}>{t('adminTheme.note')}</p>
+        <div className="theme-grid">
+          {(Object.keys(THEME_SWATCHES) as ThemeCode[]).map((code) => (
+            <button
+              key={code}
+              type="button"
+              className={`theme-card ${theme === code ? 'selected' : ''}`}
+              onClick={() => choose(code)}
+              disabled={busy}
+            >
+              <span className="swatches">
+                {THEME_SWATCHES[code].map((c) => (
+                  <span key={c} className="dot" style={{ background: c }} />
+                ))}
+              </span>
+              <span className="name">{t(`theme.${code}`)}</span>
+              {theme === code && <span className="check">✓</span>}
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
+      <AnnouncementSettings onToast={onToast} />
+    </>
   );
 };
 
@@ -761,7 +921,7 @@ const ProductsManageTab = ({ onToast }: { onToast: (m: string) => void }) => {
                     <td>
                       <strong>{productName(p, lang)}</strong>
                       {productSubName(p, lang) && (
-                        <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
+                        <div style={{ fontSize: 'calc(12px * var(--fs))', color: 'var(--ink-soft)' }}>
                           {productSubName(p, lang)}
                         </div>
                       )}
@@ -825,7 +985,7 @@ const ProductsManageTab = ({ onToast }: { onToast: (m: string) => void }) => {
           </div>
         )}
         {editing && (
-          <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 0 }}>{t('adminProd.priceHint')}</p>
+          <p style={{ fontSize: 'calc(13px * var(--fs))', color: 'var(--ink-soft)', marginTop: 0 }}>{t('adminProd.priceHint')}</p>
         )}
         <div style={{ display: 'flex', gap: 10 }}>
           <button type="button" className="btn btn-primary" onClick={submit} disabled={busy}>

@@ -230,11 +230,24 @@ export const httpAdapter: DataService = {
   },
 
   async getSettings(): Promise<AppSettings> {
-    const res = await request<{ settings: AppSettings }>('/settings.php');
-    return res.settings;
+    const res = await request<{ settings: Partial<AppSettings> }>('/settings.php');
+    const a = res.settings.announcement;
+    const at = a?.text;
+    return {
+      theme: res.settings.theme ?? 'gold',
+      announcement: {
+        text: at && typeof at === 'object' ? (at as Record<string, string>) : {},
+        mode: a?.mode === 'popup' ? 'popup' : 'marquee',
+        active: a?.active ?? false,
+      },
+    };
   },
 
   async setTheme(theme): Promise<void> {
     await request('/settings.php', { method: 'POST', body: { action: 'set_theme', theme } });
+  },
+
+  async setAnnouncement(input): Promise<void> {
+    await request('/settings.php', { method: 'POST', body: { action: 'set_announcement', ...input } });
   },
 };
