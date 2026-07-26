@@ -163,6 +163,43 @@ export const httpAdapter: DataService = {
     });
   },
 
+  async listAllProducts(): Promise<Product[]> {
+    const res = await request<{ products: Product[] }>('/admin.php?view=products');
+    return res.products;
+  },
+
+  async addProduct(input): Promise<void> {
+    await request('/admin.php', { method: 'POST', body: { action: 'add_product', ...input } });
+  },
+
+  async updateProduct(product_id, input): Promise<void> {
+    await request('/admin.php', {
+      method: 'POST',
+      body: { action: 'update_product', product_id, ...input },
+    });
+  },
+
+  async setProductActive(product_id, active): Promise<void> {
+    await request('/admin.php', {
+      method: 'POST',
+      body: { action: 'set_product_active', product_id, active },
+    });
+  },
+
+  async deleteProduct(product_id): Promise<void> {
+    await request('/admin.php', {
+      method: 'POST',
+      body: { action: 'delete_product', product_id },
+    });
+  },
+
+  async reorderProducts(order): Promise<void> {
+    await request('/admin.php', {
+      method: 'POST',
+      body: { action: 'reorder_products', order },
+    });
+  },
+
   async listLanguages(): Promise<LanguageInfo[]> {
     const res = await request<{ languages: LanguageInfo[] }>('/languages.php');
     return res.languages;

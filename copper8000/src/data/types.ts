@@ -20,6 +20,8 @@ export type Product = {
   prev_price_per_kg: number;
   high_of_day: number;
   low_of_day: number;
+  sort_order: number;
+  active: boolean;
   updated_at: string;
 };
 
@@ -109,6 +111,24 @@ export interface DataService {
     product_id: number,
     input: { price_per_kg: number; high_of_day: number; low_of_day: number },
   ): Promise<void>;
+  // ---- product management (admin) ----
+  /** ทุกสินค้า รวมที่ซ่อนอยู่ (admin) — ต่างจาก listProducts ที่แสดงเฉพาะ active */
+  listAllProducts(): Promise<Product[]>;
+  addProduct(input: {
+    material: Material;
+    name_th: string;
+    name_en: string;
+    price_per_kg: number;
+  }): Promise<void>;
+  updateProduct(
+    product_id: number,
+    input: { material: Material; name_th: string; name_en: string },
+  ): Promise<void>;
+  setProductActive(product_id: number, active: boolean): Promise<void>;
+  /** ลบถาวรได้เฉพาะสินค้าที่ไม่เคยถูกจอง — ถ้ามีประวัติให้ซ่อนแทน (เซิร์ฟเวอร์ตอบ 409) */
+  deleteProduct(product_id: number): Promise<void>;
+  /** จัดเรียงใหม่ — ส่งลำดับ id ตามที่ต้องการ */
+  reorderProducts(order: number[]): Promise<void>;
   // ---- languages ----
   /** ภาษาที่เปิดใช้งาน (สาธารณะ) */
   listLanguages(): Promise<LanguageInfo[]>;

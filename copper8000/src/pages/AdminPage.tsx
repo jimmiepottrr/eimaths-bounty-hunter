@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import { dataService } from '../data/service';
-import type { Booking, LanguageInfo, Product, User } from '../data/types';
+import type { Booking, LanguageInfo, Material, Product, User } from '../data/types';
 import { fmtDate, fmtNumber } from '../format';
 import { DICT_TEMPLATE } from '../i18n/core';
 import { bookingProductName, productName, productSubName, useI18n } from '../i18n';
 import { applyTheme, currentTheme, type ThemeCode } from '../themeManager';
 
-type Tab = 'users' | 'bookings' | 'report' | 'prices' | 'languages' | 'settings';
+type Tab = 'users' | 'bookings' | 'report' | 'products' | 'prices' | 'languages' | 'settings';
 
 const PendingUsersTab = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t } = useI18n();
@@ -598,6 +598,250 @@ const SettingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
   );
 };
 
+// ---------- แท็บจัดการสินค้า (เพิ่ม/แก้/ซ่อน/ลบ/จัดเรียง) ----------
+
+const MATERIAL_OPTIONS: Material[] = ['copper', 'brass', 'aluminium'];
+
+const ProductsManageTab = ({ onToast }: { onToast: (m: string) => void }) => {
+  const { lang, t } = useI18n();
+  const [products, setProducts] = useState<Product[] | null>(null);
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [material, setMaterial] = useState<Material>('copper');
+  const [nameTh, setNameTh] = useState('');
+  const [nameEn, setNameEn] = useState('');
+  const [price, setPrice] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const reload = useCallback(() => {
+    dataService
+      .listAllProducts()
+      .then(setProducts)
+      .catch((e) => onToast((e as Error).message));
+  }, [onToast]);
+
+  useEffect(reload, [reload]);
+
+  const resetForm = () => {
+    setEditing(null);
+    setMaterial('copper');
+    setNameTh('');
+    setNameEn('');
+    setPrice('');
+  };
+
+  const startEdit = (p: Product) => {
+    setEditing(p);
+    setMaterial(p.material);
+    setNameTh(p.name_th);
+    setNameEn(p.name_en);
+    setPrice('');
+  };
+
+  const submit = async () => {
+    if (!nameTh.trim()) {
+      onToast(t('adminProd.needName'));
+      return;
+    }
+    setBusy(true);
+    try {
+      if (editing) {
+        await dataService.updateProduct(editing.id, {
+          material,
+          name_th: nameTh.trim(),
+          name_en: nameEn.trim(),
+        });
+        onToast(t('adminProd.toastUpdated'));
+      } else {
+        const priceNum = Number(price);
+        if (!(priceNum > 0)) {
+          onToast(t('adminProd.needPrice'));
+          setBusy(false);
+          return;
+        }
+        await dataService.addProduct({
+          material,
+          name_th: nameTh.trim(),
+          name_en: nameEn.trim(),
+          price_per_kg: priceNum,
+        });
+        onToast(t('adminProd.toastAdded'));
+      }
+      resetForm();
+      reload();
+    } catch (e) {
+      onToast((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleActive = async (p: Product) => {
+    try {
+      await dataService.setProductActive(p.id, !p.active);
+      onToast(p.active ? t('adminProd.toastHidden') : t('adminProd.toastShown'));
+      reload();
+    } catch (e) {
+      onToast((e as Error).message);
+    }
+  };
+
+  const remove = async (p: Product) => {
+    if (!window.confirm(t('adminProd.confirmDelete', { name: productName(p, lang) }))) return;
+    try {
+      await dataService.deleteProduct(p.id);
+      onToast(t('adminProd.toastDeleted'));
+      if (editing?.id === p.id) resetForm();
+      reload();
+    } catch (e) {
+      onToast((e as Error).message);
+    }
+  };
+
+  // สลับตำแหน่งกับรายการที่อยู่ติดกัน (เฉพาะภายในวัสดุเดียวกัน) แล้วส่งลำดับทั้งหมดกลับ
+  const move = async (index: number, dir: -1 | 1) => {
+    if (!products) return;
+    const target = index + dir;
+    if (target < 0 || target >= products.length) return;
+    if (products[target].material !== products[index].material) return;
+    const next = [...products];
+    [next[index], next[target]] = [next[target], next[index]];
+    setProducts(next); // มองเห็นผลทันที
+    try {
+      await dataService.reorderProducts(next.map((p) => p.id));
+    } catch (e) {
+      onToast((e as Error).message);
+      reload();
+    }
+  };
+
+  if (!products) return <div className="empty-state">{t('admin.loading')}</div>;
+
+  return (
+    <>
+      <div className="table-wrap" style={{ marginBottom: 20 }}>
+        {products.length === 0 ? (
+          <div className="empty-state">{t('adminProd.empty')}</div>
+        ) : (
+          <table className="report-table">
+            <thead>
+              <tr>
+                <th>{t('adminProd.colOrder')}</th>
+                <th>{t('report.colProduct')}</th>
+                <th>{t('adminProd.colMaterial')}</th>
+                <th>{t('adminProd.colStatus')}</th>
+                <th>{t('admin.colManage')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.map((p, i) => {
+                const canUp = i > 0 && products[i - 1].material === p.material;
+                const canDown = i < products.length - 1 && products[i + 1].material === p.material;
+                return (
+                  <tr key={p.id} style={{ opacity: p.active ? 1 : 0.55 }}>
+                    <td style={{ display: 'flex', gap: 4 }}>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-small"
+                        onClick={() => move(i, -1)}
+                        disabled={!canUp}
+                        aria-label={t('adminProd.moveUp')}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-small"
+                        onClick={() => move(i, 1)}
+                        disabled={!canDown}
+                        aria-label={t('adminProd.moveDown')}
+                      >
+                        ↓
+                      </button>
+                    </td>
+                    <td>
+                      <strong>{productName(p, lang)}</strong>
+                      {productSubName(p, lang) && (
+                        <div style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
+                          {productSubName(p, lang)}
+                        </div>
+                      )}
+                    </td>
+                    <td>{t(`material.${p.material}`)}</td>
+                    <td>
+                      <span className={`badge ${p.active ? 'badge-confirmed' : 'badge-pending'}`}>
+                        {p.active ? t('adminProd.active') : t('adminProd.hidden')}
+                      </span>
+                    </td>
+                    <td style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                      <button type="button" className="btn btn-outline btn-small" onClick={() => toggleActive(p)}>
+                        {p.active ? t('adminProd.hide') : t('adminProd.show')}
+                      </button>
+                      <button type="button" className="btn btn-outline btn-small" onClick={() => startEdit(p)}>
+                        {t('adminProd.edit')}
+                      </button>
+                      <button type="button" className="btn btn-outline btn-small" onClick={() => remove(p)}>
+                        {t('adminProd.delete')}
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>{editing ? t('adminProd.editTitle') : t('adminProd.addTitle')}</h3>
+        <div className="field">
+          <label htmlFor="prod-material">{t('adminProd.materialLabel')}</label>
+          <select id="prod-material" value={material} onChange={(e) => setMaterial(e.target.value as Material)}>
+            {MATERIAL_OPTIONS.map((m) => (
+              <option key={m} value={m}>
+                {t(`material.${m}`)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="prod-name-th">{t('adminProd.nameThLabel')}</label>
+          <input id="prod-name-th" value={nameTh} onChange={(e) => setNameTh(e.target.value)} />
+        </div>
+        <div className="field">
+          <label htmlFor="prod-name-en">{t('adminProd.nameEnLabel')}</label>
+          <input id="prod-name-en" value={nameEn} onChange={(e) => setNameEn(e.target.value)} />
+        </div>
+        {!editing && (
+          <div className="field">
+            <label htmlFor="prod-price">{t('adminProd.priceLabel')}</label>
+            <input
+              id="prod-price"
+              type="number"
+              step="any"
+              min="0"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+            />
+          </div>
+        )}
+        {editing && (
+          <p style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 0 }}>{t('adminProd.priceHint')}</p>
+        )}
+        <div style={{ display: 'flex', gap: 10 }}>
+          <button type="button" className="btn btn-primary" onClick={submit} disabled={busy}>
+            {busy ? t('adminProd.saving') : editing ? t('adminProd.saveBtn') : t('adminProd.addBtn')}
+          </button>
+          {editing && (
+            <button type="button" className="btn btn-outline" onClick={resetForm} disabled={busy}>
+              {t('booking.cancel')}
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  );
+};
+
 /** แผงหัวข้อแจ้งว่ามีเรื่องอะไรรอ approve บ้าง — กดการ์ดเพื่อกระโดดไปแท็บนั้น */
 const PendingSummary = ({
   refreshKey,
@@ -694,6 +938,9 @@ const AdminPage = () => {
         <button type="button" className={tab === 'report' ? 'active' : ''} onClick={() => setTab('report')}>
           {t('admin.tabReport')}
         </button>
+        <button type="button" className={tab === 'products' ? 'active' : ''} onClick={() => setTab('products')}>
+          {t('admin.tabProducts')}
+        </button>
         <button type="button" className={tab === 'prices' ? 'active' : ''} onClick={() => setTab('prices')}>
           {t('admin.tabPrices')}
         </button>
@@ -708,6 +955,7 @@ const AdminPage = () => {
       {tab === 'users' && <PendingUsersTab onToast={notify} />}
       {tab === 'bookings' && <BookingsTab onToast={notify} />}
       {tab === 'report' && <ReportTab onToast={notify} />}
+      {tab === 'products' && <ProductsManageTab onToast={notify} />}
       {tab === 'prices' && <PricesTab onToast={notify} />}
       {tab === 'languages' && <LanguagesTab onToast={notify} />}
       {tab === 'settings' && <SettingsTab onToast={notify} />}

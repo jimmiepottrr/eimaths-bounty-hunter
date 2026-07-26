@@ -12,6 +12,7 @@ import {
   type Booking,
   type DataService,
   type LanguageInfo,
+  type Material,
   type Product,
   type Unit,
   type User,
@@ -28,7 +29,20 @@ type Db = {
   settings: AppSettings;
   nextUserId: number;
   nextBookingId: number;
+  nextProductId: number;
 };
+
+const MATERIAL_ORDER: Record<Material, number> = { copper: 0, brass: 1, aluminium: 2 };
+const MATERIALS: Material[] = ['copper', 'brass', 'aluminium'];
+
+/** เรียงแบบเดียวกับ backend: FIELD(material,...) → sort_order → id */
+const sortProducts = (products: Product[]): Product[] =>
+  [...products].sort(
+    (a, b) =>
+      MATERIAL_ORDER[a.material] - MATERIAL_ORDER[b.material] ||
+      a.sort_order - b.sort_order ||
+      a.id - b.id,
+  );
 
 const loadDb = (): Db => {
   const raw = localStorage.getItem(DB_KEY);
@@ -43,6 +57,19 @@ const loadDb = (): Db => {
       }
       if (!db.settings) {
         db.settings = { theme: 'gold' };
+        dirty = true;
+      }
+      // db เวอร์ชันก่อนหน้าไม่มีคอลัมน์ sort_order/active ในสินค้า และไม่มี nextProductId
+      if (db.products.some((p) => p.sort_order === undefined || p.active === undefined)) {
+        db.products = db.products.map((p, i) => ({
+          ...p,
+          sort_order: p.sort_order ?? i + 1,
+          active: p.active ?? true,
+        }));
+        dirty = true;
+      }
+      if (!db.nextProductId) {
+        db.nextProductId = Math.max(100, ...db.products.map((p) => p.id + 1));
         dirty = true;
       }
       if (dirty) localStorage.setItem(DB_KEY, JSON.stringify(db));
@@ -60,6 +87,7 @@ const loadDb = (): Db => {
     settings: { theme: 'gold' },
     nextUserId: 100,
     nextBookingId: 100,
+    nextProductId: 100,
   };
   localStorage.setItem(DB_KEY, JSON.stringify(db));
   return db;
@@ -155,7 +183,7 @@ export const mockAdapter: DataService = {
 
   async listProducts(): Promise<Product[]> {
     await delay();
-    return loadDb().products;
+    return sortProducts(loadDb().products.filter((p) => p.active));
   },
 
   async createBooking({ product_id, quantity, unit, expected_price_per_kg, delivery_date }): Promise<Booking> {
@@ -355,6 +383,85 @@ export const mockAdapter: DataService = {
     product.high_of_day = high_of_day;
     product.low_of_day = low_of_day;
     product.updated_at = new Date().toISOString();
+    saveDb(db);
+  },
+
+  async listAllProducts(): Promise<Product[]> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    return sortProducts(db.products);
+  },
+
+  async addProduct({ material, name_th, name_en, price_per_kg }): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    if (!MATERIALS.includes(material)) throw new ApiError('ประเภทวัสดุไม่ถูกต้อง', 400);
+    if (!name_th.trim()) throw new ApiError('กรุณากรอกชื่อสินค้า', 400);
+    if (!(price_per_kg > 0)) throw new ApiError('ราคาต้องมากกว่า 0', 400);
+    const maxSort = Math.max(0, ...db.products.map((p) => p.sort_order));
+    db.products.push({
+      id: db.nextProductId++,
+      material,
+      name_th: name_th.trim(),
+      name_en: name_en.trim(),
+      price_per_kg,
+      prev_price_per_kg: price_per_kg,
+      high_of_day: price_per_kg,
+      low_of_day: price_per_kg,
+      sort_order: maxSort + 1,
+      active: true,
+      updated_at: new Date().toISOString(),
+    });
+    saveDb(db);
+  },
+
+  async updateProduct(product_id, { material, name_th, name_en }): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    if (!MATERIALS.includes(material)) throw new ApiError('ประเภทวัสดุไม่ถูกต้อง', 400);
+    if (!name_th.trim()) throw new ApiError('กรุณากรอกชื่อสินค้า', 400);
+    const product = db.products.find((p) => p.id === product_id);
+    if (!product) throw new ApiError('ไม่พบสินค้า', 404);
+    product.material = material;
+    product.name_th = name_th.trim();
+    product.name_en = name_en.trim();
+    saveDb(db);
+  },
+
+  async setProductActive(product_id, active): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    const product = db.products.find((p) => p.id === product_id);
+    if (!product) throw new ApiError('ไม่พบสินค้า', 404);
+    product.active = active;
+    saveDb(db);
+  },
+
+  async deleteProduct(product_id): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    const product = db.products.find((p) => p.id === product_id);
+    if (!product) throw new ApiError('ไม่พบสินค้า', 404);
+    if (db.bookings.some((b) => b.product_id === product_id)) {
+      throw new ApiError('สินค้านี้มีประวัติการจองแล้ว ลบถาวรไม่ได้ — ใช้ "ซ่อน" แทน', 409);
+    }
+    db.products = db.products.filter((p) => p.id !== product_id);
+    saveDb(db);
+  },
+
+  async reorderProducts(order): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    order.forEach((pid, i) => {
+      const product = db.products.find((p) => p.id === pid);
+      if (product) product.sort_order = i + 1;
+    });
     saveDb(db);
   },
 };
