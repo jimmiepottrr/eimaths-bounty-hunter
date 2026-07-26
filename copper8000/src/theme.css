@@ -1451,8 +1451,13 @@ a.userbox:hover .name {
 /* ---------- ข้อความประกาศ: แถบอักษรวิ่งเต็มจอใต้เมนู ---------- */
 /* พื้นสีอ่อน (โทนเดียวกับมุมโค้งใต้เมนู) · วิ่งขวา→ซ้าย · จบแล้วเว้น 5 วิค่อยวนใหม่ */
 .marquee-bar {
+  position: relative;
+  z-index: 0; /* อยู่หลัง header (sticky z-40) */
   width: 100%;
-  padding: 9px 0;
+  /* ดันขึ้นไปซ้อนใต้ส่วนโค้งของ header (ลึก 26px) → มุมโค้งซ้าย/ขวาที่ถูกตัด
+     จะเผยสีแถบวิ่งโค้งขึ้นตามขอบ ไม่ใช่เส้นตรงอย่างเดียว */
+  margin-top: -26px;
+  padding: 35px 0 9px;
   background: var(--marquee-bg);
   color: var(--header-ink);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
@@ -1499,6 +1504,7 @@ a.userbox:hover .name {
     right: 0;
     bottom: 0;
     z-index: 50;
+    margin-top: 0; /* ยกเลิก tuck ของ desktop — มือถือเป็นแถบล่าง */
     padding: 11px 0;
     border-radius: 16px 16px 0 0;
     box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.16);
