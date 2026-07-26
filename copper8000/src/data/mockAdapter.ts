@@ -56,7 +56,11 @@ const loadDb = (): Db => {
         dirty = true;
       }
       if (!db.settings) {
-        db.settings = { theme: 'gold' };
+        db.settings = { theme: 'gold', announcement: { text: '', mode: 'marquee', active: false } };
+        dirty = true;
+      }
+      if (!db.settings.announcement) {
+        db.settings.announcement = { text: '', mode: 'marquee', active: false };
         dirty = true;
       }
       // db เวอร์ชันก่อนหน้าไม่มีคอลัมน์ sort_order/active ในสินค้า และไม่มี nextProductId
@@ -84,7 +88,7 @@ const loadDb = (): Db => {
     bookings: [...SEED_BOOKINGS],
     sessions: {},
     languages: [...SEED_LANGUAGES],
-    settings: { theme: 'gold' },
+    settings: { theme: 'gold', announcement: { text: '', mode: 'marquee', active: false } },
     nextUserId: 100,
     nextBookingId: 100,
     nextProductId: 100,
@@ -360,7 +364,8 @@ export const mockAdapter: DataService = {
 
   async getSettings(): Promise<AppSettings> {
     await delay(100);
-    return { ...loadDb().settings };
+    const s = loadDb().settings;
+    return { theme: s.theme, announcement: { ...s.announcement } };
   },
 
   async setTheme(theme): Promise<void> {
@@ -369,6 +374,17 @@ export const mockAdapter: DataService = {
     requireAdmin(db);
     if (!['gold', 'copper', 'silver'].includes(theme)) throw new ApiError('ธีมไม่ถูกต้อง', 400);
     db.settings.theme = theme;
+    saveDb(db);
+  },
+
+  async setAnnouncement({ text, mode, active }): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    if (!['marquee', 'popup'].includes(mode)) throw new ApiError('รูปแบบการแสดงไม่ถูกต้อง', 400);
+    const trimmed = text.trim();
+    if (trimmed.length > 500) throw new ApiError('ข้อความประกาศยาวเกินไป (สูงสุด 500 ตัวอักษร)', 400);
+    db.settings.announcement = { text: trimmed, mode, active };
     saveDb(db);
   },
 

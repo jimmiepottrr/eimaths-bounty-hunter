@@ -4,6 +4,7 @@ import { dataService, IS_DEMO } from '../data/service';
 import { useT } from '../i18n';
 import { useAuth } from '../store';
 import { syncThemeFromServer } from '../themeManager';
+import Announcement from './Announcement';
 import LanguagePicker from './LanguagePicker';
 import Logo from './Logo';
 
@@ -136,6 +137,9 @@ const Layout = () => {
         </div>
         {menuOpen && <nav className="mobile-menu">{navLinks}</nav>}
       </header>
+
+      {/* ข้อความประกาศ (แถบอักษรวิ่งใต้เมนู หรือ pop up) — ตั้งจากหน้าตั้งค่าแอดมิน */}
+      <Announcement />
 
       <main className="page">
         <Outlet />

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import { dataService } from '../data/service';
-import type { Booking, LanguageInfo, Material, Product, User } from '../data/types';
+import type { AnnounceMode, Booking, LanguageInfo, Material, Product, User } from '../data/types';
 import { fmtDate, fmtNumber } from '../format';
 import { DICT_TEMPLATE } from '../i18n/core';
 import { bookingProductName, productName, productSubName, useI18n } from '../i18n';
@@ -548,6 +548,93 @@ const THEME_SWATCHES: Record<ThemeCode, string[]> = {
   silver: ['#7c8794', '#a6b0bb', '#eef1f4'],
 };
 
+// ---------- บล็อกข้อความประกาศ (แถบวิ่ง / pop up) ----------
+
+const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => {
+  const { t } = useI18n();
+  const [text, setText] = useState('');
+  const [mode, setMode] = useState<AnnounceMode>('marquee');
+  const [active, setActive] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    dataService
+      .getSettings()
+      .then((s) => {
+        setText(s.announcement.text);
+        setMode(s.announcement.mode);
+        setActive(s.announcement.active);
+      })
+      .catch(() => {});
+  }, []);
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      await dataService.setAnnouncement({ text: text.trim(), mode, active });
+      onToast(t('adminAnnounce.saved'));
+    } catch (e) {
+      onToast((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="card">
+      <h3 style={{ marginTop: 0 }}>{t('adminAnnounce.title')}</h3>
+      <p style={{ color: 'var(--ink-soft)', fontSize: 'calc(14px * var(--fs))', marginTop: 0 }}>
+        {t('adminAnnounce.note')}
+      </p>
+
+      <label className="announce-field-label">{t('adminAnnounce.textLabel')}</label>
+      <textarea
+        className="announce-textarea"
+        rows={3}
+        maxLength={500}
+        value={text}
+        placeholder={t('adminAnnounce.placeholder')}
+        onChange={(e) => setText(e.target.value)}
+      />
+
+      <label className="announce-field-label">{t('adminAnnounce.modeLabel')}</label>
+      <div className="announce-mode-row">
+        <label className={`announce-mode-opt ${mode === 'marquee' ? 'selected' : ''}`}>
+          <input
+            type="radio"
+            name="announce-mode"
+            checked={mode === 'marquee'}
+            onChange={() => setMode('marquee')}
+          />
+          <span>📢 {t('adminAnnounce.modeMarquee')}</span>
+        </label>
+        <label className={`announce-mode-opt ${mode === 'popup' ? 'selected' : ''}`}>
+          <input
+            type="radio"
+            name="announce-mode"
+            checked={mode === 'popup'}
+            onChange={() => setMode('popup')}
+          />
+          <span>🪧 {t('adminAnnounce.modePopup')}</span>
+        </label>
+      </div>
+
+      <label className="announce-active-row">
+        <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
+        <span>{t('adminAnnounce.activeLabel')}</span>
+      </label>
+
+      <div style={{ marginTop: 16 }}>
+        <button type="button" className="btn btn-primary" onClick={save} disabled={busy}>
+          {t('adminAnnounce.save')}
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ---------- แท็บตั้งค่า (ธีมสี + ข้อความประกาศ) ----------
+
 const SettingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t } = useI18n();
   const [theme, setThemeState] = useState<ThemeCode>(currentTheme());
@@ -572,29 +659,32 @@ const SettingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
   };
 
   return (
-    <div className="card">
-      <h3 style={{ marginTop: 0 }}>{t('adminTheme.title')}</h3>
-      <p style={{ color: 'var(--ink-soft)', fontSize: 'calc(14px * var(--fs))', marginTop: 0 }}>{t('adminTheme.note')}</p>
-      <div className="theme-grid">
-        {(Object.keys(THEME_SWATCHES) as ThemeCode[]).map((code) => (
-          <button
-            key={code}
-            type="button"
-            className={`theme-card ${theme === code ? 'selected' : ''}`}
-            onClick={() => choose(code)}
-            disabled={busy}
-          >
-            <span className="swatches">
-              {THEME_SWATCHES[code].map((c) => (
-                <span key={c} className="dot" style={{ background: c }} />
-              ))}
-            </span>
-            <span className="name">{t(`theme.${code}`)}</span>
-            {theme === code && <span className="check">✓</span>}
-          </button>
-        ))}
+    <>
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>{t('adminTheme.title')}</h3>
+        <p style={{ color: 'var(--ink-soft)', fontSize: 'calc(14px * var(--fs))', marginTop: 0 }}>{t('adminTheme.note')}</p>
+        <div className="theme-grid">
+          {(Object.keys(THEME_SWATCHES) as ThemeCode[]).map((code) => (
+            <button
+              key={code}
+              type="button"
+              className={`theme-card ${theme === code ? 'selected' : ''}`}
+              onClick={() => choose(code)}
+              disabled={busy}
+            >
+              <span className="swatches">
+                {THEME_SWATCHES[code].map((c) => (
+                  <span key={c} className="dot" style={{ background: c }} />
+                ))}
+              </span>
+              <span className="name">{t(`theme.${code}`)}</span>
+              {theme === code && <span className="check">✓</span>}
+            </button>
+          ))}
+        </div>
       </div>
-    </div>
+      <AnnouncementSettings onToast={onToast} />
+    </>
   );
 };
 

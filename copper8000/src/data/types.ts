@@ -49,7 +49,16 @@ export type Booking = {
 
 export type AuthResult = { user: User; token: string };
 
-export type AppSettings = { theme: string };
+export type AnnounceMode = 'marquee' | 'popup';
+
+/** ข้อความประกาศที่แอดมินตั้ง — แสดงแบบแถบอักษรวิ่งใต้เมนู หรือ pop up */
+export type Announcement = {
+  text: string;
+  mode: AnnounceMode;
+  active: boolean;
+};
+
+export type AppSettings = { theme: string; announcement: Announcement };
 
 export type LanguageInfo = {
   code: string;
@@ -143,8 +152,10 @@ export interface DataService {
   /** ลบได้เฉพาะภาษาที่เพิ่มเอง — ภาษา built-in ทำได้แค่ปิด */
   deleteLanguage(code: string): Promise<void>;
   // ---- settings ----
-  /** ตั้งค่าเว็บ (สาธารณะ เช่น ธีมสี) */
+  /** ตั้งค่าเว็บ (สาธารณะ เช่น ธีมสี + ข้อความประกาศ) */
   getSettings(): Promise<AppSettings>;
   /** เปลี่ยนธีมทั้งเว็บ (admin) */
   setTheme(theme: string): Promise<void>;
+  /** ตั้งข้อความประกาศ + รูปแบบการแสดง (admin) */
+  setAnnouncement(input: { text: string; mode: AnnounceMode; active: boolean }): Promise<void>;
 }
