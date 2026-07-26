@@ -26,7 +26,7 @@ if ($method === 'GET') {
     $rows = pdo()->query(
       'SELECT b.*, p.name_th AS product_name, p.name_en AS product_name_en, u.name AS user_name
        FROM bookings b JOIN products p ON p.id = b.product_id JOIN users u ON u.id = b.user_id
-       ORDER BY b.created_at DESC, b.id DESC LIMIT 200'
+       ORDER BY b.created_at DESC, b.id DESC LIMIT 1000'
     )->fetchAll();
     json_out(['bookings' => array_map('booking_public', $rows)]);
   }
@@ -57,6 +57,28 @@ if ($action === 'confirm_booking') {
   $bookingId = (int) ($body['booking_id'] ?? 0);
   $st = pdo()->prepare("UPDATE bookings SET status = 'confirmed' WHERE id = ?");
   $st->execute([$bookingId]);
+  json_out([]);
+}
+
+// แอดมินบันทึกน้ำหนักส่งจริง + น้ำหนักสุทธิหลัง QC (ค่าว่าง = ล้างค่า)
+if ($action === 'set_weights') {
+  $bookingId = (int) ($body['booking_id'] ?? 0);
+  $parseW = static function ($v) {
+    if ($v === null || $v === '') return null;
+    $f = (float) $v;
+    if ($f < 0) json_err('น้ำหนักต้องไม่ติดลบ');
+    if ($f > 100000000) json_err('น้ำหนักมากเกินไป');
+    return $f;
+  };
+  $actual = $parseW($body['actual_weight_kg'] ?? null);
+  $qc = $parseW($body['qc_weight_kg'] ?? null);
+  $st = pdo()->prepare('UPDATE bookings SET actual_weight_kg = ?, qc_weight_kg = ? WHERE id = ?');
+  $st->execute([$actual, $qc, $bookingId]);
+  if ($st->rowCount() === 0) {
+    $chk = pdo()->prepare('SELECT id FROM bookings WHERE id = ?');
+    $chk->execute([$bookingId]);
+    if (!$chk->fetch()) json_err('ไม่พบรายการจอง', 404);
+  }
   json_out([]);
 }
 

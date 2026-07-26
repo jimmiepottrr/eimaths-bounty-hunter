@@ -29,10 +29,20 @@ $body = read_json_body();
 $productId = (int) ($body['product_id'] ?? 0);
 $quantity = (float) ($body['quantity'] ?? 0);
 $unit = (string) ($body['unit'] ?? 'ton');
+$deliveryDate = trim((string) ($body['delivery_date'] ?? ''));
 
 if (!in_array($unit, ['kg', 'ton'], true)) json_err('หน่วยไม่ถูกต้อง');
 if ($quantity <= 0) json_err('จำนวนต้องมากกว่า 0');
 if ($quantity > 1000000) json_err('จำนวนมากเกินไป');
+
+// วันที่ส่งสินค้า (ไม่บังคับ) — ต้องเป็น YYYY-MM-DD และไม่ย้อนหลัง
+if ($deliveryDate !== '') {
+  $d = DateTime::createFromFormat('Y-m-d', $deliveryDate);
+  if (!$d || $d->format('Y-m-d') !== $deliveryDate) json_err('วันที่ส่งสินค้าไม่ถูกต้อง');
+  if ($deliveryDate < date('Y-m-d')) json_err('วันที่ส่งสินค้าต้องไม่เป็นอดีต');
+} else {
+  $deliveryDate = null;
+}
 
 $st = pdo()->prepare('SELECT * FROM products WHERE id = ?');
 $st->execute([$productId]);
@@ -51,9 +61,9 @@ if ($expected !== null && abs(((float) $expected) - $price) > 0.001) {
 $total = round($kg * $price, 2);
 
 pdo()->prepare(
-  "INSERT INTO bookings (user_id, product_id, quantity, unit, price_at_booking, total_estimate, status)
-   VALUES (?, ?, ?, ?, ?, ?, 'pending')"
-)->execute([(int) $user['id'], $productId, $quantity, $unit, $price, $total]);
+  "INSERT INTO bookings (user_id, product_id, quantity, unit, price_at_booking, total_estimate, status, delivery_date)
+   VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)"
+)->execute([(int) $user['id'], $productId, $quantity, $unit, $price, $total, $deliveryDate]);
 $bookingId = (int) pdo()->lastInsertId();
 
 $st = pdo()->prepare(
