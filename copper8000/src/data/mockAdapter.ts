@@ -18,12 +18,16 @@ import {
   type User,
 } from './types';
 
-// v2: รีเซ็ต seed สาธิตให้มีประกาศตัวอย่างเปิดไว้ (เปิดหน้าแรกเจอทันที)
-const DB_KEY = 'copper8000_db_v2';
+// v3: ประกาศเก็บข้อความ 3 ภาษา (ไทย/อังกฤษ/จีน)
+const DB_KEY = 'copper8000_db_v3';
 
 /** ประกาศตัวอย่างในโหมดสาธิต — เปิดไว้ให้เห็นทันทีตั้งแต่เปิดหน้าแรก (ไม่ต้องล็อกอิน) */
 const DEMO_ANNOUNCEMENT = {
-  text: '📢 ยินดีต้อนรับสู่ Copper 8000 — รับซื้อทองแดง ทองเหลือง อลูมิเนียม ราคาดีทุกวัน! สอบถามราคาโทร 08x-xxx-xxxx',
+  text: {
+    th: '📢 ยินดีต้อนรับสู่ Copper 8000 — รับซื้อทองแดง ทองเหลือง อลูมิเนียม ราคาดีทุกวัน! สอบถามราคาโทร 08x-xxx-xxxx',
+    en: '📢 Welcome to Copper 8000 — we buy copper, brass and aluminium at great prices every day! Call 08x-xxx-xxxx',
+    zh: '📢 欢迎来到 Copper 8000 — 每天高价收购铜、黄铜、铝！咨询电话 08x-xxx-xxxx',
+  },
   mode: 'marquee' as const,
   active: true,
 };
@@ -373,7 +377,10 @@ export const mockAdapter: DataService = {
   async getSettings(): Promise<AppSettings> {
     await delay(100);
     const s = loadDb().settings;
-    return { theme: s.theme, announcement: { ...s.announcement } };
+    return {
+      theme: s.theme,
+      announcement: { ...s.announcement, text: { ...s.announcement.text } },
+    };
   },
 
   async setTheme(theme): Promise<void> {
@@ -390,9 +397,16 @@ export const mockAdapter: DataService = {
     const db = loadDb();
     requireAdmin(db);
     if (!['marquee', 'popup'].includes(mode)) throw new ApiError('รูปแบบการแสดงไม่ถูกต้อง', 400);
-    const trimmed = text.trim();
-    if (trimmed.length > 500) throw new ApiError('ข้อความประกาศยาวเกินไป (สูงสุด 500 ตัวอักษร)', 400);
-    db.settings.announcement = { text: trimmed, mode, active };
+    const trim = (v: string) => {
+      const t = (v ?? '').trim();
+      if (t.length > 500) throw new ApiError('ข้อความประกาศยาวเกินไป (สูงสุด 500 ตัวอักษร)', 400);
+      return t;
+    };
+    db.settings.announcement = {
+      text: { th: trim(text.th), en: trim(text.en), zh: trim(text.zh) },
+      mode,
+      active,
+    };
     saveDb(db);
   },
 

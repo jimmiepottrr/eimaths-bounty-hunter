@@ -7,8 +7,14 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { dataService } from '../data/service';
-import type { Announcement as AnnouncementData } from '../data/types';
-import { useT } from '../i18n';
+import type { AnnounceText, Announcement as AnnouncementData } from '../data/types';
+import { useI18n } from '../i18n';
+
+/** เลือกข้อความตามภาษาปัจจุบัน — ว่างก็ fallback ไทย→อังกฤษ→จีน */
+const textForLang = (m: AnnounceText, lang: string): string => {
+  const byLang = (m as Record<string, string>)[lang];
+  return (byLang && byLang.trim()) || m.th || m.en || m.zh || '';
+};
 
 /** true เมื่อจอมือถือ (<=680px) — ฟังการเปลี่ยนขนาด */
 const useIsMobile = (): boolean => {
@@ -62,7 +68,7 @@ const BotAvatar = () => (
 );
 
 const Announcement = () => {
-  const t = useT();
+  const { lang, t } = useI18n();
   const isMobile = useIsMobile();
   const [data, setData] = useState<AnnouncementData | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
@@ -76,7 +82,8 @@ const Announcement = () => {
       .then((s) => {
         if (cancelled) return;
         const a = s.announcement;
-        if (a && a.active && a.text.trim()) {
+        const hasText = !!a && !!(a.text.th || a.text.en || a.text.zh);
+        if (a && a.active && hasText) {
           setData(a);
           if (a.mode === 'popup') setPopupOpen(true);
         }
@@ -96,7 +103,8 @@ const Announcement = () => {
     return () => document.body.classList.remove('has-bottom-marquee');
   }, [isMarquee, isMobile, marqueeClosed]);
 
-  const text = data?.text ?? '';
+  // ข้อความตามภาษาที่เลือก — เปลี่ยนภาษาแล้ว text เปลี่ยน → typewriter พิมพ์ใหม่ / แถบวิ่งข้อความใหม่
+  const text = data ? textForLang(data.text, lang) : '';
   // popup: พิมพ์ทีละตัวตอนเปิด · การ์ดมือถือ: พิมพ์ทีละตัว · แถบวิ่ง PC: แสดงเต็ม (วิ่ง)
   const popupType = useTypewriter(text, !!data && data.mode === 'popup' && popupOpen);
   const cardType = useTypewriter(text, isMarquee && isMobile && !marqueeClosed);

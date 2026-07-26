@@ -51,9 +51,12 @@ export type AuthResult = { user: User; token: string };
 
 export type AnnounceMode = 'marquee' | 'popup';
 
+/** ข้อความประกาศต่อภาษา (ไทย/อังกฤษ/จีน) — แสดงตามภาษาที่ผู้ใช้เลือก */
+export type AnnounceText = { th: string; en: string; zh: string };
+
 /** ข้อความประกาศที่แอดมินตั้ง — แสดงแบบแถบอักษรวิ่งใต้เมนู หรือ pop up */
 export type Announcement = {
-  text: string;
+  text: AnnounceText;
   mode: AnnounceMode;
   active: boolean;
 };
@@ -156,6 +159,6 @@ export interface DataService {
   getSettings(): Promise<AppSettings>;
   /** เปลี่ยนธีมทั้งเว็บ (admin) */
   setTheme(theme: string): Promise<void>;
-  /** ตั้งข้อความประกาศ + รูปแบบการแสดง (admin) */
-  setAnnouncement(input: { text: string; mode: AnnounceMode; active: boolean }): Promise<void>;
+  /** ตั้งข้อความประกาศ (3 ภาษา) + รูปแบบการแสดง (admin) */
+  setAnnouncement(input: { text: AnnounceText; mode: AnnounceMode; active: boolean }): Promise<void>;
 }

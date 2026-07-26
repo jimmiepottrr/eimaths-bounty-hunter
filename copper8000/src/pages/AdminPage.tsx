@@ -552,7 +552,9 @@ const THEME_SWATCHES: Record<ThemeCode, string[]> = {
 
 const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t } = useI18n();
-  const [text, setText] = useState('');
+  const [textTh, setTextTh] = useState('');
+  const [textEn, setTextEn] = useState('');
+  const [textZh, setTextZh] = useState('');
   const [mode, setMode] = useState<AnnounceMode>('marquee');
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -561,7 +563,9 @@ const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => 
     dataService
       .getSettings()
       .then((s) => {
-        setText(s.announcement.text);
+        setTextTh(s.announcement.text.th);
+        setTextEn(s.announcement.text.en);
+        setTextZh(s.announcement.text.zh);
         setMode(s.announcement.mode);
         setActive(s.announcement.active);
       })
@@ -571,7 +575,11 @@ const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => 
   const save = async () => {
     setBusy(true);
     try {
-      await dataService.setAnnouncement({ text: text.trim(), mode, active });
+      await dataService.setAnnouncement({
+        text: { th: textTh.trim(), en: textEn.trim(), zh: textZh.trim() },
+        mode,
+        active,
+      });
       onToast(t('adminAnnounce.saved'));
     } catch (e) {
       onToast((e as Error).message);
@@ -587,14 +595,32 @@ const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => 
         {t('adminAnnounce.note')}
       </p>
 
-      <label className="announce-field-label">{t('adminAnnounce.textLabel')}</label>
+      <label className="announce-field-label">{t('adminAnnounce.textTh')}</label>
       <textarea
         className="announce-textarea"
-        rows={3}
+        rows={2}
         maxLength={500}
-        value={text}
+        value={textTh}
         placeholder={t('adminAnnounce.placeholder')}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => setTextTh(e.target.value)}
+      />
+      <label className="announce-field-label">{t('adminAnnounce.textEn')}</label>
+      <textarea
+        className="announce-textarea"
+        rows={2}
+        maxLength={500}
+        value={textEn}
+        placeholder="English announcement (optional)"
+        onChange={(e) => setTextEn(e.target.value)}
+      />
+      <label className="announce-field-label">{t('adminAnnounce.textZh')}</label>
+      <textarea
+        className="announce-textarea"
+        rows={2}
+        maxLength={500}
+        value={textZh}
+        placeholder="中文公告（可选）"
+        onChange={(e) => setTextZh(e.target.value)}
       />
 
       <label className="announce-field-label">{t('adminAnnounce.modeLabel')}</label>

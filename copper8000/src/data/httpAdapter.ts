@@ -232,10 +232,15 @@ export const httpAdapter: DataService = {
   async getSettings(): Promise<AppSettings> {
     const res = await request<{ settings: Partial<AppSettings> }>('/settings.php');
     const a = res.settings.announcement;
+    const at = a?.text;
     return {
       theme: res.settings.theme ?? 'gold',
       announcement: {
-        text: a?.text ?? '',
+        text: {
+          th: at?.th ?? '',
+          en: at?.en ?? '',
+          zh: at?.zh ?? '',
+        },
         mode: a?.mode === 'popup' ? 'popup' : 'marquee',
         active: a?.active ?? false,
       },

@@ -159,8 +159,11 @@ export const en: Dict = {
   'adminTheme.saved': 'Theme saved',
   'adminAnnounce.title': 'Announcement',
   'adminAnnounce.note':
-    'Show the latest message to all visitors — as a scrolling bar under the menu, or as a pop-up.',
+    'Show a message to all visitors — set it in 3 languages (shown by the visitor’s selected language), as a scrolling bar under the menu or a pop-up.',
   'adminAnnounce.textLabel': 'Message',
+  'adminAnnounce.textTh': 'Message (Thai)',
+  'adminAnnounce.textEn': 'Message (English)',
+  'adminAnnounce.textZh': 'Message (Chinese)',
   'adminAnnounce.placeholder': 'e.g. Special copper buying price today only!',
   'adminAnnounce.modeLabel': 'Display style',
   'adminAnnounce.modeMarquee': 'Scrolling bar (under menu)',

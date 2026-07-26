@@ -158,8 +158,11 @@ export const th: Dict = {
   'adminTheme.saved': 'บันทึกธีมแล้ว',
   'adminAnnounce.title': 'ข้อความประกาศ',
   'adminAnnounce.note':
-    'แสดงข้อความล่าสุดให้ผู้เข้าชมทุกคน — เลือกได้ว่าจะให้วิ่งเป็นแถบใต้เมนู หรือเด้งเป็น pop up',
+    'แสดงข้อความให้ผู้เข้าชมทุกคน — ตั้งได้ 3 ภาษา (แสดงตามภาษาที่ผู้ใช้เลือก) และเลือกให้วิ่งเป็นแถบใต้เมนู หรือเด้งเป็น pop up',
   'adminAnnounce.textLabel': 'ข้อความ',
+  'adminAnnounce.textTh': 'ข้อความ (ไทย)',
+  'adminAnnounce.textEn': 'ข้อความ (อังกฤษ)',
+  'adminAnnounce.textZh': 'ข้อความ (จีน)',
   'adminAnnounce.placeholder': 'เช่น รับซื้อทองแดงราคาพิเศษวันนี้เท่านั้น!',
   'adminAnnounce.modeLabel': 'รูปแบบการแสดง',
   'adminAnnounce.modeMarquee': 'แถบอักษรวิ่ง (ใต้เมนู)',
