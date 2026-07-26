@@ -47,17 +47,17 @@ const useTypewriter = (text: string, active: boolean, speed = 78) => {
 };
 
 const BotAvatar = () => (
-  // วงกลมพื้นหลัง = สีเมนู (ทอง) จาก .marquee-fab-icon · หุ่นยนต์สีเข้มตัดกับพื้นทอง
+  // วงกลมพื้นหลัง = สีเมนู (ทอง) จาก .marquee-fab-icon · หน้าหุ่นยนต์สีขาว หูฟังเข้มกรอบหน้า
   <svg viewBox="0 0 48 48" className="marquee-bot" role="img" aria-hidden="true">
-    <path d="M13 23a11 11 0 0 1 22 0" fill="none" stroke="#4a3410" strokeWidth="2.4" />
-    <rect x="8.5" y="22" width="5" height="8.5" rx="2.5" fill="#4a3410" />
-    <rect x="34.5" y="22" width="5" height="8.5" rx="2.5" fill="#4a3410" />
-    <line x1="24" y1="18" x2="24" y2="12.5" stroke="#4a3410" strokeWidth="2" />
-    <circle cx="24" cy="11.5" r="2.1" fill="#2a2e48" />
-    <rect x="13.5" y="18" width="21" height="16.5" rx="7.5" fill="#2f3350" />
-    <circle cx="19.5" cy="26" r="2.7" fill="#7fd0ff" />
-    <circle cx="28.5" cy="26" r="2.7" fill="#7fd0ff" />
-    <path d="M19.5 30.5q4.5 3 9 0" fill="none" stroke="#aab8d6" strokeWidth="1.6" strokeLinecap="round" />
+    <path d="M13 23a11 11 0 0 1 22 0" fill="none" stroke="#2a2e48" strokeWidth="2.4" />
+    <rect x="8.5" y="22" width="5" height="8.5" rx="2.5" fill="#2a2e48" />
+    <rect x="34.5" y="22" width="5" height="8.5" rx="2.5" fill="#2a2e48" />
+    <line x1="24" y1="18" x2="24" y2="12.5" stroke="#2a2e48" strokeWidth="2" />
+    <circle cx="24" cy="11.5" r="2.1" fill="#2f80ed" />
+    <rect x="13.5" y="18" width="21" height="16.5" rx="7.5" fill="#ffffff" />
+    <circle cx="19.5" cy="26" r="2.7" fill="#2f80ed" />
+    <circle cx="28.5" cy="26" r="2.7" fill="#2f80ed" />
+    <path d="M19.5 30.5q4.5 3 9 0" fill="none" stroke="#8fa0c0" strokeWidth="1.6" strokeLinecap="round" />
   </svg>
 );
 
