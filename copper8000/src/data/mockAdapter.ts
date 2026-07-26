@@ -18,7 +18,8 @@ import {
   type User,
 } from './types';
 
-const DB_KEY = 'copper8000_db_v1';
+// v2: รีเซ็ต seed สาธิตให้มีประกาศตัวอย่างเปิดไว้ (เปิดหน้าแรกเจอทันที)
+const DB_KEY = 'copper8000_db_v2';
 
 /** ประกาศตัวอย่างในโหมดสาธิต — เปิดไว้ให้เห็นทันทีตั้งแต่เปิดหน้าแรก (ไม่ต้องล็อกอิน) */
 const DEMO_ANNOUNCEMENT = {
