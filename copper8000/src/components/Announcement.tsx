@@ -91,10 +91,10 @@ const Announcement = () => {
 
   const isMarquee = !!data && data.mode === 'marquee';
   useEffect(() => {
-    // มือถือ: การ์ดลอยด้านล่าง — เว้นที่ท้ายเนื้อหาไม่ให้โดนบัง
-    document.body.classList.toggle('has-bottom-marquee', isMarquee && !marqueeClosed);
+    // มือถือ: การ์ดลอยด้านล่าง — เว้นที่ท้ายเนื้อหาไม่ให้โดนบัง (เฉพาะตอนการ์ดโชว์)
+    document.body.classList.toggle('has-bottom-marquee', isMarquee && isMobile && !marqueeClosed);
     return () => document.body.classList.remove('has-bottom-marquee');
-  }, [isMarquee, marqueeClosed]);
+  }, [isMarquee, isMobile, marqueeClosed]);
 
   const text = data?.text ?? '';
   // popup: พิมพ์ทีละตัวตอนเปิด · การ์ดมือถือ: พิมพ์ทีละตัว · แถบวิ่ง PC: แสดงเต็ม (วิ่ง)
@@ -146,7 +146,8 @@ const Announcement = () => {
   const marqueeText = isMobile ? cardType.shown : text;
   const showCaret = isMobile && !cardType.done;
 
-  if (marqueeClosed) return null;
+  // ปุ่ม × ปิดเฉพาะการ์ดมือถือ — desktop แถบวิ่งใต้เมนูแสดงเสมอ (ไม่ได้รับผลจากการกดปิดบนมือถือ)
+  if (marqueeClosed && isMobile) return null;
   return (
     <div className="marquee-bar" role="status" aria-label={t('announce.barLabel')}>
       <span className="marquee-fab-icon">
