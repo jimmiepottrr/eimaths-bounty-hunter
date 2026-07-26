@@ -13,6 +13,7 @@ const Announcement = () => {
   const t = useT();
   const [data, setData] = useState<AnnouncementData | null>(null);
   const [popupOpen, setPopupOpen] = useState(false);
+  const [marqueeClosed, setMarqueeClosed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,12 +74,25 @@ const Announcement = () => {
     );
   }
 
-  // marquee: แถบอักษรวิ่งเต็มจอใต้เมนู — วิ่งขวา→ซ้าย จบแล้วเว้น 5 วิ ค่อยวนใหม่
+  // marquee: PC = แถบอักษรวิ่งเต็มจอใต้เมนู (ขวา→ซ้าย เว้น 5 วิวนใหม่)
+  //          มือถือ = การ์ดแจ้งเตือนลอยด้านล่าง (ไอคอน + ข้อความ + ปุ่มปิด)
+  if (marqueeClosed) return null;
   return (
     <div className="marquee-bar" role="status" aria-label={t('announce.barLabel')}>
+      <span className="marquee-fab-icon" aria-hidden="true">
+        📢
+      </span>
       <div className="marquee-viewport">
         <div className="marquee-track">{data.text}</div>
       </div>
+      <button
+        type="button"
+        className="marquee-close"
+        aria-label={t('announce.close')}
+        onClick={() => setMarqueeClosed(true)}
+      >
+        ×
+      </button>
     </div>
   );
 };

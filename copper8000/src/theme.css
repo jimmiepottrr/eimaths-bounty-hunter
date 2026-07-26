@@ -1484,6 +1484,12 @@ a.userbox:hover .name {
   animation-play-state: paused;
 }
 
+/* ไอคอน + ปุ่มปิด แสดงเฉพาะการ์ดบนมือถือ (PC ซ่อน) */
+.marquee-fab-icon,
+.marquee-close {
+  display: none;
+}
+
 @keyframes marquee-rtl {
   0% {
     transform: translateX(100vw);
@@ -1496,22 +1502,82 @@ a.userbox:hover .name {
   }
 }
 
-/* มือถือ: แถบวิ่งย้ายไปเป็น "แถบล่าง" ติดขอบล่างจอ (fixed) */
+/* มือถือ: แถบประกาศเป็น "การ์ดแจ้งเตือนลอย" ด้านล่าง (ไอคอน + ข้อความ + ปุ่มปิด) */
 @media (max-width: 680px) {
   .marquee-bar {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    left: 12px;
+    right: 12px;
+    bottom: 14px;
     z-index: 50;
-    margin-top: 0; /* ยกเลิก tuck ของ desktop — มือถือเป็นแถบล่าง */
-    padding: 11px 0;
-    border-radius: 16px 16px 0 0;
-    box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.16);
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    width: auto;
+    margin-top: 0; /* ยกเลิก tuck ของ desktop */
+    padding: 12px 12px 12px 14px;
+    background: var(--marquee-bg);
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.24);
+    overflow: visible;
   }
-  /* เว้นที่ท้ายเนื้อหาไม่ให้แถบล่างบังฟุตเตอร์ */
+
+  .marquee-fab-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    font-size: 22px;
+    line-height: 1;
+    background: linear-gradient(180deg, var(--copper-light), var(--copper));
+    border-radius: 50%;
+    box-shadow: 0 3px 9px rgba(0, 0, 0, 0.22);
+  }
+
+  .marquee-viewport {
+    flex: 1;
+    overflow: visible;
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+
+  /* บนการ์ด: ข้อความนิ่ง ตัดบรรทัด (ไม่วิ่ง) */
+  .marquee-track {
+    display: block;
+    white-space: normal;
+    animation: none;
+    transform: none;
+    font-size: calc(13.5px * var(--fs));
+    font-weight: 600;
+    line-height: 1.42;
+  }
+
+  .marquee-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    align-self: flex-start;
+    width: 26px;
+    height: 26px;
+    border: none;
+    background: transparent;
+    font-size: 22px;
+    line-height: 1;
+    color: var(--header-ink);
+    cursor: pointer;
+    border-radius: 50%;
+  }
+
+  .marquee-close:hover {
+    background: rgba(0, 0, 0, 0.08);
+  }
+
+  /* เว้นที่ท้ายเนื้อหาไม่ให้การ์ดลอยบังฟุตเตอร์ */
   body.has-bottom-marquee {
-    padding-bottom: 56px;
+    padding-bottom: 92px;
   }
 }
 
