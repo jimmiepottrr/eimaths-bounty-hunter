@@ -216,11 +216,11 @@ button {
 
 .userbox .name {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 21px;
 }
 
 .userbox .status {
-  font-size: 12px;
+  font-size: 18px;
 }
 
 .status-approved {
@@ -254,7 +254,7 @@ button {
   text-decoration: none;
   color: var(--header-ink);
   font-weight: 500;
-  font-size: 14.5px;
+  font-size: 21.8px;
   letter-spacing: 0.01em;
   white-space: nowrap;
   transition: color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
@@ -284,7 +284,7 @@ button {
   background: var(--down);
   color: #fff;
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 16.5px;
   font-weight: 700;
   padding: 1px 7px;
   margin-left: 6px;
@@ -296,14 +296,14 @@ button {
   padding: 24px 16px 40px;
   text-align: center;
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 19.5px;
 }
 
 .demo-badge {
   background: #fff3d6;
   border: 1px solid #e8cf8a;
   color: #8a6d1a;
-  font-size: 12px;
+  font-size: 18px;
   padding: 3px 10px;
   border-radius: 999px;
   white-space: nowrap;
@@ -315,7 +315,7 @@ button {
   border: none;
   border-radius: 999px;
   padding: 10px 18px;
-  font-size: 15px;
+  font-size: 22.5px;
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.06s ease, box-shadow 0.15s ease, opacity 0.15s ease;
@@ -362,7 +362,7 @@ button {
 
 .btn-small {
   padding: 6px 14px;
-  font-size: 13px;
+  font-size: 19.5px;
 }
 
 .field {
@@ -373,7 +373,7 @@ button {
 }
 
 .field label {
-  font-size: 14px;
+  font-size: 21px;
   font-weight: 600;
   color: var(--ink-soft);
 }
@@ -383,7 +383,7 @@ button {
   border: 1.5px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
-  font-size: 15px;
+  font-size: 22.5px;
   font-family: inherit;
   background: #fff;
   color: var(--ink);
@@ -416,7 +416,7 @@ button {
   border-radius: 10px;
   padding: 10px 14px;
   margin-bottom: 14px;
-  font-size: 14px;
+  font-size: 21px;
 }
 
 .info-box {
@@ -424,7 +424,7 @@ button {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 12px 14px;
-  font-size: 13px;
+  font-size: 19.5px;
   color: var(--ink-soft);
 }
 
@@ -434,7 +434,7 @@ button {
   color: var(--confirmed);
   border-radius: 10px;
   padding: 12px 14px;
-  font-size: 14px;
+  font-size: 21px;
 }
 
 /* ---------- หน้าแรก: price rows ไล่สีตามรูปอ้างอิง ---------- */
@@ -467,13 +467,13 @@ button {
 
 .price-row .row-title {
   font-family: 'Noto Serif Thai', serif;
-  font-size: 20px;
+  font-size: 30px;
   font-weight: 600;
   margin: 0;
 }
 
 .price-row .row-sub {
-  font-size: 12px;
+  font-size: 18px;
   letter-spacing: 0.12em;
   opacity: 0.75;
   margin-top: 6px;
@@ -490,13 +490,13 @@ button {
 }
 
 .price-row .row-price {
-  font-size: 26px;
+  font-size: 39px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .price-row .row-price small {
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 500;
   opacity: 0.8;
 }
@@ -529,12 +529,12 @@ button {
 
 .section-heading h2 {
   margin: 0;
-  font-size: 24px;
+  font-size: 36px;
 }
 
 .section-heading .en {
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 19.5px;
   letter-spacing: 0.15em;
   text-transform: uppercase;
 }
@@ -545,7 +545,7 @@ button {
 }
 
 .hero h1 {
-  font-size: 34px;
+  font-size: 51px;
   letter-spacing: 0.01em;
   margin: 0 0 6px;
 }
@@ -569,7 +569,7 @@ button {
 .pricedate {
   display: inline-block;
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 19.5px;
   margin-top: 14px;
   padding: 6px 16px;
   background: #fff;
@@ -613,17 +613,17 @@ button {
 
 .trade-row .t-name {
   font-weight: 700;
-  font-size: 16px;
+  font-size: 24px;
 }
 
 .trade-row .t-sub {
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 18px;
   margin-top: 2px;
 }
 
 .trade-row .t-price {
-  font-size: 28px;
+  font-size: 42px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   text-align: right;
@@ -631,14 +631,14 @@ button {
 }
 
 .trade-row .t-delta {
-  font-size: 12px;
+  font-size: 18px;
   font-weight: 600;
   text-align: right;
 }
 
 .trade-row .t-hl {
   color: var(--ink-soft);
-  font-size: 12px;
+  font-size: 18px;
   text-align: right;
   min-width: 96px;
   font-variant-numeric: tabular-nums;
@@ -646,7 +646,7 @@ button {
 
 .trade-row .t-hint {
   grid-column: 1 / -1;
-  font-size: 12px;
+  font-size: 18px;
   color: var(--copper-dark);
   border-top: 1px dashed var(--line);
   padding-top: 8px;
@@ -712,7 +712,7 @@ button {
 
 .modal .m-price {
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: 21px;
   margin-bottom: 16px;
 }
 
@@ -764,7 +764,7 @@ button {
 
 .modal .m-review-note {
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: 21px;
   margin: 0 0 14px;
 }
 
@@ -790,7 +790,7 @@ button {
 
 .review-row span {
   color: var(--ink-soft);
-  font-size: 14px;
+  font-size: 21px;
 }
 
 .review-row strong {
@@ -799,7 +799,7 @@ button {
 
 .review-row.total {
   background: var(--cream-1);
-  font-size: 17px;
+  font-size: 25.5px;
 }
 
 .review-row.total strong {
@@ -843,14 +843,14 @@ button {
   color: #fff;
   text-align: left;
   padding: 12px 14px;
-  font-size: 14px;
+  font-size: 21px;
   white-space: nowrap;
 }
 
 .report-table td {
   padding: 12px 14px;
   border-top: 1px solid var(--line);
-  font-size: 14px;
+  font-size: 21px;
   font-variant-numeric: tabular-nums;
 }
 
@@ -870,7 +870,7 @@ button {
   display: inline-block;
   padding: 4px 12px;
   border-radius: 999px;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -925,7 +925,7 @@ button {
   border: 1.5px solid var(--line);
   border-radius: 8px;
   padding: 8px;
-  font-size: 14px;
+  font-size: 21px;
   width: 100%;
 }
 
@@ -945,14 +945,14 @@ button {
   border-radius: 999px;
   padding: 5px 12px;
   background: #fff;
-  font-size: 13px;
+  font-size: 19.5px;
 }
 
 .lang-picker select {
   border: none;
   background: transparent;
   font-family: inherit;
-  font-size: 13px;
+  font-size: 19.5px;
   font-weight: 600;
   color: var(--copper-dark);
   cursor: pointer;
@@ -964,7 +964,7 @@ button {
 
 .dict-editor {
   font-family: ui-monospace, 'Cascadia Mono', 'Courier New', monospace;
-  font-size: 12.5px;
+  font-size: 18.8px;
   width: 100%;
   border: 1.5px solid var(--line);
   border-radius: 10px;
@@ -1002,7 +1002,7 @@ button {
   padding: 14px 18px;
   cursor: pointer;
   font-family: inherit;
-  font-size: 14.5px;
+  font-size: 21.8px;
   color: var(--ink);
   transition: border-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
 }
@@ -1014,7 +1014,7 @@ button {
 }
 
 .pending-card .cnt {
-  font-size: 28px;
+  font-size: 42px;
   font-weight: 800;
   color: var(--copper-dark);
   min-width: 44px;
@@ -1044,7 +1044,7 @@ button {
   padding: 14px 16px;
   cursor: pointer;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 22.5px;
   font-weight: 600;
   color: var(--ink);
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -1100,7 +1100,7 @@ button {
   color: #fff;
   padding: 12px 20px;
   border-radius: 999px;
-  font-size: 14px;
+  font-size: 21px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
   z-index: 80;
   max-width: 90vw;
@@ -1133,14 +1133,14 @@ button {
 
 .stat .num {
   font-family: 'Noto Serif Thai', 'Noto Sans Thai', 'Noto Sans SC', serif;
-  font-size: 32px;
+  font-size: 48px;
   font-weight: 800;
   color: var(--copper-dark);
 }
 
 .stat .lbl {
   color: var(--ink-soft);
-  font-size: 13px;
+  font-size: 19.5px;
   margin-top: 4px;
 }
 
@@ -1178,7 +1178,7 @@ button {
 
 .reg-table {
   width: 100%;
-  font-size: 14px;
+  font-size: 21px;
   border-collapse: collapse;
 }
 
@@ -1268,9 +1268,12 @@ button {
   flex-shrink: 0;
 }
 
-/* โลโก้ภาพจริง (lockup เต็ม: มาร์ค+ชื่อบริษัท) — คุมด้วยความสูง */
+/* โลโก้ภาพจริง (lockup เต็ม: มาร์ค+ชื่อบริษัท) — คุมด้วยความสูง
+   ขยายเป็น 2 เท่า (60→120px). แถวโลโก้ (topbar-inner) จัดกึ่งกลางแนวตั้ง +
+   ปุ่ม/ภาษาชิดขวาด้วย margin-left:auto ส่วนแถบเมนู (tabs-band) อยู่คนละแถวด้านล่าง
+   โลโก้จึงสูงขึ้นได้โดยไม่ทับเมนูหรือปุ่ม */
 .logo-img {
-  height: 60px;
+  height: 120px;
   width: auto;
   display: block;
   flex-shrink: 0;
@@ -1290,7 +1293,7 @@ button {
 .logo-word-main {
   font-family: 'Noto Serif Thai', serif;
   font-weight: 700;
-  font-size: 30px;
+  font-size: 45px;
   color: var(--logo-main, #7c4a24);
 }
 
@@ -1299,7 +1302,7 @@ button {
 }
 
 .logo-word-sub {
-  font-size: 14.5px;
+  font-size: 21.8px;
   letter-spacing: 0.16em;
   color: var(--logo-sub, #a76a3a);
   border-top: 1px solid var(--logo-line, #d8c79a);
@@ -1393,11 +1396,11 @@ a.userbox:hover .name {
   }
 
   .topbar .logo-img {
-    height: 42px;
+    height: 84px;
   }
 
   .topbar .logo-word-main {
-    font-size: 18px;
+    font-size: 27px;
   }
 
   .topbar .logo-word-sub {
@@ -1426,6 +1429,6 @@ a.userbox:hover .name {
 
   .lang-picker {
     padding: 4px 8px;
-    font-size: 12.5px;
+    font-size: 18.8px;
   }
 }

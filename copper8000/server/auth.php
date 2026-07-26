@@ -1,6 +1,6 @@
 <?php
 /**
- * auth.php — POST {action:'signup'|'login', ...} · GET (Bearer) = me
+ * auth.php — POST {action:'signup'|'login'|'change_password', ...} · GET (Bearer) = me
  */
 declare(strict_types=1);
 require __DIR__ . '/_bootstrap.php';
