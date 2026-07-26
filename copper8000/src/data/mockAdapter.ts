@@ -8,6 +8,9 @@ import { SEED_BOOKINGS, SEED_LANGUAGES, SEED_PRODUCTS, SEED_USERS, type SeedUser
 import {
   ApiError,
   type AppSettings,
+  type AuditEntry,
+  type AuditQuery,
+  type AuditResult,
   type AuthResult,
   type Booking,
   type DataService,
@@ -39,9 +42,11 @@ type Db = {
   sessions: Record<string, number>; // token -> user id
   languages: LanguageInfo[];
   settings: AppSettings;
+  audit: AuditEntry[];
   nextUserId: number;
   nextBookingId: number;
   nextProductId: number;
+  nextAuditId: number;
 };
 
 const MATERIAL_ORDER: Record<Material, number> = { copper: 0, brass: 1, aluminium: 2 };
@@ -88,6 +93,14 @@ const loadDb = (): Db => {
         db.nextProductId = Math.max(100, ...db.products.map((p) => p.id + 1));
         dirty = true;
       }
+      if (!db.audit) {
+        db.audit = [];
+        dirty = true;
+      }
+      if (!db.nextAuditId) {
+        db.nextAuditId = 1;
+        dirty = true;
+      }
       if (dirty) localStorage.setItem(DB_KEY, JSON.stringify(db));
       return db;
     } catch {
@@ -101,15 +114,45 @@ const loadDb = (): Db => {
     sessions: {},
     languages: [...SEED_LANGUAGES],
     settings: { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT } },
+    audit: [],
     nextUserId: 100,
     nextBookingId: 100,
     nextProductId: 100,
+    nextAuditId: 1,
   };
   localStorage.setItem(DB_KEY, JSON.stringify(db));
   return db;
 };
 
 const saveDb = (db: Db) => localStorage.setItem(DB_KEY, JSON.stringify(db));
+
+/** บันทึกเหตุการณ์ลง audit (โหมดสาธิต) — ไม่ save เอง ให้ผู้เรียก saveDb ต่อ */
+const recordAudit = (
+  db: Db,
+  action: string,
+  opts: {
+    actor?: SeedUser | null;
+    actorRole?: string;
+    entity?: string;
+    entity_id?: number | null;
+    detail?: Record<string, unknown>;
+  } = {},
+): void => {
+  const actor = opts.actor ?? null;
+  db.audit.push({
+    id: db.nextAuditId++,
+    created_at: new Date().toISOString(),
+    user_id: actor ? actor.id : null,
+    actor_email: actor ? actor.email : null,
+    actor_role: opts.actorRole ?? (actor ? actor.role : 'guest'),
+    action,
+    entity: opts.entity ?? null,
+    entity_id: opts.entity_id ?? null,
+    detail: opts.detail ? JSON.stringify(opts.detail) : null,
+    ip: 'demo',
+    user_agent: typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 255) : null,
+  });
+};
 
 const delay = (ms = 250) => new Promise((r) => setTimeout(r, ms));
 
@@ -165,6 +208,7 @@ export const mockAdapter: DataService = {
       approved: false,
     };
     db.users.push(user);
+    recordAudit(db, 'signup', { actor: user, entity: 'user', entity_id: user.id, detail: { email: user.email, name: user.name } });
     const token = createSession(db, user.id);
     authToken = token;
     return { user: publicUser(user), token };
@@ -175,8 +219,11 @@ export const mockAdapter: DataService = {
     const db = loadDb();
     const user = db.users.find((u) => u.email === email.trim().toLowerCase());
     if (!user || user.password !== password) {
+      recordAudit(db, 'login_failed', { actorRole: 'guest', entity: 'user', detail: { email: email.trim().toLowerCase() } });
+      saveDb(db);
       throw new ApiError('อีเมลหรือรหัสผ่านไม่ถูกต้อง', 401);
     }
+    recordAudit(db, 'login', { actor: user, entity: 'user', entity_id: user.id });
     const token = createSession(db, user.id);
     authToken = token;
     return { user: publicUser(user), token };
@@ -194,6 +241,7 @@ export const mockAdapter: DataService = {
     if (user.password !== current_password) throw new ApiError('รหัสผ่านปัจจุบันไม่ถูกต้อง', 400);
     if (new_password.length < 6) throw new ApiError('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร', 400);
     user.password = new_password;
+    recordAudit(db, 'change_password', { actor: user, entity: 'user', entity_id: user.id });
     saveDb(db);
   },
 
@@ -237,6 +285,19 @@ export const mockAdapter: DataService = {
       created_at: new Date().toISOString(),
     };
     db.bookings.push(booking);
+    recordAudit(db, 'create_booking', {
+      actor: user,
+      entity: 'booking',
+      entity_id: booking.id,
+      detail: {
+        product_id,
+        product: product.name_th,
+        quantity,
+        unit,
+        price_at_booking: booking.price_at_booking,
+        total_estimate: booking.total_estimate,
+      },
+    });
     saveDb(db);
     return booking;
   },
@@ -261,10 +322,11 @@ export const mockAdapter: DataService = {
   async setUserApproval(user_id, approved): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     const user = db.users.find((u) => u.id === user_id);
     if (!user) throw new ApiError('ไม่พบผู้ใช้', 404);
     user.approved = approved;
+    recordAudit(db, approved ? 'approve_user' : 'reject_user', { actor: admin, entity: 'user', entity_id: user_id, detail: { approved } });
     saveDb(db);
   },
 
@@ -278,17 +340,18 @@ export const mockAdapter: DataService = {
   async confirmBooking(booking_id): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     const booking = db.bookings.find((b) => b.id === booking_id);
     if (!booking) throw new ApiError('ไม่พบรายการจอง', 404);
     booking.status = 'confirmed';
+    recordAudit(db, 'confirm_booking', { actor: admin, entity: 'booking', entity_id: booking_id });
     saveDb(db);
   },
 
   async setBookingWeights(booking_id, { actual_weight_kg, qc_weight_kg }): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     const booking = db.bookings.find((b) => b.id === booking_id);
     if (!booking) throw new ApiError('ไม่พบรายการจอง', 404);
     const norm = (v: number | null) => {
@@ -298,6 +361,7 @@ export const mockAdapter: DataService = {
     };
     booking.actual_weight_kg = norm(actual_weight_kg);
     booking.qc_weight_kg = norm(qc_weight_kg);
+    recordAudit(db, 'set_weights', { actor: admin, entity: 'booking', entity_id: booking_id, detail: { actual_weight_kg: booking.actual_weight_kg, qc_weight_kg: booking.qc_weight_kg } });
     saveDb(db);
   },
 
@@ -318,7 +382,7 @@ export const mockAdapter: DataService = {
   async addLanguage({ code, name_native, dict }): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     const norm = code.trim().toLowerCase();
     if (!/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/.test(norm)) throw new ApiError('รหัสภาษาไม่ถูกต้อง', 400);
     if (!name_native.trim()) throw new ApiError('กรุณากรอกชื่อภาษา', 400);
@@ -332,38 +396,41 @@ export const mockAdapter: DataService = {
       sort_order: maxSort + 1,
       dict,
     });
+    recordAudit(db, 'add_language', { actor: admin, entity: 'language', detail: { code: norm, name_native: name_native.trim() } });
     saveDb(db);
   },
 
   async updateLanguage(code, { name_native, dict }): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     const language = db.languages.find((l) => l.code === code);
     if (!language) throw new ApiError('ไม่พบภาษา', 404);
     if (dict && language.built_in) throw new ApiError('ภาษาหลักแก้คำแปลไม่ได้', 400);
     if (name_native !== undefined) language.name_native = name_native.trim();
     if (dict !== undefined) language.dict = dict;
+    recordAudit(db, 'update_language', { actor: admin, entity: 'language', detail: { code, fields: [name_native !== undefined ? 'name_native' : null, dict !== undefined ? 'dict' : null].filter(Boolean) } });
     saveDb(db);
   },
 
   async setLanguageEnabled(code, enabled): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     const language = db.languages.find((l) => l.code === code);
     if (!language) throw new ApiError('ไม่พบภาษา', 404);
     if (!enabled && db.languages.filter((l) => l.enabled && l.code !== code).length === 0) {
       throw new ApiError('ต้องมีอย่างน้อย 1 ภาษาที่เปิดใช้งาน', 400);
     }
     language.enabled = enabled;
+    recordAudit(db, enabled ? 'enable_language' : 'disable_language', { actor: admin, entity: 'language', detail: { code, enabled } });
     saveDb(db);
   },
 
   async deleteLanguage(code): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     const language = db.languages.find((l) => l.code === code);
     if (!language) throw new ApiError('ไม่พบภาษา', 404);
     if (language.built_in) throw new ApiError('ภาษาหลักลบไม่ได้ (ปิดการใช้งานแทน)', 400);
@@ -371,6 +438,7 @@ export const mockAdapter: DataService = {
       throw new ApiError('ต้องมีอย่างน้อย 1 ภาษาที่เปิดใช้งาน', 400);
     }
     db.languages = db.languages.filter((l) => l.code !== code);
+    recordAudit(db, 'delete_language', { actor: admin, entity: 'language', detail: { code } });
     saveDb(db);
   },
 
@@ -386,16 +454,17 @@ export const mockAdapter: DataService = {
   async setTheme(theme): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     if (!['gold', 'copper', 'silver'].includes(theme)) throw new ApiError('ธีมไม่ถูกต้อง', 400);
     db.settings.theme = theme;
+    recordAudit(db, 'set_theme', { actor: admin, entity: 'settings', detail: { theme } });
     saveDb(db);
   },
 
   async setAnnouncement({ text, mode, active }): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     if (!['marquee', 'popup'].includes(mode)) throw new ApiError('รูปแบบการแสดงไม่ถูกต้อง', 400);
     const map: Record<string, string> = {};
     for (const [lc, v] of Object.entries(text)) {
@@ -405,20 +474,23 @@ export const mockAdapter: DataService = {
       map[lc] = tv;
     }
     db.settings.announcement = { text: map, mode, active };
+    recordAudit(db, 'set_announcement', { actor: admin, entity: 'settings', detail: { mode, active, langs: Object.keys(map) } });
     saveDb(db);
   },
 
   async updatePrice(product_id, { price_per_kg, high_of_day, low_of_day }): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     const product = db.products.find((p) => p.id === product_id);
     if (!product) throw new ApiError('ไม่พบสินค้า', 404);
+    const oldPrice = product.price_per_kg;
     product.prev_price_per_kg = product.price_per_kg;
     product.price_per_kg = price_per_kg;
     product.high_of_day = high_of_day;
     product.low_of_day = low_of_day;
     product.updated_at = new Date().toISOString();
+    recordAudit(db, 'update_price', { actor: admin, entity: 'product', entity_id: product_id, detail: { old_price: oldPrice, new_price: price_per_kg, high_of_day, low_of_day } });
     saveDb(db);
   },
 
@@ -432,13 +504,14 @@ export const mockAdapter: DataService = {
   async addProduct({ material, name_th, name_en, price_per_kg }): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     if (!MATERIALS.includes(material)) throw new ApiError('ประเภทวัสดุไม่ถูกต้อง', 400);
     if (!name_th.trim()) throw new ApiError('กรุณากรอกชื่อสินค้า', 400);
     if (!(price_per_kg > 0)) throw new ApiError('ราคาต้องมากกว่า 0', 400);
     const maxSort = Math.max(0, ...db.products.map((p) => p.sort_order));
+    const newId = db.nextProductId++;
     db.products.push({
-      id: db.nextProductId++,
+      id: newId,
       material,
       name_th: name_th.trim(),
       name_en: name_en.trim(),
@@ -450,13 +523,14 @@ export const mockAdapter: DataService = {
       active: true,
       updated_at: new Date().toISOString(),
     });
+    recordAudit(db, 'add_product', { actor: admin, entity: 'product', entity_id: newId, detail: { material, name_th: name_th.trim(), price_per_kg } });
     saveDb(db);
   },
 
   async updateProduct(product_id, { material, name_th, name_en }): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     if (!MATERIALS.includes(material)) throw new ApiError('ประเภทวัสดุไม่ถูกต้อง', 400);
     if (!name_th.trim()) throw new ApiError('กรุณากรอกชื่อสินค้า', 400);
     const product = db.products.find((p) => p.id === product_id);
@@ -464,40 +538,75 @@ export const mockAdapter: DataService = {
     product.material = material;
     product.name_th = name_th.trim();
     product.name_en = name_en.trim();
+    recordAudit(db, 'update_product', { actor: admin, entity: 'product', entity_id: product_id, detail: { material, name_th: name_th.trim(), name_en: name_en.trim() } });
     saveDb(db);
   },
 
   async setProductActive(product_id, active): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     const product = db.products.find((p) => p.id === product_id);
     if (!product) throw new ApiError('ไม่พบสินค้า', 404);
     product.active = active;
+    recordAudit(db, active ? 'show_product' : 'hide_product', { actor: admin, entity: 'product', entity_id: product_id, detail: { active } });
     saveDb(db);
   },
 
   async deleteProduct(product_id): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     const product = db.products.find((p) => p.id === product_id);
     if (!product) throw new ApiError('ไม่พบสินค้า', 404);
     if (db.bookings.some((b) => b.product_id === product_id)) {
       throw new ApiError('สินค้านี้มีประวัติการจองแล้ว ลบถาวรไม่ได้ — ใช้ "ซ่อน" แทน', 409);
     }
     db.products = db.products.filter((p) => p.id !== product_id);
+    recordAudit(db, 'delete_product', { actor: admin, entity: 'product', entity_id: product_id });
     saveDb(db);
   },
 
   async reorderProducts(order): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     order.forEach((pid, i) => {
       const product = db.products.find((p) => p.id === pid);
       if (product) product.sort_order = i + 1;
     });
+    recordAudit(db, 'reorder_products', { actor: admin, entity: 'product', detail: { order } });
     saveDb(db);
+  },
+
+  async listAudit(query: AuditQuery = {}): Promise<AuditResult> {
+    await delay(150);
+    const db = loadDb();
+    requireAdmin(db);
+    const q = (query.q ?? '').trim().toLowerCase();
+    const filtered = db.audit.filter((e) => {
+      if (query.action && e.action !== query.action) return false;
+      if (query.user_id !== undefined && e.user_id !== query.user_id) return false;
+      if (query.from && e.created_at.slice(0, 10) < query.from) return false;
+      if (query.to && e.created_at.slice(0, 10) > query.to) return false;
+      if (q) {
+        const hay = `${e.actor_email ?? ''} ${e.ip ?? ''} ${e.detail ?? ''} ${e.user_agent ?? ''}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    // ใหม่สุดก่อน
+    const sorted = [...filtered].sort((a, b) => b.id - a.id);
+    const perPage = Math.min(Math.max(query.per_page ?? 50, 1), 10000);
+    const page = Math.max(query.page ?? 1, 1);
+    const start = (page - 1) * perPage;
+    const actions = [...new Set(db.audit.map((e) => e.action))].sort();
+    return {
+      entries: sorted.slice(start, start + perPage),
+      total: filtered.length,
+      page,
+      per_page: perPage,
+      actions,
+    };
   },
 };

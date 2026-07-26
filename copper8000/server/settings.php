@@ -56,7 +56,7 @@ if ($method === 'GET') {
 
 if ($method !== 'POST') json_err('method ไม่ถูกต้อง', 405);
 
-require_admin();
+$admin = require_admin();
 
 $body = read_json_body();
 $action = (string) ($body['action'] ?? '');
@@ -65,6 +65,7 @@ if ($action === 'set_theme') {
   $theme = (string) ($body['theme'] ?? '');
   if (!in_array($theme, VALID_THEMES, true)) json_err('ธีมไม่ถูกต้อง');
   set_setting('theme', $theme);
+  audit_log('set_theme', ['user' => $admin, 'entity' => 'settings', 'detail' => ['theme' => $theme]]);
   json_out([]);
 }
 
@@ -87,6 +88,7 @@ if ($action === 'set_announcement') {
   set_setting('announce_text', json_encode($map, JSON_UNESCAPED_UNICODE));
   set_setting('announce_mode', $mode);
   set_setting('announce_active', $active);
+  audit_log('set_announcement', ['user' => $admin, 'entity' => 'settings', 'detail' => ['mode' => $mode, 'active' => $active === '1', 'langs' => array_keys($map)]]);
   json_out([]);
 }
 

@@ -8,7 +8,7 @@ declare(strict_types=1);
 require __DIR__ . '/_bootstrap.php';
 
 api_key_check();
-require_admin();
+$admin = require_admin();
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
@@ -57,6 +57,7 @@ if ($action === 'set_approval') {
     $chk->execute([$userId]);
     if (!$chk->fetch()) json_err('ไม่พบผู้ใช้', 404);
   }
+  audit_log($approved ? 'approve_user' : 'reject_user', ['user' => $admin, 'entity' => 'user', 'entity_id' => $userId, 'detail' => ['approved' => $approved]]);
   json_out([]);
 }
 
@@ -64,6 +65,7 @@ if ($action === 'confirm_booking') {
   $bookingId = (int) ($body['booking_id'] ?? 0);
   $st = pdo()->prepare("UPDATE bookings SET status = 'confirmed' WHERE id = ?");
   $st->execute([$bookingId]);
+  audit_log('confirm_booking', ['user' => $admin, 'entity' => 'booking', 'entity_id' => $bookingId]);
   json_out([]);
 }
 
@@ -86,6 +88,7 @@ if ($action === 'set_weights') {
     $chk->execute([$bookingId]);
     if (!$chk->fetch()) json_err('ไม่พบรายการจอง', 404);
   }
+  audit_log('set_weights', ['user' => $admin, 'entity' => 'booking', 'entity_id' => $bookingId, 'detail' => ['actual_weight_kg' => $actual, 'qc_weight_kg' => $qc]]);
   json_out([]);
 }
 
@@ -105,7 +108,9 @@ if ($action === 'add_product') {
     'INSERT INTO products (material, name_th, name_en, price_per_kg, prev_price_per_kg, high_of_day, low_of_day, sort_order, active)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)'
   )->execute([$material, $nameTh, $nameEn, $price, $price, $price, $price, $maxSort + 1]);
-  json_out(['id' => (int) pdo()->lastInsertId()]);
+  $newId = (int) pdo()->lastInsertId();
+  audit_log('add_product', ['user' => $admin, 'entity' => 'product', 'entity_id' => $newId, 'detail' => ['material' => $material, 'name_th' => $nameTh, 'price_per_kg' => $price]]);
+  json_out(['id' => $newId]);
 }
 
 if ($action === 'update_product') {
@@ -122,6 +127,7 @@ if ($action === 'update_product') {
     $chk->execute([$productId]);
     if (!$chk->fetch()) json_err('ไม่พบสินค้า', 404);
   }
+  audit_log('update_product', ['user' => $admin, 'entity' => 'product', 'entity_id' => $productId, 'detail' => ['material' => $material, 'name_th' => $nameTh, 'name_en' => $nameEn]]);
   json_out([]);
 }
 
@@ -129,6 +135,7 @@ if ($action === 'set_product_active') {
   $productId = (int) ($body['product_id'] ?? 0);
   $active = (bool) ($body['active'] ?? false);
   pdo()->prepare('UPDATE products SET active = ? WHERE id = ?')->execute([$active ? 1 : 0, $productId]);
+  audit_log($active ? 'show_product' : 'hide_product', ['user' => $admin, 'entity' => 'product', 'entity_id' => $productId, 'detail' => ['active' => $active]]);
   json_out([]);
 }
 
@@ -141,6 +148,7 @@ if ($action === 'delete_product') {
     json_err('สินค้านี้มีประวัติการจองแล้ว ลบถาวรไม่ได้ — ใช้ "ซ่อน" แทน', 409);
   }
   pdo()->prepare('DELETE FROM products WHERE id = ?')->execute([$productId]);
+  audit_log('delete_product', ['user' => $admin, 'entity' => 'product', 'entity_id' => $productId]);
   json_out([]);
 }
 
@@ -153,6 +161,7 @@ if ($action === 'reorder_products') {
     $st->execute([$i, (int) $pid]);
     $i++;
   }
+  audit_log('reorder_products', ['user' => $admin, 'entity' => 'product', 'detail' => ['order' => array_map('intval', $order)]]);
   json_out([]);
 }
 
@@ -162,10 +171,15 @@ if ($action === 'update_price') {
   $high = (float) ($body['high_of_day'] ?? 0);
   $low = (float) ($body['low_of_day'] ?? 0);
   if ($price <= 0) json_err('ราคาต้องมากกว่า 0');
+  // อ่านราคาเดิมก่อนแก้ เพื่อบันทึกเก่า→ใหม่ ใน audit log
+  $prevSt = pdo()->prepare('SELECT price_per_kg FROM products WHERE id = ?');
+  $prevSt->execute([$productId]);
+  $oldPrice = $prevSt->fetchColumn();
   $st = pdo()->prepare(
     'UPDATE products SET prev_price_per_kg = price_per_kg, price_per_kg = ?, high_of_day = ?, low_of_day = ? WHERE id = ?'
   );
   $st->execute([$price, $high, $low, $productId]);
+  audit_log('update_price', ['user' => $admin, 'entity' => 'product', 'entity_id' => $productId, 'detail' => ['old_price' => $oldPrice !== false ? (float) $oldPrice : null, 'new_price' => $price, 'high_of_day' => $high, 'low_of_day' => $low]]);
   json_out([]);
 }
 

@@ -39,7 +39,9 @@ if ($action === 'signup') {
 
   $st = pdo()->prepare('SELECT * FROM users WHERE id = ?');
   $st->execute([$userId]);
-  json_out(['token' => new_session($userId), 'user' => user_public($st->fetch())], 201);
+  $newUser = $st->fetch();
+  audit_log('signup', ['user' => $newUser, 'entity' => 'user', 'entity_id' => $userId, 'detail' => ['email' => $email, 'name' => $name]]);
+  json_out(['token' => new_session($userId), 'user' => user_public($newUser)], 201);
 }
 
 if ($action === 'login') {
@@ -50,8 +52,11 @@ if ($action === 'login') {
   $st->execute([$email]);
   $user = $st->fetch();
   if (!$user || !password_verify($password, $user['password_hash'])) {
+    // บันทึกความพยายามล็อกอินที่ล้มเหลว (เก็บอีเมลที่กรอก ไม่เก็บรหัสผ่าน) — ช่วยจับ brute force
+    audit_log('login_failed', ['actor_role' => 'guest', 'entity' => 'user', 'detail' => ['email' => $email]]);
     json_err('อีเมลหรือรหัสผ่านไม่ถูกต้อง', 401);
   }
+  audit_log('login', ['user' => $user, 'entity' => 'user', 'entity_id' => (int) $user['id']]);
   json_out(['token' => new_session((int) $user['id']), 'user' => user_public($user)]);
 }
 
@@ -63,6 +68,7 @@ if ($action === 'change_password') {
   if (!password_verify($current, $user['password_hash'])) json_err('รหัสผ่านปัจจุบันไม่ถูกต้อง');
   pdo()->prepare('UPDATE users SET password_hash = ? WHERE id = ?')
     ->execute([password_hash($new, PASSWORD_DEFAULT), (int) $user['id']]);
+  audit_log('change_password', ['user' => $user, 'entity' => 'user', 'entity_id' => (int) $user['id']]);
   json_out([]);
 }
 

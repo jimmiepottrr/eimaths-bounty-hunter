@@ -66,6 +66,11 @@ pdo()->prepare(
 )->execute([(int) $user['id'], $productId, $quantity, $unit, $price, $total, $deliveryDate]);
 $bookingId = (int) pdo()->lastInsertId();
 
+audit_log('create_booking', ['user' => $user, 'entity' => 'booking', 'entity_id' => $bookingId, 'detail' => [
+  'product_id' => $productId, 'product' => $product['name_th'], 'quantity' => $quantity, 'unit' => $unit,
+  'price_at_booking' => $price, 'total_estimate' => $total,
+]]);
+
 $st = pdo()->prepare(
   'SELECT b.*, p.name_th AS product_name, p.name_en AS product_name_en, u.name AS user_name
    FROM bookings b JOIN products p ON p.id = b.product_id JOIN users u ON u.id = b.user_id
