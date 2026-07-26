@@ -397,16 +397,14 @@ export const mockAdapter: DataService = {
     const db = loadDb();
     requireAdmin(db);
     if (!['marquee', 'popup'].includes(mode)) throw new ApiError('รูปแบบการแสดงไม่ถูกต้อง', 400);
-    const trim = (v: string) => {
-      const t = (v ?? '').trim();
-      if (t.length > 500) throw new ApiError('ข้อความประกาศยาวเกินไป (สูงสุด 500 ตัวอักษร)', 400);
-      return t;
-    };
-    db.settings.announcement = {
-      text: { th: trim(text.th), en: trim(text.en), zh: trim(text.zh) },
-      mode,
-      active,
-    };
+    const map: Record<string, string> = {};
+    for (const [lc, v] of Object.entries(text)) {
+      const tv = (v ?? '').trim();
+      if (!tv) continue; // เก็บเฉพาะภาษาที่มีข้อความ
+      if (tv.length > 500) throw new ApiError('ข้อความประกาศยาวเกินไป (สูงสุด 500 ตัวอักษร)', 400);
+      map[lc] = tv;
+    }
+    db.settings.announcement = { text: map, mode, active };
     saveDb(db);
   },
 

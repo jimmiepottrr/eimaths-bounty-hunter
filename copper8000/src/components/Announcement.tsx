@@ -10,10 +10,12 @@ import { dataService } from '../data/service';
 import type { AnnounceText, Announcement as AnnouncementData } from '../data/types';
 import { useI18n } from '../i18n';
 
-/** เลือกข้อความตามภาษาปัจจุบัน — ว่างก็ fallback ไทย→อังกฤษ→จีน */
+/** เลือกข้อความตามภาษาปัจจุบัน — ว่างก็ fallback: ภาษาปัจจุบัน → ไทย → ภาษาแรกที่มีข้อความ */
 const textForLang = (m: AnnounceText, lang: string): string => {
-  const byLang = (m as Record<string, string>)[lang];
-  return (byLang && byLang.trim()) || m.th || m.en || m.zh || '';
+  const byLang = m[lang];
+  if (byLang && byLang.trim()) return byLang;
+  if (m.th && m.th.trim()) return m.th;
+  return Object.values(m).find((v) => v && v.trim()) ?? '';
 };
 
 /** true เมื่อจอมือถือ (<=680px) — ฟังการเปลี่ยนขนาด */
@@ -82,7 +84,7 @@ const Announcement = () => {
       .then((s) => {
         if (cancelled) return;
         const a = s.announcement;
-        const hasText = !!a && !!(a.text.th || a.text.en || a.text.zh);
+        const hasText = !!a && Object.values(a.text).some((v) => v && v.trim());
         if (a && a.active && hasText) {
           setData(a);
           if (a.mode === 'popup') setPopupOpen(true);

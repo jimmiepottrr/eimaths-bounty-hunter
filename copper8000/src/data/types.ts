@@ -51,8 +51,9 @@ export type AuthResult = { user: User; token: string };
 
 export type AnnounceMode = 'marquee' | 'popup';
 
-/** ข้อความประกาศต่อภาษา (ไทย/อังกฤษ/จีน) — แสดงตามภาษาที่ผู้ใช้เลือก */
-export type AnnounceText = { th: string; en: string; zh: string };
+/** ข้อความประกาศต่อภาษา (คีย์ = รหัสภาษา เช่น th/en/zh หรือภาษาที่เพิ่มเอง)
+ *  — แสดงตามภาษาที่ผู้ใช้เลือก รองรับภาษาใหม่ที่เพิ่มในอนาคตอัตโนมัติ */
+export type AnnounceText = Record<string, string>;
 
 /** ข้อความประกาศที่แอดมินตั้ง — แสดงแบบแถบอักษรวิ่งใต้เมนู หรือ pop up */
 export type Announcement = {

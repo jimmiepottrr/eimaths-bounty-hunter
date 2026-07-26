@@ -551,10 +551,8 @@ const THEME_SWATCHES: Record<ThemeCode, string[]> = {
 // ---------- บล็อกข้อความประกาศ (แถบวิ่ง / pop up) ----------
 
 const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => {
-  const { t } = useI18n();
-  const [textTh, setTextTh] = useState('');
-  const [textEn, setTextEn] = useState('');
-  const [textZh, setTextZh] = useState('');
+  const { t, languages } = useI18n();
+  const [texts, setTexts] = useState<Record<string, string>>({});
   const [mode, setMode] = useState<AnnounceMode>('marquee');
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -563,9 +561,7 @@ const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => 
     dataService
       .getSettings()
       .then((s) => {
-        setTextTh(s.announcement.text.th);
-        setTextEn(s.announcement.text.en);
-        setTextZh(s.announcement.text.zh);
+        setTexts(s.announcement.text);
         setMode(s.announcement.mode);
         setActive(s.announcement.active);
       })
@@ -575,11 +571,7 @@ const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => 
   const save = async () => {
     setBusy(true);
     try {
-      await dataService.setAnnouncement({
-        text: { th: textTh.trim(), en: textEn.trim(), zh: textZh.trim() },
-        mode,
-        active,
-      });
+      await dataService.setAnnouncement({ text: texts, mode, active });
       onToast(t('adminAnnounce.saved'));
     } catch (e) {
       onToast((e as Error).message);
@@ -588,6 +580,9 @@ const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => 
     }
   };
 
+  // ช่องกรอกข้อความ 1 ช่องต่อ 1 ภาษาที่เปิดใช้งาน — เพิ่มภาษาใหม่ก็มีช่องอัตโนมัติ
+  const enabledLangs = languages.filter((l) => l.enabled);
+
   return (
     <div className="card">
       <h3 style={{ marginTop: 0 }}>{t('adminAnnounce.title')}</h3>
@@ -595,33 +590,21 @@ const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => 
         {t('adminAnnounce.note')}
       </p>
 
-      <label className="announce-field-label">{t('adminAnnounce.textTh')}</label>
-      <textarea
-        className="announce-textarea"
-        rows={2}
-        maxLength={500}
-        value={textTh}
-        placeholder={t('adminAnnounce.placeholder')}
-        onChange={(e) => setTextTh(e.target.value)}
-      />
-      <label className="announce-field-label">{t('adminAnnounce.textEn')}</label>
-      <textarea
-        className="announce-textarea"
-        rows={2}
-        maxLength={500}
-        value={textEn}
-        placeholder="English announcement (optional)"
-        onChange={(e) => setTextEn(e.target.value)}
-      />
-      <label className="announce-field-label">{t('adminAnnounce.textZh')}</label>
-      <textarea
-        className="announce-textarea"
-        rows={2}
-        maxLength={500}
-        value={textZh}
-        placeholder="中文公告（可选）"
-        onChange={(e) => setTextZh(e.target.value)}
-      />
+      {enabledLangs.map((l) => (
+        <div key={l.code}>
+          <label className="announce-field-label">
+            {t('adminAnnounce.textLabel')} ({l.name_native})
+          </label>
+          <textarea
+            className="announce-textarea"
+            rows={2}
+            maxLength={500}
+            value={texts[l.code] ?? ''}
+            placeholder={l.code === 'th' ? t('adminAnnounce.placeholder') : ''}
+            onChange={(e) => setTexts((prev) => ({ ...prev, [l.code]: e.target.value }))}
+          />
+        </div>
+      ))}
 
       <label className="announce-field-label">{t('adminAnnounce.modeLabel')}</label>
       <div className="announce-mode-row">

@@ -27,15 +27,17 @@ function set_setting(string $key, string $value): void {
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
-const ANNOUNCE_LANGS = ['th', 'en', 'zh'];
-
-/** ข้อความประกาศเก็บเป็น JSON {th,en,zh} — ของเก่าเป็น string ธรรมดา = ถือเป็นภาษาไทย */
+/** ข้อความประกาศเก็บเป็น JSON {langCode: text} (รองรับทุกภาษา) — ของเก่าเป็น string = ภาษาไทย */
 function announce_text_map(): array {
   $raw = get_setting('announce_text', '');
   $decoded = json_decode($raw, true);
-  $src = is_array($decoded) ? $decoded : ['th' => $raw];
+  if (!is_array($decoded)) return $raw !== '' ? ['th' => $raw] : [];
   $out = [];
-  foreach (ANNOUNCE_LANGS as $lc) $out[$lc] = (string) ($src[$lc] ?? '');
+  foreach ($decoded as $lc => $v) {
+    if (is_string($lc) && preg_match('/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/', $lc)) {
+      $out[$lc] = (string) $v;
+    }
+  }
   return $out;
 }
 
@@ -70,8 +72,10 @@ if ($action === 'set_announcement') {
   $textIn = $body['text'] ?? [];
   if (!is_array($textIn)) $textIn = ['th' => (string) $textIn];
   $map = [];
-  foreach (ANNOUNCE_LANGS as $lc) {
-    $v = trim((string) ($textIn[$lc] ?? ''));
+  foreach ($textIn as $lc => $val) {
+    if (!is_string($lc) || !preg_match('/^[a-z]{2,3}(-[a-z0-9]{2,8})?$/', $lc)) continue;
+    $v = trim((string) $val);
+    if ($v === '') continue; // เก็บเฉพาะภาษาที่มีข้อความ
     if (mb_strlen($v) > ANNOUNCE_MAX_LEN) {
       json_err('ข้อความประกาศยาวเกินไป (สูงสุด ' . ANNOUNCE_MAX_LEN . ' ตัวอักษร)');
     }

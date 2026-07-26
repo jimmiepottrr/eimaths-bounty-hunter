@@ -236,11 +236,7 @@ export const httpAdapter: DataService = {
     return {
       theme: res.settings.theme ?? 'gold',
       announcement: {
-        text: {
-          th: at?.th ?? '',
-          en: at?.en ?? '',
-          zh: at?.zh ?? '',
-        },
+        text: at && typeof at === 'object' ? (at as Record<string, string>) : {},
         mode: a?.mode === 'popup' ? 'popup' : 'marquee',
         active: a?.active ?? false,
       },
