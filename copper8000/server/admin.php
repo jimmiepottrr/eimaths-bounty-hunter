@@ -22,6 +22,13 @@ if ($method === 'GET') {
     json_out(['users' => array_map('user_public', $rows)]);
   }
 
+  if ($view === 'products') {
+    $rows = pdo()->query(
+      "SELECT * FROM products ORDER BY FIELD(material,'copper','brass','aluminium'), sort_order, id"
+    )->fetchAll();
+    json_out(['products' => array_map('product_public', $rows)]);
+  }
+
   if ($view === 'bookings') {
     $rows = pdo()->query(
       'SELECT b.*, p.name_th AS product_name, p.name_en AS product_name_en, u.name AS user_name
@@ -78,6 +85,73 @@ if ($action === 'set_weights') {
     $chk = pdo()->prepare('SELECT id FROM bookings WHERE id = ?');
     $chk->execute([$bookingId]);
     if (!$chk->fetch()) json_err('ไม่พบรายการจอง', 404);
+  }
+  json_out([]);
+}
+
+// ---- จัดการสินค้า (Admin 1) ----
+$materials = ['copper', 'brass', 'aluminium'];
+
+if ($action === 'add_product') {
+  $material = (string) ($body['material'] ?? '');
+  $nameTh = trim((string) ($body['name_th'] ?? ''));
+  $nameEn = trim((string) ($body['name_en'] ?? ''));
+  $price = (float) ($body['price_per_kg'] ?? 0);
+  if (!in_array($material, $materials, true)) json_err('ประเภทวัสดุไม่ถูกต้อง');
+  if ($nameTh === '') json_err('กรุณากรอกชื่อสินค้า');
+  if ($price <= 0) json_err('ราคาต้องมากกว่า 0');
+  $maxSort = (int) pdo()->query('SELECT COALESCE(MAX(sort_order),0) FROM products')->fetchColumn();
+  pdo()->prepare(
+    'INSERT INTO products (material, name_th, name_en, price_per_kg, prev_price_per_kg, high_of_day, low_of_day, sort_order, active)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)'
+  )->execute([$material, $nameTh, $nameEn, $price, $price, $price, $price, $maxSort + 1]);
+  json_out(['id' => (int) pdo()->lastInsertId()]);
+}
+
+if ($action === 'update_product') {
+  $productId = (int) ($body['product_id'] ?? 0);
+  $material = (string) ($body['material'] ?? '');
+  $nameTh = trim((string) ($body['name_th'] ?? ''));
+  $nameEn = trim((string) ($body['name_en'] ?? ''));
+  if (!in_array($material, $materials, true)) json_err('ประเภทวัสดุไม่ถูกต้อง');
+  if ($nameTh === '') json_err('กรุณากรอกชื่อสินค้า');
+  $st = pdo()->prepare('UPDATE products SET material = ?, name_th = ?, name_en = ? WHERE id = ?');
+  $st->execute([$material, $nameTh, $nameEn, $productId]);
+  if ($st->rowCount() === 0) {
+    $chk = pdo()->prepare('SELECT id FROM products WHERE id = ?');
+    $chk->execute([$productId]);
+    if (!$chk->fetch()) json_err('ไม่พบสินค้า', 404);
+  }
+  json_out([]);
+}
+
+if ($action === 'set_product_active') {
+  $productId = (int) ($body['product_id'] ?? 0);
+  $active = (bool) ($body['active'] ?? false);
+  pdo()->prepare('UPDATE products SET active = ? WHERE id = ?')->execute([$active ? 1 : 0, $productId]);
+  json_out([]);
+}
+
+if ($action === 'delete_product') {
+  $productId = (int) ($body['product_id'] ?? 0);
+  $chk = pdo()->prepare('SELECT COUNT(*) FROM bookings WHERE product_id = ?');
+  $chk->execute([$productId]);
+  if ((int) $chk->fetchColumn() > 0) {
+    // มีประวัติการจอง — ลบจริงไม่ได้ (กันข้อมูลรายงานพัง) ให้ซ่อนแทน
+    json_err('สินค้านี้มีประวัติการจองแล้ว ลบถาวรไม่ได้ — ใช้ "ซ่อน" แทน', 409);
+  }
+  pdo()->prepare('DELETE FROM products WHERE id = ?')->execute([$productId]);
+  json_out([]);
+}
+
+if ($action === 'reorder_products') {
+  $order = $body['order'] ?? [];
+  if (!is_array($order)) json_err('ลำดับไม่ถูกต้อง');
+  $st = pdo()->prepare('UPDATE products SET sort_order = ? WHERE id = ?');
+  $i = 1;
+  foreach ($order as $pid) {
+    $st->execute([$i, (int) $pid]);
+    $i++;
   }
   json_out([]);
 }

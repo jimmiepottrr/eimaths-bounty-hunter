@@ -130,6 +130,8 @@ function product_public(array $p): array {
     'prev_price_per_kg' => (float) $p['prev_price_per_kg'],
     'high_of_day'       => (float) $p['high_of_day'],
     'low_of_day'        => (float) $p['low_of_day'],
+    'sort_order'        => (int) ($p['sort_order'] ?? 0),
+    'active'            => (bool) ($p['active'] ?? true),
     'updated_at'        => str_replace(' ', 'T', $p['updated_at']),
   ];
 }
