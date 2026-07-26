@@ -26,7 +26,7 @@ const useIsMobile = (): boolean => {
 };
 
 /** พิมพ์ข้อความทีละตัว (เหมือนบอทกำลังพิมพ์) — พิมพ์ครบแล้วค้างไว้ ไม่วนซ้ำ */
-const useTypewriter = (text: string, active: boolean, speed = 34) => {
+const useTypewriter = (text: string, active: boolean, speed = 60) => {
   const [count, setCount] = useState(active ? 0 : text.length);
   useEffect(() => {
     if (!active) {
