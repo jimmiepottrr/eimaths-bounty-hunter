@@ -64,6 +64,39 @@ export type Announcement = {
 
 export type AppSettings = { theme: string; announcement: Announcement };
 
+/** หนึ่งรายการในบันทึกการใช้งาน (audit log) — บันทึกฝั่งเซิร์ฟเวอร์ ผู้ใช้ปลอมไม่ได้ */
+export type AuditEntry = {
+  id: number;
+  created_at: string;
+  user_id: number | null; // null = ไม่ได้ล็อกอิน (guest)
+  actor_email: string | null;
+  actor_role: string | null;
+  action: string;
+  entity: string | null;
+  entity_id: number | null;
+  detail: string | null; // JSON string (รายละเอียด เช่น ราคาเก่า→ใหม่)
+  ip: string | null;
+  user_agent: string | null;
+};
+
+export type AuditQuery = {
+  action?: string;
+  user_id?: number;
+  q?: string; // ค้นอีเมล/IP/รายละเอียด/user agent
+  from?: string; // YYYY-MM-DD
+  to?: string; // YYYY-MM-DD
+  page?: number;
+  per_page?: number;
+};
+
+export type AuditResult = {
+  entries: AuditEntry[];
+  total: number;
+  page: number;
+  per_page: number;
+  actions: string[]; // action ทั้งหมดที่เคยเกิด (ทำ dropdown ตัวกรอง)
+};
+
 export type LanguageInfo = {
   code: string;
   name_native: string;
@@ -162,4 +195,7 @@ export interface DataService {
   setTheme(theme: string): Promise<void>;
   /** ตั้งข้อความประกาศ (3 ภาษา) + รูปแบบการแสดง (admin) */
   setAnnouncement(input: { text: AnnounceText; mode: AnnounceMode; active: boolean }): Promise<void>;
+  // ---- audit log ----
+  /** บันทึกการใช้งาน (admin) — กรอง/แบ่งหน้าได้ */
+  listAudit(query?: AuditQuery): Promise<AuditResult>;
 }

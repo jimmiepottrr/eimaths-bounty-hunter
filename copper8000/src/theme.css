@@ -1826,3 +1826,72 @@ a.userbox:hover .name {
   font-weight: 600;
   cursor: pointer;
 }
+
+/* ---------- Audit log (บันทึกการใช้งาน) ---------- */
+.audit-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+}
+.audit-filters .field {
+  margin: 0;
+  min-width: 150px;
+  flex: 1 1 150px;
+}
+.audit-filter-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.audit-count {
+  font-size: calc(13px * var(--fs));
+  color: var(--ink-soft);
+  margin: 4px 0 8px;
+}
+.audit-table td {
+  vertical-align: top;
+  font-size: calc(12.5px * var(--fs));
+}
+.audit-time,
+.audit-ip {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.audit-detail {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-soft);
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+}
+.audit-ua {
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-soft);
+}
+.audit-action-chip {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--marquee-bg, #eee);
+  color: var(--ink);
+  font-size: calc(12px * var(--fs));
+  white-space: nowrap;
+}
+.audit-action-chip.danger {
+  background: #fde2e1;
+  color: #a11119;
+}
+.audit-pager {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 14px;
+  font-size: calc(13px * var(--fs));
+}

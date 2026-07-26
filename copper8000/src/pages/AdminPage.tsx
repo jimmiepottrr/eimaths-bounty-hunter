@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import { dataService } from '../data/service';
-import type { AnnounceMode, Booking, LanguageInfo, Material, Product, User } from '../data/types';
+import type { AnnounceMode, AuditResult, Booking, LanguageInfo, Material, Product, User } from '../data/types';
 import { fmtDate, fmtNumber } from '../format';
 import { DICT_TEMPLATE } from '../i18n/core';
 import { bookingProductName, productName, productSubName, useI18n } from '../i18n';
 import { applyTheme, currentTheme, type ThemeCode } from '../themeManager';
 
-type Tab = 'users' | 'bookings' | 'report' | 'products' | 'prices' | 'languages' | 'settings';
+type Tab = 'users' | 'bookings' | 'report' | 'products' | 'prices' | 'languages' | 'settings' | 'audit';
 
 const PendingUsersTab = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t } = useI18n();
@@ -1002,6 +1002,217 @@ const ProductsManageTab = ({ onToast }: { onToast: (m: string) => void }) => {
   );
 };
 
+// ---------- แท็บบันทึกการใช้งาน (audit log) ----------
+
+const AUDIT_PAGE_SIZE = 50;
+
+/** ป้ายชื่อ action เป็นภาษาปัจจุบัน — ไม่มีคำแปลก็คืนโค้ดดิบ */
+const useActionLabel = () => {
+  const { t } = useI18n();
+  return (action: string): string => {
+    const key = `adminAudit.a.${action}`;
+    const label = t(key);
+    return label === key ? action : label;
+  };
+};
+
+const fmtDateTime = (iso: string): string => {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+};
+
+const csvCell = (v: unknown): string => {
+  const s = v === null || v === undefined ? '' : String(v);
+  return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+type AuditFilters = { action: string; q: string; from: string; to: string };
+
+const AuditTab = ({ onToast }: { onToast: (m: string) => void }) => {
+  const { t } = useI18n();
+  const actionLabel = useActionLabel();
+  const [result, setResult] = useState<AuditResult | null>(null);
+  const [actions, setActions] = useState<string[]>([]);
+  const [filters, setFilters] = useState<AuditFilters>({ action: '', q: '', from: '', to: '' });
+  const [draft, setDraft] = useState<AuditFilters>({ action: '', q: '', from: '', to: '' });
+  const [page, setPage] = useState(1);
+  const [exporting, setExporting] = useState(false);
+
+  const query = {
+    action: filters.action || undefined,
+    q: filters.q || undefined,
+    from: filters.from || undefined,
+    to: filters.to || undefined,
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    dataService
+      .listAudit({ ...query, page, per_page: AUDIT_PAGE_SIZE })
+      .then((r) => {
+        if (cancelled) return;
+        setResult(r);
+        if (r.actions.length) setActions(r.actions);
+      })
+      .catch((e) => onToast((e as Error).message));
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters, page, onToast]);
+
+  const apply = () => {
+    setFilters(draft);
+    setPage(1);
+  };
+
+  const reset = () => {
+    const empty = { action: '', q: '', from: '', to: '' };
+    setDraft(empty);
+    setFilters(empty);
+    setPage(1);
+  };
+
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const all = await dataService.listAudit({ ...query, page: 1, per_page: 10000 });
+      const cols = ['id', 'created_at', 'user_id', 'actor_email', 'actor_role', 'action', 'entity', 'entity_id', 'detail', 'ip', 'user_agent'] as const;
+      const lines = [cols.join(',')];
+      for (const e of all.entries) lines.push(cols.map((c) => csvCell(e[c])).join(','));
+      // ﻿ (BOM) ให้ Excel อ่านภาษาไทย/จีนไม่เพี้ยน
+      const blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `audit-log-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      onToast(t('adminAudit.exported', { n: all.entries.length }));
+    } catch (e) {
+      onToast((e as Error).message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const totalPages = result ? Math.max(1, Math.ceil(result.total / AUDIT_PAGE_SIZE)) : 1;
+
+  return (
+    <>
+      <div className="card audit-filters">
+        <div className="field">
+          <label htmlFor="audit-action">{t('adminAudit.filterAction')}</label>
+          <select id="audit-action" value={draft.action} onChange={(e) => setDraft((d) => ({ ...d, action: e.target.value }))}>
+            <option value="">{t('adminAudit.allActions')}</option>
+            {actions.map((a) => (
+              <option key={a} value={a}>
+                {actionLabel(a)}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="field">
+          <label htmlFor="audit-q">{t('adminAudit.filterSearch')}</label>
+          <input
+            id="audit-q"
+            value={draft.q}
+            placeholder={t('adminAudit.searchPlaceholder')}
+            onChange={(e) => setDraft((d) => ({ ...d, q: e.target.value }))}
+            onKeyDown={(e) => e.key === 'Enter' && apply()}
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="audit-from">{t('adminAudit.filterFrom')}</label>
+          <input id="audit-from" type="date" value={draft.from} onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))} />
+        </div>
+        <div className="field">
+          <label htmlFor="audit-to">{t('adminAudit.filterTo')}</label>
+          <input id="audit-to" type="date" value={draft.to} onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))} />
+        </div>
+        <div className="audit-filter-actions">
+          <button type="button" className="btn btn-primary btn-small" onClick={apply}>
+            {t('adminAudit.applyFilter')}
+          </button>
+          <button type="button" className="btn btn-outline btn-small" onClick={reset}>
+            {t('adminAudit.resetFilter')}
+          </button>
+          <button type="button" className="btn btn-outline btn-small" onClick={exportCsv} disabled={exporting || !result || result.total === 0}>
+            {exporting ? t('adminAudit.exporting') : `⬇ ${t('adminAudit.exportCsv')}`}
+          </button>
+        </div>
+      </div>
+
+      {!result ? (
+        <div className="empty-state">{t('admin.loading')}</div>
+      ) : result.entries.length === 0 ? (
+        <div className="empty-state">{t('adminAudit.empty')}</div>
+      ) : (
+        <>
+          <div className="audit-count">{t('adminAudit.total', { n: result.total })}</div>
+          <div className="table-wrap">
+            <table className="report-table audit-table">
+              <thead>
+                <tr>
+                  <th>{t('adminAudit.colTime')}</th>
+                  <th>{t('adminAudit.colActor')}</th>
+                  <th>{t('adminAudit.colAction')}</th>
+                  <th>{t('adminAudit.colTarget')}</th>
+                  <th>{t('adminAudit.colDetail')}</th>
+                  <th>{t('adminAudit.colIp')}</th>
+                  <th>{t('adminAudit.colDevice')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.entries.map((e) => (
+                  <tr key={e.id}>
+                    <td className="audit-time">{fmtDateTime(e.created_at)}</td>
+                    <td>
+                      {e.actor_email ? (
+                        <>
+                          <div>{e.actor_email}</div>
+                          <span className={`badge ${e.actor_role === 'admin' ? 'badge-confirmed' : 'badge-pending'}`}>{e.actor_role}</span>
+                        </>
+                      ) : (
+                        <span className="badge badge-pending">{t('adminAudit.guest')}</span>
+                      )}
+                    </td>
+                    <td>
+                      <span className={`audit-action-chip ${e.action.includes('fail') || e.action.startsWith('delete') || e.action === 'reject_user' ? 'danger' : ''}`}>
+                        {actionLabel(e.action)}
+                      </span>
+                    </td>
+                    <td>{e.entity ? `${e.entity}${e.entity_id !== null ? ` #${e.entity_id}` : ''}` : '—'}</td>
+                    <td className="audit-detail" title={e.detail ?? ''}>{e.detail ?? '—'}</td>
+                    <td className="audit-ip">{e.ip ?? '—'}</td>
+                    <td className="audit-ua" title={e.user_agent ?? ''}>{e.user_agent ?? '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {totalPages > 1 && (
+            <div className="audit-pager">
+              <button type="button" className="btn btn-outline btn-small" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
+                ← {t('adminAudit.prev')}
+              </button>
+              <span>{t('adminAudit.pageOf', { page, total: totalPages })}</span>
+              <button type="button" className="btn btn-outline btn-small" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                {t('adminAudit.next')} →
+              </button>
+            </div>
+          )}
+        </>
+      )}
+    </>
+  );
+};
+
 /** แผงหัวข้อแจ้งว่ามีเรื่องอะไรรอ approve บ้าง — กดการ์ดเพื่อกระโดดไปแท็บนั้น */
 const PendingSummary = ({
   refreshKey,
@@ -1110,6 +1321,9 @@ const AdminPage = () => {
         <button type="button" className={tab === 'settings' ? 'active' : ''} onClick={() => setTab('settings')}>
           {t('admin.tabSettings')}
         </button>
+        <button type="button" className={tab === 'audit' ? 'active' : ''} onClick={() => setTab('audit')}>
+          {t('admin.tabAudit')}
+        </button>
       </div>
 
       {tab === 'users' && <PendingUsersTab onToast={notify} />}
@@ -1119,6 +1333,7 @@ const AdminPage = () => {
       {tab === 'prices' && <PricesTab onToast={notify} />}
       {tab === 'languages' && <LanguagesTab onToast={notify} />}
       {tab === 'settings' && <SettingsTab onToast={notify} />}
+      {tab === 'audit' && <AuditTab onToast={notify} />}
 
       {toast && <div className="toast">{toast}</div>}
     </>

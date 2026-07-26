@@ -9,6 +9,8 @@ import { t } from '../i18n/core';
 import {
   ApiError,
   type AppSettings,
+  type AuditQuery,
+  type AuditResult,
   type AuthResult,
   type Booking,
   type DataService,
@@ -249,5 +251,25 @@ export const httpAdapter: DataService = {
 
   async setAnnouncement(input): Promise<void> {
     await request('/settings.php', { method: 'POST', body: { action: 'set_announcement', ...input } });
+  },
+
+  async listAudit(query: AuditQuery = {}): Promise<AuditResult> {
+    const qs = new URLSearchParams();
+    if (query.action) qs.set('action', query.action);
+    if (query.user_id !== undefined) qs.set('user_id', String(query.user_id));
+    if (query.q) qs.set('q', query.q);
+    if (query.from) qs.set('from', query.from);
+    if (query.to) qs.set('to', query.to);
+    if (query.page !== undefined) qs.set('page', String(query.page));
+    if (query.per_page !== undefined) qs.set('per_page', String(query.per_page));
+    const suffix = qs.toString() ? `?${qs.toString()}` : '';
+    const res = await request<AuditResult>(`/audit.php${suffix}`);
+    return {
+      entries: res.entries ?? [],
+      total: res.total ?? 0,
+      page: res.page ?? 1,
+      per_page: res.per_page ?? 50,
+      actions: res.actions ?? [],
+    };
   },
 };

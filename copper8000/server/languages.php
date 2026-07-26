@@ -35,7 +35,7 @@ if ($method === 'GET') {
 
 if ($method !== 'POST') json_err('method ไม่ถูกต้อง', 405);
 
-require_admin();
+$admin = require_admin();
 
 $body = read_json_body();
 $action = (string) ($body['action'] ?? '');
@@ -65,6 +65,7 @@ if ($action === 'add') {
   pdo()->prepare(
     'INSERT INTO languages (code, name_native, dict, enabled, built_in, sort_order) VALUES (?, ?, ?, 1, 0, ?)'
   )->execute([$code, $name, $dictJson, $max + 1]);
+  audit_log('add_language', ['user' => $admin, 'entity' => 'language', 'detail' => ['code' => $code, 'name_native' => $name]]);
   json_out([], 201);
 }
 
@@ -86,6 +87,7 @@ if ($action === 'update') {
     if ($name === '') json_err('กรุณากรอกชื่อภาษา');
     pdo()->prepare('UPDATE languages SET name_native = ? WHERE code = ?')->execute([$name, $code]);
   }
+  audit_log('update_language', ['user' => $admin, 'entity' => 'language', 'detail' => ['code' => $code, 'fields' => array_values(array_intersect(['dict', 'name_native'], array_keys($body)))]]);
   json_out([]);
 }
 
@@ -101,6 +103,7 @@ if ($action === 'set_enabled') {
     if ((int) $others->fetchColumn() === 0) json_err('ต้องมีอย่างน้อย 1 ภาษาที่เปิดใช้งาน');
   }
   pdo()->prepare('UPDATE languages SET enabled = ? WHERE code = ?')->execute([$enabled ? 1 : 0, $code]);
+  audit_log($enabled ? 'enable_language' : 'disable_language', ['user' => $admin, 'entity' => 'language', 'detail' => ['code' => $code, 'enabled' => $enabled]]);
   json_out([]);
 }
 
@@ -117,6 +120,7 @@ if ($action === 'delete') {
     if ((int) $others->fetchColumn() === 0) json_err('ต้องมีอย่างน้อย 1 ภาษาที่เปิดใช้งาน');
   }
   pdo()->prepare('DELETE FROM languages WHERE code = ?')->execute([$code]);
+  audit_log('delete_language', ['user' => $admin, 'entity' => 'language', 'detail' => ['code' => $code]]);
   json_out([]);
 }
 

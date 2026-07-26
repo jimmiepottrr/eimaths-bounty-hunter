@@ -115,9 +115,9 @@ test('ราคาเปลี่ยนระหว่างเปิด modal �
 
   // จำลองแอดมินเปลี่ยนราคาระหว่างที่ modal เปิดค้าง (แก้ตรงใน mock db)
   await page.evaluate(() => {
-    const db = JSON.parse(localStorage.getItem('copper8000_db_v1')!);
+    const db = JSON.parse(localStorage.getItem('copper8000_db_v3')!);
     db.products.find((p: { id: number }) => p.id === 1).price_per_kg = 300;
-    localStorage.setItem('copper8000_db_v1', JSON.stringify(db));
+    localStorage.setItem('copper8000_db_v3', JSON.stringify(db));
   });
 
   await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();

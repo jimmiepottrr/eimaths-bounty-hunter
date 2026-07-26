@@ -108,6 +108,40 @@ function new_session(int $userId): string {
   return $token;
 }
 
+// ---------- Audit log (บันทึกการใช้งาน) ----------
+/** IP ผู้เรียก — ใช้ REMOTE_ADDR เป็นหลัก (ปลอมยาก) ตัดความยาวกัน overflow */
+function client_ip(): string {
+  return substr((string) ($_SERVER['REMOTE_ADDR'] ?? ''), 0, 45);
+}
+
+/**
+ * บันทึกเหตุการณ์ลงตาราง audit_log — เรียกก่อน json_out เสมอ (json_out จะ exit)
+ * $opts: user(array แถว user) | user_id, actor_email, actor_role, entity, entity_id, detail(array|string)
+ * ห้ามให้ audit ล้มแล้วทำ request หลักพัง → จับ error เงียบ
+ */
+function audit_log(string $action, array $opts = []): void {
+  try {
+    $user  = $opts['user'] ?? null;
+    $uid   = isset($opts['user_id']) ? (int) $opts['user_id'] : ($user ? (int) $user['id'] : null);
+    $email = $opts['actor_email'] ?? ($user['email'] ?? null);
+    $role  = $opts['actor_role']  ?? ($user['role']  ?? 'guest');
+    $detail = $opts['detail'] ?? null;
+    if (is_array($detail)) $detail = json_encode($detail, JSON_UNESCAPED_UNICODE);
+    $ua = substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 255);
+    pdo()->prepare(
+      'INSERT INTO audit_log (user_id, actor_email, actor_role, action, entity, entity_id, detail, ip, user_agent)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    )->execute([
+      $uid, $email, $role, $action,
+      $opts['entity'] ?? null,
+      isset($opts['entity_id']) ? (int) $opts['entity_id'] : null,
+      $detail, client_ip(), $ua,
+    ]);
+  } catch (Throwable $e) {
+    error_log('[Copper8000Audit] ' . $e->getMessage());
+  }
+}
+
 // ---------- Serializers (ให้ type ตรงกับ frontend) ----------
 function user_public(array $u): array {
   return [

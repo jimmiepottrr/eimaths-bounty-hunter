@@ -70,6 +70,25 @@ CREATE TABLE IF NOT EXISTS settings (
   sval TEXT NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- บันทึกการใช้งาน (audit log) — ทุก action สำคัญทุก role (ฝั่งเซิร์ฟเวอร์ ปลอมไม่ได้)
+-- ไม่มี FK บน user_id ตั้งใจ: ถ้าผู้ใช้ถูกลบ log ยังอยู่ (actor_email เก็บ snapshot ไว้)
+CREATE TABLE IF NOT EXISTS audit_log (
+  id BIGINT AUTO_INCREMENT PRIMARY KEY,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  user_id INT NULL,                       -- NULL = ไม่ได้ล็อกอิน (guest)
+  actor_email VARCHAR(190) NULL,          -- snapshot อีเมลผู้ทำ ณ เวลานั้น
+  actor_role VARCHAR(20) NULL,            -- user | admin | guest
+  action VARCHAR(64) NOT NULL,            -- login | update_price | create_booking ...
+  entity VARCHAR(40) NULL,                -- product | booking | user | settings ...
+  entity_id INT NULL,
+  detail TEXT NULL,                       -- JSON รายละเอียด (เช่น ราคาเก่า→ใหม่)
+  ip VARCHAR(45) NULL,                    -- รองรับ IPv6
+  user_agent VARCHAR(255) NULL,
+  INDEX idx_audit_created (created_at),
+  INDEX idx_audit_user (user_id),
+  INDEX idx_audit_action (action)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 INSERT IGNORE INTO settings (skey, sval) VALUES
 ('theme', 'gold'),
 -- ข้อความประกาศ (แอดมินตั้งจากหน้าตั้งค่า) — แสดงแบบแถบอักษรวิ่งใต้เมนู หรือ pop up
