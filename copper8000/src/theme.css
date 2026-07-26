@@ -1252,6 +1252,19 @@ button {
   flex-shrink: 0;
 }
 
+/* โลโก้ภาพจริง (lockup เต็ม: มาร์ค+ชื่อบริษัท) — คุมด้วยความสูง */
+.logo-img {
+  height: 60px;
+  width: auto;
+  display: block;
+  flex-shrink: 0;
+}
+
+.company-hero .logo-img {
+  height: 96px;
+  margin: 0 auto;
+}
+
 .logo-word {
   display: flex;
   flex-direction: column;
@@ -1361,6 +1374,10 @@ a.userbox:hover .name {
   .topbar .logo-mark {
     width: 56px;
     height: 56px;
+  }
+
+  .topbar .logo-img {
+    height: 42px;
   }
 
   .topbar .logo-word-main {
