@@ -550,12 +550,25 @@ const THEME_SWATCHES: Record<ThemeCode, string[]> = {
 
 // ---------- บล็อกข้อความประกาศ (แถบวิ่ง / pop up) ----------
 
+/** แปลข้อความด้วย MyMemory (ฟรี ไม่ต้องใช้ key รองรับ CORS — รวมผล Google/Microsoft) */
+const MM_LANG: Record<string, string> = { zh: 'zh-CN' };
+const translateText = async (text: string, source: string, target: string): Promise<string> => {
+  const pair = `${MM_LANG[source] ?? source}|${MM_LANG[target] ?? target}`;
+  const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${encodeURIComponent(pair)}`;
+  const res = await fetch(url);
+  const data = (await res.json()) as { responseData?: { translatedText?: string } };
+  const out = data?.responseData?.translatedText;
+  if (!out || typeof out !== 'string') throw new Error('แปลไม่สำเร็จ');
+  return out;
+};
+
 const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t, languages } = useI18n();
   const [texts, setTexts] = useState<Record<string, string>>({});
   const [mode, setMode] = useState<AnnounceMode>('marquee');
   const [active, setActive] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [translating, setTranslating] = useState(false);
 
   useEffect(() => {
     dataService
@@ -583,6 +596,36 @@ const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => 
   // ช่องกรอกข้อความ 1 ช่องต่อ 1 ภาษาที่เปิดใช้งาน — เพิ่มภาษาใหม่ก็มีช่องอัตโนมัติ
   const enabledLangs = languages.filter((l) => l.enabled);
 
+  // แปลจากภาษาไทย → เติมภาษาอื่นที่เปิดใช้งานอัตโนมัติ (แอดมินตรวจ/แก้ก่อนบันทึกได้)
+  const autoTranslate = async () => {
+    const src = (texts.th ?? '').trim();
+    if (!src) {
+      onToast(t('adminAnnounce.needThai'));
+      return;
+    }
+    setTranslating(true);
+    try {
+      const targets = enabledLangs.map((l) => l.code).filter((c) => c !== 'th');
+      const results = await Promise.all(
+        targets.map(async (c) => {
+          try {
+            return [c, await translateText(src, 'th', c)] as const;
+          } catch {
+            return [c, ''] as const;
+          }
+        }),
+      );
+      setTexts((prev) => {
+        const next = { ...prev };
+        for (const [c, v] of results) if (v) next[c] = v;
+        return next;
+      });
+      onToast(t('adminAnnounce.translated'));
+    } finally {
+      setTranslating(false);
+    }
+  };
+
   return (
     <div className="card">
       <h3 style={{ marginTop: 0 }}>{t('adminAnnounce.title')}</h3>
@@ -606,7 +649,25 @@ const AnnouncementSettings = ({ onToast }: { onToast: (m: string) => void }) => 
         </div>
       ))}
 
-      <label className="announce-field-label">{t('adminAnnounce.modeLabel')}</label>
+      {enabledLangs.some((l) => l.code !== 'th') && (
+        <div style={{ marginTop: 10 }}>
+          <button
+            type="button"
+            className="btn btn-outline btn-small"
+            onClick={autoTranslate}
+            disabled={translating}
+          >
+            🌐 {translating ? t('adminAnnounce.translating') : t('adminAnnounce.autoTranslate')}
+          </button>
+          <span style={{ fontSize: 'calc(12.5px * var(--fs))', color: 'var(--ink-soft)', marginLeft: 10 }}>
+            {t('adminAnnounce.translateHint')}
+          </span>
+        </div>
+      )}
+
+      <label className="announce-field-label" style={{ marginTop: 18 }}>
+        {t('adminAnnounce.modeLabel')}
+      </label>
       <div className="announce-mode-row">
         <label className={`announce-mode-opt ${mode === 'marquee' ? 'selected' : ''}`}>
           <input
