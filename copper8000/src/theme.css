@@ -37,6 +37,7 @@
   --band-a: #e3b433;
   --band-b: #d5a527;
   --header-ink: #6b520e;
+  --marquee-bg: #fdeeba;
 }
 
 /* ธีมทองแดง */
@@ -65,6 +66,7 @@
   --band-a: #b1743c;
   --band-b: #a26834;
   --header-ink: #4f2e14;
+  --marquee-bg: #f0dcc4;
 }
 
 /* ธีมเงิน */
@@ -93,6 +95,7 @@
   --band-a: #a7b2bb;
   --band-b: #98a3ac;
   --header-ink: #2f3a44;
+  --marquee-bg: #eaf0f5;
 }
 
 * {
@@ -161,6 +164,8 @@ button {
   top: 0;
   z-index: 40;
   background:
+    /* แถบล่างสุดของเฮดเดอร์ = สีแถบวิ่ง → มุมโค้งซ้าย/ขวาใต้เมนูเป็นสีเดียวกับแถบวิ่ง */
+    linear-gradient(0deg, var(--marquee-bg) 0 34px, transparent 34px),
     linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 50%),
     linear-gradient(180deg, var(--header-hi) 0%, var(--header-mid) 48%, var(--header-lo) 100%);
   border-radius: 0 0 48% 48% / 0 0 26px 26px;
@@ -1442,64 +1447,50 @@ a.userbox:hover .name {
   }
 }
 
-/* ---------- ข้อความประกาศ: แถบอักษรวิ่งใต้เมนู ---------- */
+/* ---------- ข้อความประกาศ: แถบอักษรวิ่งเต็มจอใต้เมนู ---------- */
+/* พื้นสีอ่อน (โทนเดียวกับมุมโค้งใต้เมนู) · วิ่งขวา→ซ้าย · จบแล้วเว้น 5 วิค่อยวนใหม่ */
 .marquee-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   width: 100%;
-  max-width: 1080px;
-  margin: 0 auto;
-  padding: 8px 16px;
-  background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 100%);
+  padding: 9px 0;
+  background: var(--marquee-bg);
   color: var(--header-ink);
-  border-radius: 0 0 12px 12px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
   overflow: hidden;
-}
-
-.marquee-icon {
-  flex-shrink: 0;
-  font-size: calc(16px * var(--fs));
-  line-height: 1;
 }
 
 .marquee-viewport {
-  flex: 1;
+  width: 100%;
   overflow: hidden;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
-  mask-image: linear-gradient(90deg, transparent 0, #000 24px, #000 calc(100% - 24px), transparent 100%);
 }
 
 .marquee-track {
-  display: inline-flex;
+  display: inline-block;
   white-space: nowrap;
   will-change: transform;
-  animation: marquee-scroll 22s linear infinite;
+  font-size: calc(14.5px * var(--fs));
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  /* 20s รวม: วิ่ง 0–75% (15s) แล้วค้างนอกจอ 75–100% (5s) = เว้นระยะ 5 วิ ก่อนวนใหม่ */
+  animation: marquee-rtl 20s linear infinite;
 }
 
 .marquee-bar:hover .marquee-track {
   animation-play-state: paused;
 }
 
-.marquee-item {
-  display: inline-block;
-  padding-right: 64px;
-  font-size: calc(14.5px * var(--fs));
-  font-weight: 600;
-  letter-spacing: 0.01em;
-}
-
-@keyframes marquee-scroll {
-  from {
-    transform: translateX(0);
+@keyframes marquee-rtl {
+  0% {
+    transform: translateX(100vw);
   }
-  to {
-    transform: translateX(-50%);
+  75% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(-100%);
   }
 }
 
-/* ---------- ข้อความประกาศ: pop up ---------- */
+/* ---------- ข้อความประกาศ: pop up (ดีไซน์การ์ด) ---------- */
 .announce-overlay {
   position: fixed;
   inset: 0;
@@ -1508,35 +1499,103 @@ a.userbox:hover .name {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(0, 0, 0, 0.45);
+  background: rgba(38, 28, 8, 0.5);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
   animation: fadeUp 0.2s ease-out;
 }
 
 .announce-popup {
+  position: relative;
   background: var(--cream-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
-  max-width: 460px;
+  border-radius: 20px;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.4);
+  max-width: 440px;
   width: 100%;
-  padding: 28px 26px 24px;
+  padding: 40px 30px 28px;
   text-align: center;
+  overflow: hidden;
+  animation: announce-pop 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.25);
+}
+
+.announce-popup::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 7px;
+  background: linear-gradient(90deg, var(--copper-dark), var(--copper-light), var(--copper-dark));
+}
+
+.announce-popup-badge {
+  width: 66px;
+  height: 66px;
+  margin: 4px auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  line-height: 1;
+  background: linear-gradient(180deg, var(--header-hi), var(--header-mid));
+  border: 3px solid var(--cream-3);
+  border-radius: 50%;
+  box-shadow: 0 6px 18px rgba(143, 111, 20, 0.25);
 }
 
 .announce-popup-title {
   font-family: 'Noto Serif Thai', 'Noto Sans Thai', serif;
   font-weight: 700;
-  font-size: calc(19px * var(--fs));
+  font-size: calc(20px * var(--fs));
   color: var(--copper-dark);
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 .announce-popup-text {
   font-size: calc(15px * var(--fs));
   color: var(--ink);
-  line-height: 1.55;
+  line-height: 1.6;
   white-space: pre-wrap;
-  margin: 0 0 22px;
+  margin: 0 0 24px;
+}
+
+.announce-popup-btn {
+  min-width: 150px;
+}
+
+.announce-popup-x {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  font-size: 26px;
+  line-height: 1;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.announce-popup-x:hover {
+  background: rgba(0, 0, 0, 0.07);
+  color: var(--ink);
+}
+
+@keyframes announce-pop {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.93);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 /* เคารพผู้ที่ตั้งค่าลดการเคลื่อนไหว */
@@ -1545,8 +1604,8 @@ a.userbox:hover .name {
     animation: none;
     transform: none;
   }
-  .marquee-item:nth-child(2) {
-    display: none;
+  .announce-popup {
+    animation: none;
   }
 }
 

@@ -41,9 +41,24 @@ const Announcement = () => {
     return (
       <div className="announce-overlay" role="dialog" aria-modal="true" onClick={() => setPopupOpen(false)}>
         <div className="announce-popup" onClick={(e) => e.stopPropagation()}>
+          <button
+            type="button"
+            className="announce-popup-x"
+            aria-label={t('announce.close')}
+            onClick={() => setPopupOpen(false)}
+          >
+            ×
+          </button>
+          <div className="announce-popup-badge" aria-hidden="true">
+            📢
+          </div>
           <div className="announce-popup-title">{t('announce.popupTitle')}</div>
           <p className="announce-popup-text">{data.text}</p>
-          <button type="button" className="btn btn-primary" onClick={() => setPopupOpen(false)}>
+          <button
+            type="button"
+            className="btn btn-primary announce-popup-btn"
+            onClick={() => setPopupOpen(false)}
+          >
             {t('announce.close')}
           </button>
         </div>
@@ -51,19 +66,11 @@ const Announcement = () => {
     );
   }
 
-  // marquee: แถบอักษรวิ่งใต้เมนู — ทำซ้ำข้อความเพื่อวิ่งต่อเนื่องไร้รอยต่อ
+  // marquee: แถบอักษรวิ่งเต็มจอใต้เมนู — วิ่งขวา→ซ้าย จบแล้วเว้น 5 วิ ค่อยวนใหม่
   return (
     <div className="marquee-bar" role="status" aria-label={t('announce.barLabel')}>
-      <span className="marquee-icon" aria-hidden="true">
-        📢
-      </span>
       <div className="marquee-viewport">
-        <div className="marquee-track">
-          <span className="marquee-item">{data.text}</span>
-          <span className="marquee-item" aria-hidden="true">
-            {data.text}
-          </span>
-        </div>
+        <div className="marquee-track">{data.text}</div>
       </div>
     </div>
   );
