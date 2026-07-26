@@ -163,9 +163,11 @@ button {
   position: sticky;
   top: 0;
   z-index: 40;
+  /* แถบล่างสุดของเฮดเดอร์ = สีแถบวิ่ง → มุมโค้งใต้เมนูสีเดียวกับแถบวิ่ง (เฉพาะ PC)
+     มือถือไม่มีแถบวิ่งใต้เมนู (ไปอยู่การ์ดล่าง) จึงตั้ง shelf = transparent */
+  --header-shelf: var(--marquee-bg);
   background:
-    /* แถบล่างสุดของเฮดเดอร์ = สีแถบวิ่ง → มุมโค้งซ้าย/ขวาใต้เมนูเป็นสีเดียวกับแถบวิ่ง */
-    linear-gradient(0deg, var(--marquee-bg) 0 34px, transparent 34px),
+    linear-gradient(0deg, var(--header-shelf) 0 34px, transparent 34px),
     linear-gradient(180deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 50%),
     linear-gradient(180deg, var(--header-hi) 0%, var(--header-mid) 48%, var(--header-lo) 100%);
   border-radius: 0 0 48% 48% / 0 0 26px 26px;
@@ -1364,6 +1366,11 @@ a.userbox:hover .name {
     display: none;
   }
 
+  /* มือถือไม่มีแถบวิ่งใต้เมนู → ไม่ต้องมีแถบสีอ่อนที่ขอบล่างเฮดเดอร์ */
+  .topbar {
+    --header-shelf: transparent;
+  }
+
   .hamburger {
     display: inline-flex;
   }
@@ -1691,6 +1698,23 @@ a.userbox:hover .name {
   }
 }
 
+/* เคอร์เซอร์พิมพ์ (บอทกำลังพิมพ์) */
+.type-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -2px;
+  background: currentColor;
+  animation: type-blink 1s step-end infinite;
+}
+
+@keyframes type-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
 /* เคารพผู้ที่ตั้งค่าลดการเคลื่อนไหว */
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
@@ -1698,6 +1722,9 @@ a.userbox:hover .name {
     transform: none;
   }
   .announce-popup {
+    animation: none;
+  }
+  .type-caret {
     animation: none;
   }
 }
