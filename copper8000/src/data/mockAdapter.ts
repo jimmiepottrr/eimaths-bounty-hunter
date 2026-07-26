@@ -20,6 +20,13 @@ import {
 
 const DB_KEY = 'copper8000_db_v1';
 
+/** ประกาศตัวอย่างในโหมดสาธิต — เปิดไว้ให้เห็นทันทีตั้งแต่เปิดหน้าแรก (ไม่ต้องล็อกอิน) */
+const DEMO_ANNOUNCEMENT = {
+  text: '📢 ยินดีต้อนรับสู่ Copper 8000 — รับซื้อทองแดง ทองเหลือง อลูมิเนียม ราคาดีทุกวัน! สอบถามราคาโทร 08x-xxx-xxxx',
+  mode: 'marquee' as const,
+  active: true,
+};
+
 type Db = {
   users: SeedUser[];
   products: Product[];
@@ -56,11 +63,11 @@ const loadDb = (): Db => {
         dirty = true;
       }
       if (!db.settings) {
-        db.settings = { theme: 'gold', announcement: { text: '', mode: 'marquee', active: false } };
+        db.settings = { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT } };
         dirty = true;
       }
       if (!db.settings.announcement) {
-        db.settings.announcement = { text: '', mode: 'marquee', active: false };
+        db.settings.announcement = { ...DEMO_ANNOUNCEMENT };
         dirty = true;
       }
       // db เวอร์ชันก่อนหน้าไม่มีคอลัมน์ sort_order/active ในสินค้า และไม่มี nextProductId
@@ -88,7 +95,7 @@ const loadDb = (): Db => {
     bookings: [...SEED_BOOKINGS],
     sessions: {},
     languages: [...SEED_LANGUAGES],
-    settings: { theme: 'gold', announcement: { text: '', mode: 'marquee', active: false } },
+    settings: { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT } },
     nextUserId: 100,
     nextBookingId: 100,
     nextProductId: 100,
