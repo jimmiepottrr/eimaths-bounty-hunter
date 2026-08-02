@@ -1895,3 +1895,65 @@ a.userbox:hover .name {
   margin-top: 14px;
   font-size: calc(13px * var(--fs));
 }
+
+/* ---------- รังผึ้งจุดเด่นบริษัท (TrustHoneycomb) — ใต้แถบวิ่ง ---------- */
+.trust-comb {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(14px, 4vw, 60px);
+  flex-wrap: nowrap;
+  padding: clamp(16px, 2.6vw, 30px) 12px clamp(8px, 1.6vw, 16px);
+}
+.trust-cell {
+  text-align: center;
+  flex: 0 1 auto;
+  max-width: 190px;
+}
+.hex-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(58px, 7.2vw, 92px);
+  aspect-ratio: 1 / 1;
+  color: #fff;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(155deg, var(--copper-light), var(--copper) 55%, var(--copper-dark));
+  box-shadow: 0 8px 18px var(--glow-c);
+  margin-bottom: 10px;
+}
+.hex-badge svg {
+  width: 48%;
+  height: 48%;
+  fill: currentColor;
+}
+.trust-title {
+  font-weight: 800;
+  font-size: calc(16px * var(--fs));
+  color: var(--ink);
+  line-height: 1.2;
+}
+.trust-sub {
+  font-size: calc(12.5px * var(--fs));
+  color: var(--ink-soft);
+  margin-top: 3px;
+  line-height: 1.25;
+}
+
+/* มือถือ: ตาราง 2×2 */
+@media (max-width: 680px) {
+  .trust-comb {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 10px;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 16px 12px 6px;
+  }
+  .trust-cell {
+    max-width: none;
+  }
+  .hex-badge {
+    width: clamp(60px, 22vw, 88px);
+  }
+}

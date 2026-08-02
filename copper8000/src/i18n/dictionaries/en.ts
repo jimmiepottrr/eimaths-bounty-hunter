@@ -30,6 +30,15 @@ export const en: Dict = {
   'home.subtitle':
     'Copper · Brass · Aluminium — approved members can book prices from the "Products" menu',
   'home.asOf': 'As of {date}',
+  'home.trust.aria': 'Why choose us',
+  'home.trust.fair.title': 'Fair',
+  'home.trust.fair.sub': 'Weighed in front of you',
+  'home.trust.solid.title': 'Solid',
+  'home.trust.solid.sub': 'Paid in full, cash',
+  'home.trust.honest.title': 'Honest',
+  'home.trust.honest.sub': 'Real prices, no tricks',
+  'home.trust.service.title': 'Service',
+  'home.trust.service.sub': 'Pickup at your site',
   'home.loading': 'Loading prices…',
 
   'material.copper': 'Copper',
