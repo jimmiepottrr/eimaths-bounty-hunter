@@ -81,6 +81,9 @@ const Layout = () => {
 
   return (
     <>
+      {/* header + แถบวิ่ง ค้างด้วยกันเป็นก้อนเดียว (sticky) — เลื่อนลงแล้วแถบวิ่งค้างใต้เมนู
+          มือถือ: การ์ดบอทเป็น position:fixed จึงหลุดออกไปลอยล่างจอตามเดิม */}
+      <div className="header-stack">
       <header className="topbar">
         <div className="topbar-inner">
           <Link to="/" style={{ textDecoration: 'none' }}>
@@ -140,6 +143,7 @@ const Layout = () => {
 
       {/* ข้อความประกาศ (แถบอักษรวิ่งใต้เมนู หรือ pop up) — ตั้งจากหน้าตั้งค่าแอดมิน */}
       <Announcement />
+      </div>
 
       <main className="page">
         <Outlet />
