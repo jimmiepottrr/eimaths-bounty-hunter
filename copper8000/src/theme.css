@@ -1895,3 +1895,89 @@ a.userbox:hover .name {
   margin-top: 14px;
   font-size: calc(13px * var(--fs));
 }
+
+/* ---------- รังผึ้งจุดเด่นบริษัท (TrustHoneycomb) — ใต้แถบวิ่ง ---------- */
+.trust-comb {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: clamp(14px, 4vw, 60px);
+  flex-wrap: nowrap;
+  padding: clamp(16px, 2.6vw, 30px) 12px clamp(8px, 1.6vw, 16px);
+}
+.trust-cell {
+  text-align: center;
+  flex: 0 1 auto;
+  max-width: 190px;
+}
+.hex-badge {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(58px, 7.2vw, 92px);
+  aspect-ratio: 1 / 1;
+  color: #fff;
+  margin-bottom: 13px;
+  /* เงาตกพื้น (ตามรูปหกเหลี่ยม) — ให้ลอยเป็น 3D */
+  filter: drop-shadow(0 11px 13px rgba(120, 82, 12, 0.5));
+}
+/* ชั้นหลัง = ความหนาของเหรียญทอง (extrusion) เลื่อนลง → เห็นเป็น 3D */
+.hex-badge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateY(7%);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: linear-gradient(158deg, #c08a1d 0%, #7c5810 65%, #573d09 100%);
+  z-index: 0;
+}
+/* หน้าเหรียญ = ทองนูนโค้ง (โดม) + จุดไฮไลต์สว่างมุมบนซ้าย */
+.hex-badge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background:
+    radial-gradient(125% 100% at 34% 20%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.28) 22%, rgba(255, 255, 255, 0) 45%),
+    radial-gradient(140% 120% at 50% 46%, #fbeaa0 0%, #f0cf5f 30%, #d8a836 60%, #b3811c 86%, #916612 100%);
+  z-index: 1;
+}
+.hex-badge svg {
+  position: relative;
+  z-index: 2;
+  width: 47%;
+  height: 47%;
+  fill: currentColor;
+  filter: drop-shadow(0 2px 2px rgba(96, 64, 6, 0.55));
+}
+.trust-title {
+  font-weight: 800;
+  font-size: calc(16px * var(--fs));
+  color: var(--ink);
+  line-height: 1.2;
+}
+.trust-sub {
+  font-size: calc(12.5px * var(--fs));
+  color: var(--ink-soft);
+  margin-top: 3px;
+  line-height: 1.25;
+}
+
+/* มือถือ: ตาราง 2×2 */
+@media (max-width: 680px) {
+  .trust-comb {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 10px;
+    max-width: 420px;
+    margin: 0 auto;
+    padding: 16px 12px 6px;
+  }
+  .trust-cell {
+    max-width: none;
+  }
+  .hex-badge {
+    width: clamp(60px, 22vw, 88px);
+  }
+}
