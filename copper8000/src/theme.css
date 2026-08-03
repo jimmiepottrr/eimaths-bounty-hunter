@@ -1911,26 +1911,45 @@ a.userbox:hover .name {
   max-width: 190px;
 }
 .hex-badge {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: clamp(58px, 7.2vw, 92px);
   aspect-ratio: 1 / 1;
   color: #fff;
+  margin-bottom: 13px;
+  /* เงาตกพื้น (ตามรูปหกเหลี่ยม) — ให้ลอยเป็น 3D */
+  filter: drop-shadow(0 11px 13px rgba(120, 82, 12, 0.5));
+}
+/* ชั้นหลัง = ความหนาของเหรียญทอง (extrusion) เลื่อนลง → เห็นเป็น 3D */
+.hex-badge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateY(7%);
   clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  /* ทองคำขัดเงา: แสงสะท้อนมุมบนซ้าย + ไล่เฉดทองเข้ม + เส้นไฮไลต์กลาง */
+  background: linear-gradient(158deg, #c08a1d 0%, #7c5810 65%, #573d09 100%);
+  z-index: 0;
+}
+/* หน้าเหรียญ = ทองนูนโค้ง (โดม) + จุดไฮไลต์สว่างมุมบนซ้าย */
+.hex-badge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
   background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.12) 34%, rgba(255, 255, 255, 0) 52%),
-    linear-gradient(158deg, #fbeaa0 0%, #f2d268 24%, #dcae3c 52%, #b9861f 82%, #9c6c14 100%);
-  /* clip-path ตัด box-shadow ทิ้ง → ใช้ drop-shadow ให้เงาตามรูปหกเหลี่ยม */
-  filter: drop-shadow(0 9px 16px rgba(150, 105, 20, 0.42)) drop-shadow(0 2px 3px rgba(120, 80, 10, 0.3));
-  margin-bottom: 10px;
+    radial-gradient(125% 100% at 34% 20%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.28) 22%, rgba(255, 255, 255, 0) 45%),
+    radial-gradient(140% 120% at 50% 46%, #fbeaa0 0%, #f0cf5f 30%, #d8a836 60%, #b3811c 86%, #916612 100%);
+  z-index: 1;
 }
 .hex-badge svg {
-  width: 48%;
-  height: 48%;
+  position: relative;
+  z-index: 2;
+  width: 47%;
+  height: 47%;
   fill: currentColor;
-  filter: drop-shadow(0 1.5px 1.5px rgba(110, 74, 8, 0.45));
+  filter: drop-shadow(0 2px 2px rgba(96, 64, 6, 0.55));
 }
 .trust-title {
   font-weight: 800;
