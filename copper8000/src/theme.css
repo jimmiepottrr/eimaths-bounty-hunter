@@ -1918,14 +1918,19 @@ a.userbox:hover .name {
   aspect-ratio: 1 / 1;
   color: #fff;
   clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  background: linear-gradient(155deg, var(--copper-light), var(--copper) 55%, var(--copper-dark));
-  box-shadow: 0 8px 18px var(--glow-c);
+  /* ทองคำขัดเงา: แสงสะท้อนมุมบนซ้าย + ไล่เฉดทองเข้ม + เส้นไฮไลต์กลาง */
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.68) 0%, rgba(255, 255, 255, 0.12) 34%, rgba(255, 255, 255, 0) 52%),
+    linear-gradient(158deg, #fbeaa0 0%, #f2d268 24%, #dcae3c 52%, #b9861f 82%, #9c6c14 100%);
+  /* clip-path ตัด box-shadow ทิ้ง → ใช้ drop-shadow ให้เงาตามรูปหกเหลี่ยม */
+  filter: drop-shadow(0 9px 16px rgba(150, 105, 20, 0.42)) drop-shadow(0 2px 3px rgba(120, 80, 10, 0.3));
   margin-bottom: 10px;
 }
 .hex-badge svg {
   width: 48%;
   height: 48%;
   fill: currentColor;
+  filter: drop-shadow(0 1.5px 1.5px rgba(110, 74, 8, 0.45));
 }
 .trust-title {
   font-weight: 800;
