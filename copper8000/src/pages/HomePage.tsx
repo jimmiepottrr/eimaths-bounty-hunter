@@ -17,6 +17,23 @@ const MATERIAL_EN: Record<Material, string> = {
 };
 
 // ---------- รังผึ้งจุดเด่นบริษัท (ใต้แถบวิ่ง) — PC แถวเดียว resize ตามจอ · มือถือ 2×2 ----------
+// ฿ ทำเป็น SVG (viewBox เดียวกับไอคอนอื่น) → ขนาดเท่ากันเป๊ะทุกป้าย
+const BahtIcon = () => (
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <text
+      x="12"
+      y="12.5"
+      textAnchor="middle"
+      dominantBaseline="central"
+      fontFamily="'Prompt','Sarabun','Noto Sans Thai',system-ui,sans-serif"
+      fontWeight="700"
+      fontSize="23"
+      fill="currentColor"
+    >
+      ฿
+    </text>
+  </svg>
+);
 const ShieldIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5l-8-3Zm-1 13-3.5-3.5 1.4-1.4L11 12.2l4.1-4.1 1.4 1.4L11 15Z" />
@@ -24,7 +41,7 @@ const ShieldIcon = () => (
 );
 const HeartIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M12 21s-7.5-4.6-10-9.3C.7 9 1.7 5.5 5 4.8c2-.4 3.7.5 5 2.2 1.3-1.7 3-2.6 5-2.2 3.3.7 4.3 4.2 3 6.9C19.5 16.4 12 21 12 21Z" />
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
   </svg>
 );
 // หูโทรศัพท์บ้านแบบโบราณ — สื่อถึง "บริการ / ติดต่อสอบถาม"
@@ -34,9 +51,8 @@ const PhoneIcon = () => (
   </svg>
 );
 
-type TrustItem = { key: string; glyph?: string; Icon?: () => JSX.Element };
-const TRUST_ITEMS: TrustItem[] = [
-  { key: 'fair', glyph: '฿' }, // สัญลักษณ์เงินบาท
+const TRUST_ITEMS: { key: string; Icon: () => JSX.Element }[] = [
+  { key: 'fair', Icon: BahtIcon }, // ฿
   { key: 'solid', Icon: ShieldIcon },
   { key: 'honest', Icon: HeartIcon },
   { key: 'service', Icon: PhoneIcon },
@@ -45,13 +61,12 @@ const TRUST_ITEMS: TrustItem[] = [
 const TrustHoneycomb = () => {
   const t = useT();
   return (
-    <div className="trust-comb" role="list" aria-label={t('home.trust.aria')}>
-      {TRUST_ITEMS.map(({ key, glyph, Icon }) => (
+    <div className="trust-comb trust-comb-text" role="list" aria-label={t('home.trust.aria')}>
+      {TRUST_ITEMS.map(({ key }) => (
         <div className="trust-cell" role="listitem" key={key}>
-          <span className="hex-badge" aria-hidden="true">
-            {glyph ? <span className="hex-glyph">{glyph}</span> : Icon ? <Icon /> : null}
+          <span className="hex-badge hex-badge-text">
+            <span className="hex-label">{t(`home.trust.${key}.title`)}</span>
           </span>
-          <div className="trust-title">{t(`home.trust.${key}.title`)}</div>
         </div>
       ))}
     </div>
