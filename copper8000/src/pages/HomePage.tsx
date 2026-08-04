@@ -17,11 +17,6 @@ const MATERIAL_EN: Record<Material, string> = {
 };
 
 // ---------- รังผึ้งจุดเด่นบริษัท (ใต้แถบวิ่ง) — PC แถวเดียว resize ตามจอ · มือถือ 2×2 ----------
-const ScaleIcon = () => (
-  <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M12 2a1.3 1.3 0 0 0-1.3 1.3c0 .5.28.94.7 1.16V6H5.5a1 1 0 0 0 0 2h.34l-2.3 5.05A1 1 0 0 0 3.4 13c0 1.6 1.5 2.8 3.35 2.8S10.1 14.6 10.1 13a1 1 0 0 0-.13-.5L7.7 8h3V19H7.5a1 1 0 0 0 0 2h9a1 1 0 0 0 0-2h-3.2V8h3l-2.27 5A1 1 0 0 0 13.9 13c0 1.6 1.5 2.8 3.35 2.8S20.6 14.6 20.6 13a1 1 0 0 0-.14-.5L18.16 8h.34a1 1 0 0 0 0-2h-5.9V4.46c.42-.22.7-.66.7-1.16A1.3 1.3 0 0 0 12 2ZM6.75 10.2 8.1 13.2H5.4l1.35-3ZM17.25 10.2l1.35 3h-2.7l1.35-3Z" />
-  </svg>
-);
 const ShieldIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
     <path d="M12 2 4 5v6c0 5 3.4 8.5 8 11 4.6-2.5 8-6 8-11V5l-8-3Zm-1 13-3.5-3.5 1.4-1.4L11 12.2l4.1-4.1 1.4 1.4L11 15Z" />
@@ -32,30 +27,31 @@ const HeartIcon = () => (
     <path d="M12 21s-7.5-4.6-10-9.3C.7 9 1.7 5.5 5 4.8c2-.4 3.7.5 5 2.2 1.3-1.7 3-2.6 5-2.2 3.3.7 4.3 4.2 3 6.9C19.5 16.4 12 21 12 21Z" />
   </svg>
 );
-const TruckIcon = () => (
+// หูโทรศัพท์บ้านแบบโบราณ — สื่อถึง "บริการ / ติดต่อสอบถาม"
+const PhoneIcon = () => (
   <svg viewBox="0 0 24 24" aria-hidden="true">
-    <path d="M3 5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h1a2.5 2.5 0 0 0 5 0h5a2.5 2.5 0 0 0 5 0h1a1 1 0 0 0 1-1v-3.6a2 2 0 0 0-.4-1.2l-2.1-2.8a2 2 0 0 0-1.6-.8H16V6a1 1 0 0 0-1-1H3Zm13 4h1.9l2.1 2.8V13h-4V9ZM6.5 15.2a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm10 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z" />
+    <path d="M6.6 10.8c1.4 2.8 3.8 5.2 6.6 6.6l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.58.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1C10.61 21 3 13.39 3 4c0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.46.57 3.58.11.35.03.74-.24 1.02L6.6 10.8Z" />
   </svg>
 );
 
-const TRUST_ITEMS = [
-  { key: 'fair', Icon: ScaleIcon },
+type TrustItem = { key: string; glyph?: string; Icon?: () => JSX.Element };
+const TRUST_ITEMS: TrustItem[] = [
+  { key: 'fair', glyph: '฿' }, // สัญลักษณ์เงินบาท
   { key: 'solid', Icon: ShieldIcon },
   { key: 'honest', Icon: HeartIcon },
-  { key: 'service', Icon: TruckIcon },
-] as const;
+  { key: 'service', Icon: PhoneIcon },
+];
 
 const TrustHoneycomb = () => {
   const t = useT();
   return (
     <div className="trust-comb" role="list" aria-label={t('home.trust.aria')}>
-      {TRUST_ITEMS.map(({ key, Icon }) => (
+      {TRUST_ITEMS.map(({ key, glyph, Icon }) => (
         <div className="trust-cell" role="listitem" key={key}>
           <span className="hex-badge" aria-hidden="true">
-            <Icon />
+            {glyph ? <span className="hex-glyph">{glyph}</span> : Icon ? <Icon /> : null}
           </span>
           <div className="trust-title">{t(`home.trust.${key}.title`)}</div>
-          <div className="trust-sub">{t(`home.trust.${key}.sub`)}</div>
         </div>
       ))}
     </div>

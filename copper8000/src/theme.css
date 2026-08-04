@@ -1935,7 +1935,7 @@ a.userbox:hover .name {
   inset: 0;
   transform: translateY(7%);
   clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  background: linear-gradient(158deg, #c08a1d 0%, #7c5810 65%, #573d09 100%);
+  background: linear-gradient(158deg, #7a540b 0%, #402c05 65%, #271a03 100%);
   z-index: 0;
 }
 /* หน้าเหรียญ = ทองนูนโค้ง (โดม) + จุดไฮไลต์สว่างมุมบนซ้าย */
@@ -1945,8 +1945,8 @@ a.userbox:hover .name {
   inset: 0;
   clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
   background:
-    radial-gradient(125% 100% at 34% 20%, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.28) 22%, rgba(255, 255, 255, 0) 45%),
-    radial-gradient(140% 120% at 50% 46%, #fbeaa0 0%, #f0cf5f 30%, #d8a836 60%, #b3811c 86%, #916612 100%);
+    radial-gradient(125% 100% at 34% 20%, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 255, 0.16) 22%, rgba(255, 255, 255, 0) 46%),
+    radial-gradient(140% 120% at 50% 46%, #c7a748 0%, #b08b2c 30%, #8f6c18 60%, #6d4f0f 86%, #4c3707 100%);
   z-index: 1;
 }
 .hex-badge svg {
@@ -1955,6 +1955,16 @@ a.userbox:hover .name {
   width: 47%;
   height: 47%;
   fill: currentColor;
+  filter: drop-shadow(0 2px 2px rgba(96, 64, 6, 0.55));
+}
+/* ตัวอักษรในป้าย (เช่น ฿) — วางบนหน้าโดม 3D เหมือนไอคอน */
+.hex-glyph {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+  font-weight: 800;
+  font-size: clamp(28px, 3.6vw, 46px);
+  line-height: 1;
   filter: drop-shadow(0 2px 2px rgba(96, 64, 6, 0.55));
 }
 .trust-title {
