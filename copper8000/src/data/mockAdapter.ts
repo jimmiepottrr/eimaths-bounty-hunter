@@ -7,6 +7,9 @@
 import { SEED_BOOKINGS, SEED_LANGUAGES, SEED_PRODUCTS, SEED_USERS, type SeedUser } from './seed';
 import {
   ApiError,
+  type AgentCommission,
+  type AgentMember,
+  type AgentSummary,
   type AppSettings,
   type AuditEntry,
   type AuditQuery,
@@ -183,17 +186,52 @@ const createSession = (db: Db, userId: number): string => {
   return token;
 };
 
+/** เฉพาะ agent (พนักงาน) — ใช้กับ endpoint ฝั่ง agent */
+const requireAgent = (db: Db): SeedUser => {
+  const user = requireUser(db);
+  if (user.role !== 'agent') throw new ApiError('เฉพาะพนักงาน (agent) เท่านั้น', 403);
+  return user;
+};
+
+/** สร้าง referral code ไม่ซ้ำ (6 ตัว ตัดอักษรที่สับสน) */
+const genReferral = (db: Db): string => {
+  const alpha = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for (let t = 0; t < 30; t++) {
+    let c = '';
+    for (let i = 0; i < 6; i++) c += alpha[Math.floor(Math.random() * alpha.length)];
+    if (!db.users.some((u) => u.referral_code === c)) return c;
+  }
+  return 'AG' + Math.floor(1000 + Math.random() * 9000);
+};
+
+/** จำนวนลูกค้าที่ผูก + ยอด confirmed รวม ของ agent */
+const agentStats = (db: Db, agentId: number): { customer_count: number; confirmed_total: number } => {
+  const memberIds = db.users.filter((u) => u.agent_id === agentId && u.role === 'user').map((u) => u.id);
+  const confirmed_total = db.bookings
+    .filter((b) => b.status === 'confirmed' && memberIds.includes(b.user_id))
+    .reduce((s, b) => s + b.total_estimate, 0);
+  return { customer_count: memberIds.length, confirmed_total };
+};
+
 export const mockAdapter: DataService = {
   setAuthToken(token) {
     authToken = token;
   },
 
-  async signup({ email, password, name, phone }): Promise<AuthResult> {
+  async signup({ email, password, name, phone, referral_code }): Promise<AuthResult> {
     await delay();
     const db = loadDb();
     const normEmail = email.trim().toLowerCase();
     if (!normEmail || !password || !name.trim()) {
       throw new ApiError('กรุณากรอกข้อมูลให้ครบถ้วน', 400);
+    }
+    // referral (ไม่บังคับ) — ผูกลูกค้าเข้ากับ agent เจ้าของโค้ด
+    let agentId: number | null = null;
+    const ref = (referral_code ?? '').trim().toUpperCase();
+    if (ref) {
+      const agent = db.users.find((u) => u.role === 'agent' && (u.referral_code ?? '') === ref);
+      if (!agent) throw new ApiError('รหัสแนะนำ (referral) ไม่ถูกต้อง', 400);
+      agentId = agent.id;
     }
     if (db.users.some((u) => u.email === normEmail)) {
       throw new ApiError('อีเมลนี้ถูกใช้สมัครแล้ว', 409);
@@ -206,9 +244,10 @@ export const mockAdapter: DataService = {
       phone: phone.trim(),
       role: 'user',
       approved: false,
+      agent_id: agentId,
     };
     db.users.push(user);
-    recordAudit(db, 'signup', { actor: user, entity: 'user', entity_id: user.id, detail: { email: user.email, name: user.name } });
+    recordAudit(db, 'signup', { actor: user, entity: 'user', entity_id: user.id, detail: { email: user.email, name: user.name, agent_id: agentId } });
     const token = createSession(db, user.id);
     authToken = token;
     return { user: publicUser(user), token };
@@ -327,6 +366,113 @@ export const mockAdapter: DataService = {
     if (!user) throw new ApiError('ไม่พบผู้ใช้', 404);
     user.approved = approved;
     recordAudit(db, approved ? 'approve_user' : 'reject_user', { actor: admin, entity: 'user', entity_id: user_id, detail: { approved } });
+    saveDb(db);
+  },
+
+  async listAgents(): Promise<AgentSummary[]> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    return db.users
+      .filter((u) => u.role === 'agent')
+      .map((u) => {
+        const { customer_count, confirmed_total } = agentStats(db, u.id);
+        const rate = u.commission_rate ?? 0;
+        return {
+          ...publicUser(u),
+          customer_count,
+          confirmed_total,
+          commission: Math.round((rate / 100) * confirmed_total * 100) / 100,
+        };
+      });
+  },
+
+  async createAgent({ email, password, name, phone, commission_rate }): Promise<{ referral_code?: string }> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    const normEmail = email.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normEmail)) throw new ApiError('รูปแบบอีเมลไม่ถูกต้อง', 400);
+    if (password.length < 6) throw new ApiError('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร', 400);
+    if (!name.trim()) throw new ApiError('กรุณากรอกชื่อ', 400);
+    const rate = commission_rate ?? 0;
+    if (rate < 0 || rate > 100) throw new ApiError('เปอร์เซ็นต์ค่าคอมต้องอยู่ระหว่าง 0–100', 400);
+    if (db.users.some((u) => u.email === normEmail)) throw new ApiError('อีเมลนี้ถูกใช้แล้ว', 409);
+    const code = genReferral(db);
+    db.users.push({
+      id: db.nextUserId++,
+      email: normEmail,
+      password,
+      name: name.trim(),
+      phone: phone.trim(),
+      role: 'agent',
+      approved: true,
+      referral_code: code,
+      commission_rate: rate,
+    });
+    saveDb(db);
+    return { referral_code: code };
+  },
+
+  async setCommissionRate(user_id, commission_rate): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    if (commission_rate < 0 || commission_rate > 100) throw new ApiError('เปอร์เซ็นต์ค่าคอมต้องอยู่ระหว่าง 0–100', 400);
+    const agent = db.users.find((u) => u.id === user_id && u.role === 'agent');
+    if (!agent) throw new ApiError('ไม่พบพนักงาน', 404);
+    agent.commission_rate = commission_rate;
+    saveDb(db);
+  },
+
+  async agentCommission(): Promise<AgentCommission> {
+    await delay();
+    const db = loadDb();
+    const me = requireAgent(db);
+    const { customer_count, confirmed_total } = agentStats(db, me.id);
+    const rate = me.commission_rate ?? 0;
+    return {
+      referral_code: me.referral_code ?? null,
+      commission_rate: rate,
+      customer_count,
+      confirmed_total,
+      commission: Math.round((rate / 100) * confirmed_total * 100) / 100,
+    };
+  },
+
+  async agentMembers(): Promise<AgentMember[]> {
+    await delay();
+    const db = loadDb();
+    const me = requireAgent(db);
+    return db.users
+      .filter((u) => u.agent_id === me.id && u.role === 'user')
+      .map((u) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        approved: u.approved,
+        confirmed_total: db.bookings
+          .filter((b) => b.status === 'confirmed' && b.user_id === u.id)
+          .reduce((s, b) => s + b.total_estimate, 0),
+      }));
+  },
+
+  async deleteAgent(user_id): Promise<void> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    const agent = db.users.find((u) => u.id === user_id && u.role === 'agent');
+    if (!agent) throw new ApiError('ไม่พบพนักงาน', 404);
+    // ปลดลูกค้าที่ผูกกับ agent นี้
+    db.users.forEach((u) => {
+      if (u.agent_id === user_id) u.agent_id = null;
+    });
+    db.users = db.users.filter((u) => u.id !== user_id);
+    // เคลียร์เซสชันของพนักงานที่ถูกลบ
+    for (const [token, uid] of Object.entries(db.sessions)) {
+      if (uid === user_id) delete db.sessions[token];
+    }
     saveDb(db);
   },
 

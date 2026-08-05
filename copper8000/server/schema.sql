@@ -7,8 +7,12 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash VARCHAR(255) NOT NULL,
   name VARCHAR(190) NOT NULL,
   phone VARCHAR(32) NOT NULL DEFAULT '',
-  role ENUM('user','admin') NOT NULL DEFAULT 'user',
+  role ENUM('user','agent','admin') NOT NULL DEFAULT 'user',
   approved TINYINT(1) NOT NULL DEFAULT 0,
+  -- ระบบค่าคอมมิชชั่น: ลูกค้าผูกกับ agent ผ่าน referral · agent มี rate% ที่แอดมินตั้ง
+  agent_id INT NULL,                                  -- (ลูกค้า) สังกัด agent คนไหน
+  referral_code VARCHAR(20) NULL UNIQUE,              -- (agent) โค้ดแนะนำของ agent
+  commission_rate DECIMAL(5,2) NOT NULL DEFAULT 0,    -- (agent) % ค่าคอม
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

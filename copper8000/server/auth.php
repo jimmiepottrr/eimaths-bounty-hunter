@@ -28,19 +28,30 @@ if ($action === 'signup') {
   if (mb_strlen($password) < 6) json_err('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร');
   if ($name === '') json_err('กรุณากรอกชื่อ');
 
+  // referral code (ไม่บังคับ) — ผูกลูกค้าเข้ากับ agent ที่เป็นเจ้าของโค้ด
+  $referral = strtoupper(trim((string) ($body['referral_code'] ?? '')));
+  $agentId = null;
+  if ($referral !== '') {
+    $st = pdo()->prepare("SELECT id FROM users WHERE referral_code = ? AND role = 'agent'");
+    $st->execute([$referral]);
+    $agentRow = $st->fetch();
+    if (!$agentRow) json_err('รหัสแนะนำ (referral) ไม่ถูกต้อง');
+    $agentId = (int) $agentRow['id'];
+  }
+
   $st = pdo()->prepare('SELECT id FROM users WHERE email = ?');
   $st->execute([$email]);
   if ($st->fetch()) json_err('อีเมลนี้ถูกใช้สมัครแล้ว', 409);
 
   pdo()->prepare(
-    "INSERT INTO users (email, password_hash, name, phone, role, approved) VALUES (?, ?, ?, ?, 'user', 0)"
-  )->execute([$email, password_hash($password, PASSWORD_DEFAULT), $name, $phone]);
+    "INSERT INTO users (email, password_hash, name, phone, role, approved, agent_id) VALUES (?, ?, ?, ?, 'user', 0, ?)"
+  )->execute([$email, password_hash($password, PASSWORD_DEFAULT), $name, $phone, $agentId]);
   $userId = (int) pdo()->lastInsertId();
 
   $st = pdo()->prepare('SELECT * FROM users WHERE id = ?');
   $st->execute([$userId]);
   $newUser = $st->fetch();
-  audit_log('signup', ['user' => $newUser, 'entity' => 'user', 'entity_id' => $userId, 'detail' => ['email' => $email, 'name' => $name]]);
+  audit_log('signup', ['user' => $newUser, 'entity' => 'user', 'entity_id' => $userId, 'detail' => ['email' => $email, 'name' => $name, 'agent_id' => $agentId]]);
   json_out(['token' => new_session($userId), 'user' => user_public($newUser)], 201);
 }
 

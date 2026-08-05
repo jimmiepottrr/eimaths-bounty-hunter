@@ -10,6 +10,30 @@ require __DIR__ . '/_bootstrap.php';
 api_key_check();
 $admin = require_admin();
 
+/** ผู้ใช้ agent + สรุปค่าคอม (สำหรับหน้าแอดมิน) — commission = rate% × ยอด confirmed */
+function agent_public(array $a): array {
+  $rate = isset($a['commission_rate']) ? (float) $a['commission_rate'] : 0;
+  $confirmed = isset($a['confirmed_total']) ? (float) $a['confirmed_total'] : 0;
+  return user_public($a) + [
+    'customer_count'  => (int) ($a['customer_count'] ?? 0),
+    'confirmed_total' => $confirmed,
+    'commission'      => round($rate / 100 * $confirmed, 2),
+  ];
+}
+
+/** สร้าง referral code ไม่ซ้ำ (6 ตัว ตัดอักษรที่สับสน 0/O/1/I) */
+function gen_referral_code(): string {
+  $alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  for ($try = 0; $try < 20; $try++) {
+    $code = '';
+    for ($i = 0; $i < 6; $i++) $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+    $st = pdo()->prepare('SELECT id FROM users WHERE referral_code = ?');
+    $st->execute([$code]);
+    if (!$st->fetch()) return $code;
+  }
+  return 'AG' . random_int(1000, 9999);
+}
+
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
 if ($method === 'GET') {
@@ -20,6 +44,19 @@ if ($method === 'GET') {
       "SELECT * FROM users WHERE role = 'user' AND approved = 0 ORDER BY created_at DESC"
     )->fetchAll();
     json_out(['users' => array_map('user_public', $rows)]);
+  }
+
+  if ($view === 'agents') {
+    // agent + สรุปค่าคอม: จำนวนลูกค้าที่ผูก, ยอด confirmed, ค่าคอม = rate% × ยอด
+    $rows = pdo()->query(
+      "SELECT a.*,
+         (SELECT COUNT(*) FROM users c WHERE c.agent_id = a.id) AS customer_count,
+         COALESCE((SELECT SUM(b.total_estimate) FROM bookings b
+                   JOIN users c ON c.id = b.user_id
+                   WHERE c.agent_id = a.id AND b.status = 'confirmed'), 0) AS confirmed_total
+       FROM users a WHERE a.role = 'agent' ORDER BY a.created_at DESC"
+    )->fetchAll();
+    json_out(['agents' => array_map('agent_public', $rows)]);
   }
 
   if ($view === 'products') {
@@ -58,6 +95,60 @@ if ($action === 'set_approval') {
     if (!$chk->fetch()) json_err('ไม่พบผู้ใช้', 404);
   }
   audit_log($approved ? 'approve_user' : 'reject_user', ['user' => $admin, 'entity' => 'user', 'entity_id' => $userId, 'detail' => ['approved' => $approved]]);
+  json_out([]);
+}
+
+if ($action === 'create_agent') {
+  // สร้างบัญชีพนักงาน (agent) — เฉพาะแอดมิน · agent สมัครเองไม่ได้ · อนุมัติอัตโนมัติ
+  $email = strtolower(trim((string) ($body['email'] ?? '')));
+  $password = (string) ($body['password'] ?? '');
+  $name = trim((string) ($body['name'] ?? ''));
+  $phone = trim((string) ($body['phone'] ?? ''));
+
+  if (!filter_var($email, FILTER_VALIDATE_EMAIL)) json_err('รูปแบบอีเมลไม่ถูกต้อง');
+  if (mb_strlen($password) < 6) json_err('รหัสผ่านต้องยาวอย่างน้อย 6 ตัวอักษร');
+  if ($name === '') json_err('กรุณากรอกชื่อ');
+
+  $rate = (float) ($body['commission_rate'] ?? 0);
+  if ($rate < 0 || $rate > 100) json_err('เปอร์เซ็นต์ค่าคอมต้องอยู่ระหว่าง 0–100');
+
+  $st = pdo()->prepare('SELECT id FROM users WHERE email = ?');
+  $st->execute([$email]);
+  if ($st->fetch()) json_err('อีเมลนี้ถูกใช้แล้ว', 409);
+
+  $code = gen_referral_code();
+  pdo()->prepare(
+    "INSERT INTO users (email, password_hash, name, phone, role, approved, referral_code, commission_rate)
+     VALUES (?, ?, ?, ?, 'agent', 1, ?, ?)"
+  )->execute([$email, password_hash($password, PASSWORD_DEFAULT), $name, $phone, $code, $rate]);
+  $newId = (int) pdo()->lastInsertId();
+  audit_log('create_agent', ['user' => $admin, 'entity' => 'user', 'entity_id' => $newId, 'detail' => ['email' => $email, 'name' => $name, 'referral_code' => $code, 'commission_rate' => $rate]]);
+  json_out(['referral_code' => $code], 201);
+}
+
+if ($action === 'set_commission_rate') {
+  $userId = (int) ($body['user_id'] ?? 0);
+  $rate = (float) ($body['commission_rate'] ?? 0);
+  if ($rate < 0 || $rate > 100) json_err('เปอร์เซ็นต์ค่าคอมต้องอยู่ระหว่าง 0–100');
+  $st = pdo()->prepare("UPDATE users SET commission_rate = ? WHERE id = ? AND role = 'agent'");
+  $st->execute([$rate, $userId]);
+  if ($st->rowCount() === 0) {
+    $chk = pdo()->prepare("SELECT id FROM users WHERE id = ? AND role = 'agent'");
+    $chk->execute([$userId]);
+    if (!$chk->fetch()) json_err('ไม่พบพนักงาน', 404);
+  }
+  audit_log('set_commission_rate', ['user' => $admin, 'entity' => 'user', 'entity_id' => $userId, 'detail' => ['commission_rate' => $rate]]);
+  json_out([]);
+}
+
+if ($action === 'delete_agent') {
+  $userId = (int) ($body['user_id'] ?? 0);
+  // ปลดลูกค้าที่ผูกกับ agent นี้ก่อน (ไม่ให้ค้าง agent_id ที่ไม่มีตัวตน)
+  pdo()->prepare('UPDATE users SET agent_id = NULL WHERE agent_id = ?')->execute([$userId]);
+  $st = pdo()->prepare("DELETE FROM users WHERE id = ? AND role = 'agent'");
+  $st->execute([$userId]);
+  if ($st->rowCount() === 0) json_err('ไม่พบพนักงาน', 404);
+  audit_log('delete_agent', ['user' => $admin, 'entity' => 'user', 'entity_id' => $userId]);
   json_out([]);
 }
 

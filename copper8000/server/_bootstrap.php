@@ -145,12 +145,15 @@ function audit_log(string $action, array $opts = []): void {
 // ---------- Serializers (ให้ type ตรงกับ frontend) ----------
 function user_public(array $u): array {
   return [
-    'id'       => (int) $u['id'],
-    'email'    => $u['email'],
-    'name'     => $u['name'],
-    'phone'    => $u['phone'],
-    'role'     => $u['role'],
-    'approved' => (bool) $u['approved'],
+    'id'              => (int) $u['id'],
+    'email'           => $u['email'],
+    'name'            => $u['name'],
+    'phone'           => $u['phone'],
+    'role'            => $u['role'],
+    'approved'        => (bool) $u['approved'],
+    'agent_id'        => isset($u['agent_id']) && $u['agent_id'] !== null ? (int) $u['agent_id'] : null,
+    'referral_code'   => $u['referral_code'] ?? null,
+    'commission_rate' => isset($u['commission_rate']) ? (float) $u['commission_rate'] : 0,
   ];
 }
 

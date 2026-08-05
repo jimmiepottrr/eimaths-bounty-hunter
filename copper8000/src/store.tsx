@@ -24,8 +24,16 @@ type AuthContextValue = {
   user: User | null;
   booting: boolean;
   login: (email: string, password: string) => Promise<User>;
-  signup: (input: { email: string; password: string; name: string; phone: string }) => Promise<User>;
+  signup: (input: {
+    email: string;
+    password: string;
+    name: string;
+    phone: string;
+    referral_code?: string;
+  }) => Promise<User>;
   logout: () => void;
+  /** เคลียร์เซสชันโดยไม่ redirect (เช่น ปฏิเสธคนที่ไม่ใช่พนักงานบนหน้า login พนักงาน) */
+  clearSession: () => void;
   refreshUser: () => Promise<void>;
 };
 
@@ -60,6 +68,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     persist(null);
     navigate('/');
   }, [persist, navigate]);
+
+  const clearSession = useCallback(() => {
+    persist(null);
+  }, [persist]);
 
   useEffect(() => {
     setAuthErrorHandler(() => {
@@ -100,7 +112,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const signup = useCallback(
-    async (input: { email: string; password: string; name: string; phone: string }) => {
+    async (input: {
+      email: string;
+      password: string;
+      name: string;
+      phone: string;
+      referral_code?: string;
+    }) => {
       const res = await dataService.signup(input);
       persist({ token: res.token, user: res.user });
       return res.user;
@@ -118,8 +136,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({ user: session?.user ?? null, booting, login, signup, logout, refreshUser }),
-    [session, booting, login, signup, logout, refreshUser],
+    () => ({ user: session?.user ?? null, booting, login, signup, logout, clearSession, refreshUser }),
+    [session, booting, login, signup, logout, clearSession, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

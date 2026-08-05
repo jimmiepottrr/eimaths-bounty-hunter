@@ -103,6 +103,121 @@ test('flow ครบวงจร: สมัคร → รออนุมัต�
   await expect(page.locator('tr', { hasText: 'ทองแดงเงา' })).toContainText('ได้รับการยืนยันแล้ว');
 });
 
+test('role พนักงาน (agent): login แล้วแถบหัวขึ้นป้าย "พนักงาน" · ไม่มีแท็บแอดมิน · เข้า /admin ไม่ได้', async ({
+  page,
+}) => {
+  await login(page, 'agent@copper8000.co.th', 'agent1234');
+  // แถบหัวแสดง role ว่าเป็น "พนักงาน" (ไม่ใช่ "อนุมัติแล้ว" ของลูกค้า)
+  await expect(page.locator('a.userbox .status')).toHaveText('พนักงาน');
+  // agent ไม่เห็นแท็บแอดมิน
+  await expect(page.getByRole('link', { name: 'แอดมิน' })).toHaveCount(0);
+  // เข้า /admin ตรงๆ ก็ถูก redirect ออก (เฉพาะแอดมินเท่านั้น)
+  await page.goto('/#/admin');
+  await expect(page).toHaveURL(/#\/$/);
+});
+
+test('แอดมินสร้างพนักงาน → พนักงานล็อกอินผ่านหน้า login พนักงาน · เห็นมุมมองพนักงาน · จองไม่ได้', async ({
+  page,
+}) => {
+  const AGENT_EMAIL = 'newagent@copper8000.co.th';
+  const AGENT_PW = 'agent5678';
+
+  // แอดมินสร้างบัญชีพนักงานจากแท็บ "พนักงาน"
+  await login(page, 'admin@copper8000.co.th', 'admin1234');
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: 'พนักงาน', exact: true }).click();
+  await page.fill('#agent-name', 'พนักงานใหม่ ทดสอบ');
+  await page.fill('#agent-email', AGENT_EMAIL);
+  await page.fill('#agent-phone', '081-000-0009');
+  await page.fill('#agent-password', AGENT_PW);
+  await page.getByRole('button', { name: 'สร้างบัญชีพนักงาน' }).click();
+  await expect(page.locator('tr', { hasText: AGENT_EMAIL })).toBeVisible();
+  await logout(page);
+
+  // พนักงานล็อกอินผ่านหน้า login พนักงานแยกต่างหาก
+  await page.goto('/#/agent-login');
+  await page.fill('#email', AGENT_EMAIL);
+  await page.fill('#password', AGENT_PW);
+  await page.locator('form button[type="submit"]').click();
+  await expect(page).toHaveURL(/#\/agent/);
+  await expect(page.locator('a.userbox .status')).toHaveText('พนักงาน');
+
+  // แตะสินค้า → ไม่มี modal จอง (พนักงานดูราคาอย่างเดียว)
+  await page.goto('/#/products');
+  await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
+  await expect(page.locator('.modal')).toHaveCount(0);
+});
+
+test('หน้า login พนักงาน: ผู้ใช้ทั่วไปถูกปฏิเสธ (ไม่พาเข้าระบบ)', async ({ page }) => {
+  await page.goto('/#/agent-login');
+  await page.fill('#email', 'demo@copper8000.co.th');
+  await page.fill('#password', 'demo1234');
+  await page.locator('form button[type="submit"]').click();
+  await expect(page.locator('.error-box')).toContainText('ไม่ใช่พนักงาน');
+  await expect(page).toHaveURL(/#\/agent-login/);
+});
+
+test('พนักงาน (agent) เห็นค่าคอมของตัวเอง: รหัสแนะนำ + ยอดยืนยัน + ค่าคอม 3% × 564,000 = 16,920', async ({
+  page,
+}) => {
+  await login(page, 'agent@copper8000.co.th', 'agent1234');
+  // มีแท็บ "พนักงานขาย" ในเมนู → เข้าหน้า /agent
+  await page.goto('/#/agent');
+  await expect(page.getByRole('heading', { name: 'ค่าคอมมิชชั่นของฉัน' })).toBeVisible();
+  // รหัสแนะนำ + อัตรา + ยอดยืนยัน + ค่าคอม (คำนวณฝั่งระบบ)
+  await expect(page.locator('.agent-stat-card', { hasText: 'รหัสแนะนำของฉัน' })).toContainText('AGENT1');
+  await expect(page.locator('.agent-stat-card.highlight')).toContainText('16,920');
+  await expect(page.getByText('564,000').first()).toBeVisible();
+  // ลูกค้าที่ผูก (เดโม่) โผล่ในรายชื่อลูกค้าของฉัน
+  await expect(page.locator('tr', { hasText: 'คุณเดโม่' })).toBeVisible();
+});
+
+test('แอดมินตั้ง % ค่าคอมให้ agent → สรุปค่าคอมอัปเดต (5% × 564,000 = 28,200)', async ({ page }) => {
+  await login(page, 'admin@copper8000.co.th', 'admin1234');
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: 'พนักงาน', exact: true }).click();
+  const agentRow = page.locator('tr', { hasText: 'AGENT1' });
+  await expect(agentRow).toContainText('16,920'); // ค่าคอมเริ่มต้น 3%
+  // เปลี่ยนอัตราเป็น 5% แล้วบันทึก
+  await agentRow.locator('input[type="number"]').fill('5');
+  await agentRow.getByRole('button', { name: 'บันทึก %' }).click();
+  await expect(page.locator('.toast')).toContainText('บันทึกเปอร์เซ็นต์ค่าคอมแล้ว');
+  await expect(page.locator('tr', { hasText: 'AGENT1' })).toContainText('28,200');
+});
+
+test('ลูกค้ากรอกรหัสแนะนำตอนสมัคร → ผูกกับ agent เจ้าของโค้ด (agent เห็นลูกค้าเพิ่ม)', async ({ page }) => {
+  const REF_EMAIL = 'referred@test.co.th';
+  // สมัครพร้อมกรอก referral = AGENT1
+  await page.goto('/#/signup');
+  await page.fill('#name', 'ลูกค้าจากเซลล์');
+  await page.fill('#phone', '089-111-2222');
+  await page.fill('#email', REF_EMAIL);
+  await page.fill('#referral', 'AGENT1');
+  await page.fill('#password', 'ref12345');
+  await page.fill('#confirm', 'ref12345');
+  await page.locator('form button[type="submit"]').click();
+  await expect(page.getByText('รอการอนุมัติจากแอดมิน')).toBeVisible();
+  await logout(page);
+
+  // agent เห็นลูกค้าใหม่ในรายชื่อของตัวเอง (customer_count เพิ่มเป็น 2)
+  await login(page, 'agent@copper8000.co.th', 'agent1234');
+  await page.goto('/#/agent');
+  await expect(page.locator('.agent-stat-card', { hasText: 'จำนวนลูกค้า' })).toContainText('2');
+  await expect(page.locator('tr', { hasText: 'ลูกค้าจากเซลล์' })).toBeVisible();
+});
+
+test('รหัสแนะนำผิด → สมัครไม่ผ่าน', async ({ page }) => {
+  await page.goto('/#/signup');
+  await page.fill('#name', 'รหัสผิด ทดสอบ');
+  await page.fill('#phone', '089-000-0000');
+  await page.fill('#email', 'badref@test.co.th');
+  await page.fill('#referral', 'NOPE99');
+  await page.fill('#password', 'bad12345');
+  await page.fill('#confirm', 'bad12345');
+  await page.locator('form button[type="submit"]').click();
+  await expect(page.locator('.error-box')).toContainText('referral');
+});
+
 test('ราคาเปลี่ยนระหว่างเปิด modal → โดนบล็อก + โชว์ราคาใหม่ให้ยืนยันอีกครั้ง', async ({ page }) => {
   await login(page, 'demo@copper8000.co.th', 'demo1234');
   await page.getByRole('button', { name: /Bright Copper|ทองแดงเงา/ }).click();

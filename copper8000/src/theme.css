@@ -1042,6 +1042,63 @@ button {
   font-weight: 600;
 }
 
+/* ---------- หน้าพนักงานขาย (agent console) ---------- */
+
+.agent-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.agent-stat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px 18px;
+}
+
+.agent-stat-card .label {
+  font-size: calc(13px * var(--fs));
+  color: var(--ink-soft);
+}
+
+.agent-stat-card .value {
+  font-size: calc(22px * var(--fs));
+  font-weight: 800;
+  color: var(--copper-dark);
+  font-variant-numeric: tabular-nums;
+}
+
+.agent-stat-card .value.code {
+  letter-spacing: 2px;
+}
+
+.agent-stat-card .hint {
+  font-size: calc(12px * var(--fs));
+  color: var(--ink-soft);
+}
+
+.agent-stat-card.highlight {
+  border-left: 5px solid var(--copper);
+  background: linear-gradient(180deg, #fffdf6, #fff);
+}
+
+.referral-chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--copper-soft, #f4ead2);
+  color: var(--copper-dark);
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- ตัวเลือกธีม (แอดมิน) ---------- */
 
 .theme-grid {
