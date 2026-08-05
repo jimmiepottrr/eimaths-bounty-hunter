@@ -26,7 +26,7 @@ const AgentLoginPage = () => {
         setError(t('agentLogin.notStaff'));
         return;
       }
-      navigate('/products');
+      navigate(user.role === 'agent' ? '/agent' : '/admin');
     } catch (err) {
       setError((err as Error).message);
     } finally {

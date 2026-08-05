@@ -9,6 +9,7 @@ const SignupPage = () => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [referral, setReferral] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +29,7 @@ const SignupPage = () => {
     }
     setBusy(true);
     try {
-      await signup({ email, password, name, phone });
+      await signup({ email, password, name, phone, referral_code: referral.trim() || undefined });
       setDone(true);
     } catch (err) {
       setError((err as Error).message);
@@ -74,6 +75,20 @@ const SignupPage = () => {
             required
             autoComplete="email"
           />
+        </div>
+        <div className="field">
+          <label htmlFor="referral">{t('signup.referral')}</label>
+          <input
+            id="referral"
+            value={referral}
+            onChange={(e) => setReferral(e.target.value)}
+            autoComplete="off"
+            placeholder={t('signup.referralPlaceholder')}
+            style={{ textTransform: 'uppercase' }}
+          />
+          <p style={{ fontSize: 'calc(12.5px * var(--fs))', color: 'var(--ink-soft)', margin: '4px 0 0' }}>
+            {t('signup.referralHint')}
+          </p>
         </div>
         <div className="field">
           <label htmlFor="password">{t('signup.password6')}</label>

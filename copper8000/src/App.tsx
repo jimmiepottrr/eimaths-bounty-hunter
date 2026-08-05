@@ -1,8 +1,9 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import Layout from './components/Layout';
-import { RequireAdmin, RequireAuth } from './components/Protected';
+import { RequireAdmin, RequireAgent, RequireAuth } from './components/Protected';
 import AdminPage from './pages/AdminPage';
 import AgentLoginPage from './pages/AgentLoginPage';
+import AgentPage from './pages/AgentPage';
 import BookingReportPage from './pages/BookingReportPage';
 import CompanyPage from './pages/CompanyPage';
 import ContactPage from './pages/ContactPage';
@@ -36,6 +37,14 @@ const App = () => (
           <RequireAuth>
             <BookingReportPage />
           </RequireAuth>
+        }
+      />
+      <Route
+        path="agent"
+        element={
+          <RequireAgent>
+            <AgentPage />
+          </RequireAgent>
         }
       />
       <Route

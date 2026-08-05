@@ -70,6 +70,11 @@ const Layout = () => {
           {t('nav.profile')}
         </NavLink>
       )}
+      {user?.role === 'agent' && (
+        <NavLink to="/agent" className={tabClass}>
+          {t('nav.agent')}
+        </NavLink>
+      )}
       {user?.role === 'admin' && (
         <NavLink to="/admin" className={tabClass}>
           {t('nav.admin')}

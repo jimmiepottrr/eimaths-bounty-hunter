@@ -24,7 +24,13 @@ type AuthContextValue = {
   user: User | null;
   booting: boolean;
   login: (email: string, password: string) => Promise<User>;
-  signup: (input: { email: string; password: string; name: string; phone: string }) => Promise<User>;
+  signup: (input: {
+    email: string;
+    password: string;
+    name: string;
+    phone: string;
+    referral_code?: string;
+  }) => Promise<User>;
   logout: () => void;
   /** เคลียร์เซสชันโดยไม่ redirect (เช่น ปฏิเสธคนที่ไม่ใช่พนักงานบนหน้า login พนักงาน) */
   clearSession: () => void;
@@ -106,7 +112,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const signup = useCallback(
-    async (input: { email: string; password: string; name: string; phone: string }) => {
+    async (input: {
+      email: string;
+      password: string;
+      name: string;
+      phone: string;
+      referral_code?: string;
+    }) => {
       const res = await dataService.signup(input);
       persist({ token: res.token, user: res.user });
       return res.user;

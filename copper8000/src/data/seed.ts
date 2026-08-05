@@ -22,6 +22,8 @@ export const SEED_USERS: SeedUser[] = [
     phone: '081-000-0004',
     role: 'agent',
     approved: true,
+    referral_code: 'AGENT1',
+    commission_rate: 3,
   },
   {
     id: 2,
@@ -31,6 +33,7 @@ export const SEED_USERS: SeedUser[] = [
     phone: '081-000-0002',
     role: 'user',
     approved: true,
+    agent_id: 4, // ลูกค้าคนนี้ผูกกับ agent (ไว้โชว์ค่าคอมในโหมดสาธิต)
   },
   {
     id: 3,

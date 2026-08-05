@@ -9,6 +9,35 @@ export type User = {
   phone: string;
   role: 'user' | 'agent' | 'admin';
   approved: boolean;
+  agent_id?: number | null; // (ลูกค้า) สังกัด agent คนไหน
+  referral_code?: string | null; // (agent) โค้ดแนะนำ
+  commission_rate?: number; // (agent) % ค่าคอม
+};
+
+/** agent + สรุปค่าคอม (หน้าแอดมิน) */
+export type AgentSummary = User & {
+  customer_count: number;
+  confirmed_total: number; // ยอดจอง confirmed รวมของลูกค้าที่ผูก
+  commission: number; // = commission_rate% × confirmed_total
+};
+
+/** สรุปค่าคอมของ agent เอง */
+export type AgentCommission = {
+  referral_code: string | null;
+  commission_rate: number;
+  customer_count: number;
+  confirmed_total: number;
+  commission: number;
+};
+
+/** ลูกค้าที่ผูกกับ agent (มุมมอง agent) */
+export type AgentMember = {
+  id: number;
+  name: string;
+  email: string;
+  phone: string;
+  approved: boolean;
+  confirmed_total: number;
 };
 
 export type Product = {
@@ -127,7 +156,13 @@ export class ApiError extends Error {
 
 export interface DataService {
   setAuthToken(token: string | null): void;
-  signup(input: { email: string; password: string; name: string; phone: string }): Promise<AuthResult>;
+  signup(input: {
+    email: string;
+    password: string;
+    name: string;
+    phone: string;
+    referral_code?: string;
+  }): Promise<AuthResult>;
   login(email: string, password: string): Promise<AuthResult>;
   me(): Promise<User>;
   /** เปลี่ยนรหัสผ่านของตัวเอง (ข้อมูลอื่นแก้ไม่ได้ — ต้องติดต่อบริษัท) */
@@ -147,9 +182,23 @@ export interface DataService {
   listPendingUsers(): Promise<User[]>;
   setUserApproval(user_id: number, approved: boolean): Promise<void>;
   /** พนักงาน (agent) — สร้าง/ดู/ลบ ได้เฉพาะแอดมิน (agent สมัครเองไม่ได้) */
-  listAgents(): Promise<User[]>;
-  createAgent(input: { email: string; password: string; name: string; phone: string }): Promise<void>;
+  /** รายชื่อ agent + สรุปค่าคอม (admin) */
+  listAgents(): Promise<AgentSummary[]>;
+  createAgent(input: {
+    email: string;
+    password: string;
+    name: string;
+    phone: string;
+    commission_rate?: number;
+  }): Promise<{ referral_code?: string }>;
   deleteAgent(user_id: number): Promise<void>;
+  /** แอดมินตั้ง % ค่าคอมให้ agent */
+  setCommissionRate(user_id: number, commission_rate: number): Promise<void>;
+  // ---- agent (พนักงานดูของตัวเอง) ----
+  /** สรุปค่าคอมของ agent ที่ล็อกอินอยู่ */
+  agentCommission(): Promise<AgentCommission>;
+  /** รายชื่อลูกค้าที่ผูกกับ agent ที่ล็อกอินอยู่ */
+  agentMembers(): Promise<AgentMember[]>;
   listAllBookings(): Promise<Booking[]>;
   confirmBooking(booking_id: number): Promise<void>;
   /** แอดมินบันทึกน้ำหนักส่งจริง + น้ำหนักสุทธิหลัง QC (ส่ง null เพื่อล้างค่า) */

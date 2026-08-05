@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import { dataService } from '../data/service';
-import type { AnnounceMode, AuditResult, Booking, LanguageInfo, Material, Product, User } from '../data/types';
-import { fmtDate, fmtNumber } from '../format';
+import type { AgentSummary, AnnounceMode, AuditResult, Booking, LanguageInfo, Material, Product, User } from '../data/types';
+import { fmtBaht, fmtDate, fmtNumber } from '../format';
 import { DICT_TEMPLATE } from '../i18n/core';
 import { bookingProductName, productName, productSubName, useI18n } from '../i18n';
 import { applyTheme, currentTheme, type ThemeCode } from '../themeManager';
@@ -70,15 +70,93 @@ const PendingUsersTab = ({ onToast }: { onToast: (m: string) => void }) => {
   );
 };
 
-// ---------- แท็บจัดการพนักงาน (agent) — แอดมินสร้าง/ลบ agent ----------
+// ---------- แถวพนักงาน 1 คน — ตั้ง % ค่าคอม + ดูสรุปยอด/ค่าคอมได้ในตัว ----------
+const AgentRow = ({
+  a,
+  onReload,
+  onToast,
+  onRemove,
+}: {
+  a: AgentSummary;
+  onReload: () => void;
+  onToast: (m: string) => void;
+  onRemove: (a: AgentSummary) => void;
+}) => {
+  const { t } = useI18n();
+  const [rate, setRate] = useState(String(a.commission_rate ?? 0));
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setRate(String(a.commission_rate ?? 0));
+  }, [a.commission_rate]);
+
+  const saveRate = async () => {
+    const num = Number(rate);
+    if (!(num >= 0 && num <= 100)) {
+      onToast(t('adminAgent.rateRange'));
+      return;
+    }
+    setBusy(true);
+    try {
+      await dataService.setCommissionRate(a.id, num);
+      onToast(t('adminAgent.toastRateSaved'));
+      onReload();
+    } catch (e) {
+      onToast((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <tr>
+      <td>{a.name}</td>
+      <td>{a.email}</td>
+      <td>
+        <span className="referral-chip">{a.referral_code ?? '—'}</span>
+      </td>
+      <td style={{ whiteSpace: 'nowrap' }}>
+        <input
+          className="w-input"
+          type="number"
+          step="any"
+          min="0"
+          max="100"
+          aria-label={t('adminAgent.colRate')}
+          value={rate}
+          onChange={(e) => setRate(e.target.value)}
+          style={{ width: 70 }}
+        />{' '}
+        %
+      </td>
+      <td>{fmtNumber(a.customer_count)}</td>
+      <td>{fmtBaht(a.confirmed_total)}</td>
+      <td>
+        <strong>{fmtBaht(a.commission)}</strong>
+      </td>
+      <td style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button type="button" className="btn btn-primary btn-small" onClick={saveRate} disabled={busy}>
+          {t('adminAgent.saveRate')}
+        </button>
+        <button type="button" className="btn btn-outline btn-small" onClick={() => onRemove(a)}>
+          {t('adminAgent.remove')}
+        </button>
+      </td>
+    </tr>
+  );
+};
+
+// ---------- แท็บจัดการพนักงาน (agent) — แอดมินสร้าง/ลบ agent + ตั้งค่าคอม ----------
 const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t } = useI18n();
-  const [agents, setAgents] = useState<User[] | null>(null);
+  const [agents, setAgents] = useState<AgentSummary[] | null>(null);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [rate, setRate] = useState('0');
   const [busy, setBusy] = useState(false);
+  const [newCode, setNewCode] = useState<string | null>(null);
 
   const reload = useCallback(() => {
     dataService
@@ -94,13 +172,20 @@ const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
     setEmail('');
     setPhone('');
     setPassword('');
+    setRate('0');
   };
 
   const create = async () => {
+    const rateNum = Number(rate);
+    if (!(rateNum >= 0 && rateNum <= 100)) {
+      onToast(t('adminAgent.rateRange'));
+      return;
+    }
     setBusy(true);
     try {
-      await dataService.createAgent({ email, password, name, phone });
+      const res = await dataService.createAgent({ email, password, name, phone, commission_rate: rateNum });
       onToast(t('adminAgent.toastCreated'));
+      setNewCode(res.referral_code ?? null);
       resetForm();
       reload();
     } catch (e) {
@@ -110,7 +195,7 @@ const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
     }
   };
 
-  const remove = async (a: User) => {
+  const remove = async (a: AgentSummary) => {
     if (!window.confirm(t('adminAgent.confirmDelete', { name: a.name }))) return;
     try {
       await dataService.deleteAgent(a.id);
@@ -134,22 +219,17 @@ const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
               <tr>
                 <th>{t('admin.colName')}</th>
                 <th>{t('login.email')}</th>
-                <th>{t('admin.colPhone')}</th>
+                <th>{t('adminAgent.colReferral')}</th>
+                <th>{t('adminAgent.colRate')}</th>
+                <th>{t('adminAgent.colCustomers')}</th>
+                <th>{t('adminAgent.colConfirmedTotal')}</th>
+                <th>{t('adminAgent.colCommission')}</th>
                 <th>{t('admin.colManage')}</th>
               </tr>
             </thead>
             <tbody>
               {agents.map((a) => (
-                <tr key={a.id}>
-                  <td>{a.name}</td>
-                  <td>{a.email}</td>
-                  <td>{a.phone || '—'}</td>
-                  <td>
-                    <button type="button" className="btn btn-outline btn-small" onClick={() => remove(a)}>
-                      {t('adminAgent.remove')}
-                    </button>
-                  </td>
-                </tr>
+                <AgentRow key={a.id} a={a} onReload={reload} onToast={onToast} onRemove={remove} />
               ))}
             </tbody>
           </table>
@@ -158,6 +238,12 @@ const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
 
       <div className="card">
         <h3 style={{ marginTop: 0 }}>{t('adminAgent.addTitle')}</h3>
+        {newCode && (
+          <div className="success-box" style={{ marginBottom: 14 }}>
+            {t('adminAgent.newCodeLabel')}: <strong className="referral-chip">{newCode}</strong>
+            <div style={{ fontSize: 'calc(12.5px * var(--fs))', marginTop: 4 }}>{t('adminAgent.newCodeHint')}</div>
+          </div>
+        )}
         <div className="field">
           <label htmlFor="agent-name">{t('adminAgent.nameLabel')}</label>
           <input id="agent-name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -178,6 +264,18 @@ const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="new-password"
+          />
+        </div>
+        <div className="field">
+          <label htmlFor="agent-rate">{t('adminAgent.rateLabel')}</label>
+          <input
+            id="agent-rate"
+            type="number"
+            step="any"
+            min="0"
+            max="100"
+            value={rate}
+            onChange={(e) => setRate(e.target.value)}
           />
         </div>
         <button type="button" className="btn btn-primary" onClick={create} disabled={busy}>

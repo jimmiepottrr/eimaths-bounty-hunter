@@ -8,6 +8,9 @@ import { API_BASE, API_KEY, REQUEST_TIMEOUT_MS } from '../config';
 import { t } from '../i18n/core';
 import {
   ApiError,
+  type AgentCommission,
+  type AgentMember,
+  type AgentSummary,
   type AppSettings,
   type AuditQuery,
   type AuditResult,
@@ -139,17 +142,38 @@ export const httpAdapter: DataService = {
     });
   },
 
-  async listAgents(): Promise<User[]> {
-    const res = await request<{ users: User[] }>('/admin.php?view=agents');
-    return res.users;
+  async listAgents(): Promise<AgentSummary[]> {
+    const res = await request<{ agents: AgentSummary[] }>('/admin.php?view=agents');
+    return res.agents ?? [];
   },
 
-  async createAgent(input): Promise<void> {
-    await request('/admin.php', { method: 'POST', body: { action: 'create_agent', ...input } });
+  async createAgent(input): Promise<{ referral_code?: string }> {
+    const res = await request<{ referral_code?: string }>('/admin.php', {
+      method: 'POST',
+      body: { action: 'create_agent', ...input },
+    });
+    return { referral_code: res.referral_code };
   },
 
   async deleteAgent(user_id): Promise<void> {
     await request('/admin.php', { method: 'POST', body: { action: 'delete_agent', user_id } });
+  },
+
+  async setCommissionRate(user_id, commission_rate): Promise<void> {
+    await request('/admin.php', {
+      method: 'POST',
+      body: { action: 'set_commission_rate', user_id, commission_rate },
+    });
+  },
+
+  async agentCommission(): Promise<AgentCommission> {
+    const res = await request<{ commission: AgentCommission }>('/agent.php?view=commission');
+    return res.commission;
+  },
+
+  async agentMembers(): Promise<AgentMember[]> {
+    const res = await request<{ members: AgentMember[] }>('/agent.php?view=members');
+    return res.members ?? [];
   },
 
   async listAllBookings(): Promise<Booking[]> {
