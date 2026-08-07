@@ -323,7 +323,7 @@ button {
   gap: 6px 18px;
   width: 92%;
   max-width: 560px;
-  margin: 0 auto 12px;
+  margin: 12px auto 0;
   font-weight: 700;
   font-size: calc(14px * var(--fs));
   color: var(--copper-dark);
@@ -1561,11 +1561,12 @@ a.userbox:hover .name {
   display: inline-block;
   white-space: nowrap;
   will-change: transform;
+  /* เริ่มพ้นขอบขวาของแถบ (padding = ความกว้างแถบ) แล้ววิ่งซ้ายจนพ้นขอบซ้าย → วิ่งชัวร์ทุกความยาว */
+  padding-left: 100%;
   font-size: calc(14.5px * var(--fs));
   font-weight: 600;
   letter-spacing: 0.01em;
-  /* 20s รวม: วิ่ง 0–75% (15s) แล้วค้างนอกจอ 75–100% (5s) = เว้นระยะ 5 วิ ก่อนวนใหม่ */
-  animation: marquee-rtl 20s linear infinite;
+  animation: marquee-rtl 18s linear infinite;
 }
 
 .marquee-bar:hover .marquee-track {
@@ -1588,13 +1589,10 @@ a.userbox:hover .name {
 }
 
 @keyframes marquee-rtl {
-  0% {
-    transform: translateX(100vw);
+  from {
+    transform: translateX(0);
   }
-  75% {
-    transform: translateX(-100%);
-  }
-  100% {
+  to {
     transform: translateX(-100%);
   }
 }
