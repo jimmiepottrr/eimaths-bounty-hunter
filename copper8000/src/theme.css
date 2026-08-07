@@ -309,7 +309,7 @@ button {
 
 .footer {
   border-top: 1px solid var(--line);
-  padding: 24px 16px 40px;
+  padding: 4px 16px 40px;
   text-align: center;
   color: var(--ink-soft);
   font-size: calc(13px * var(--fs));
