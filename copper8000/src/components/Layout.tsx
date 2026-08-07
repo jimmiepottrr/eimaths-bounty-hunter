@@ -156,7 +156,15 @@ const Layout = () => {
         <Outlet />
       </main>
 
-      <footer className="footer">{t('layout.footer', { year: new Date().getFullYear() })}</footer>
+      <footer className="footer">
+        <div className="footer-slogan" aria-label={t('home.trust.aria')}>
+          <span>{t('home.trust.fair.title')}</span>
+          <span>{t('home.trust.solid.title')}</span>
+          <span>{t('home.trust.honest.title')}</span>
+          <span>{t('home.trust.service.title')}</span>
+        </div>
+        <div className="footer-copy">{t('layout.footer', { year: new Date().getFullYear() })}</div>
+      </footer>
     </>
   );
 };

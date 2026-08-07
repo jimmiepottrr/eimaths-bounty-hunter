@@ -315,6 +315,24 @@ button {
   font-size: calc(13px * var(--fs));
 }
 
+/* สโลแกนท้ายสุด — กระจายตรงกลาง กว้างไม่เกินบรรทัด copyright */
+.footer-slogan {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  width: 92%;
+  max-width: 560px;
+  margin: 0 auto 12px;
+  font-weight: 700;
+  font-size: calc(14px * var(--fs));
+  color: var(--copper-dark);
+}
+
+.footer-slogan span {
+  white-space: nowrap;
+}
+
 .demo-badge {
   background: #fff3d6;
   border: 1px solid #e8cf8a;
@@ -1581,119 +1599,6 @@ a.userbox:hover .name {
   }
 }
 
-/* มือถือ: 2 ส่วนแยกกัน — (1) วงกลมหุ่นยนต์ยืนเดี่ยว (2) กล่องข้อความมีหางชี้ไปที่หุ่นยนต์ */
-@media (max-width: 680px) {
-  .marquee-bar {
-    position: fixed;
-    left: 12px;
-    right: 12px;
-    bottom: 14px;
-    z-index: 50;
-    display: flex;
-    align-items: center; /* หุ่นยนต์อยู่กึ่งกลางแนวตั้งของกล่อง */
-    gap: 11px;
-    width: auto;
-    margin-top: 0; /* ยกเลิก tuck ของ desktop */
-    padding: 0;
-    background: transparent; /* คอนเทนเนอร์โปร่งใส — 2 ส่วนไม่เชื่อมกัน */
-    box-shadow: none;
-    overflow: visible;
-  }
-
-  /* ส่วนที่ 1: วงกลมหุ่นยนต์ (ยืนเดี่ยว ตัวใหญ่ขึ้น) — พื้นวงกลมสีเมนู */
-  .marquee-fab-icon {
-    display: flex;
-    flex-shrink: 0;
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: linear-gradient(180deg, var(--band-a) 0%, var(--band-b) 100%);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
-
-  .marquee-bot {
-    width: 60px;
-    height: 60px;
-    display: block;
-  }
-
-  /* ส่วนที่ 2: กล่องข้อความพื้นขาว + หางลูกศรชี้ไปหุ่นยนต์ · สูงคงที่ ถ้ายาวเกินเลื่อนได้ */
-  .marquee-bubble {
-    position: relative;
-    flex: 1;
-    display: flex;
-    align-items: flex-start;
-    gap: 6px;
-    background: #fff;
-    color: var(--ink);
-    border-radius: 16px;
-    padding: 11px 12px;
-    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.2);
-  }
-
-  .marquee-bubble::before {
-    display: block;
-    content: '';
-    position: absolute;
-    left: -7px;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 0;
-    height: 0;
-    border-top: 8px solid transparent;
-    border-bottom: 8px solid transparent;
-    border-right: 8px solid #fff;
-  }
-
-  /* กล่องข้อความสูงคงที่ (~3 บรรทัด) ถ้ายาวเกินมี scroll เลื่อนขึ้น-ลง */
-  .marquee-viewport {
-    flex: 1;
-    max-height: 4.6em;
-    overflow-y: auto;
-    overflow-x: hidden;
-    -webkit-mask-image: none;
-    mask-image: none;
-    scrollbar-width: thin;
-  }
-
-  /* ข้อความนิ่ง ตัดบรรทัด (ไม่วิ่ง) */
-  .marquee-track {
-    display: block;
-    white-space: normal;
-    animation: none;
-    transform: none;
-    font-size: calc(13.5px * var(--fs));
-    font-weight: 600;
-    line-height: 1.42;
-  }
-
-  .marquee-close {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    align-self: flex-start;
-    width: 24px;
-    height: 24px;
-    margin: -2px -2px 0 0;
-    border: none;
-    background: transparent;
-    font-size: 20px;
-    line-height: 1;
-    color: var(--ink-soft);
-    cursor: pointer;
-    border-radius: 50%;
-  }
-
-  .marquee-close:hover {
-    background: rgba(0, 0, 0, 0.08);
-  }
-
-  /* เว้นที่ท้ายเนื้อหาไม่ให้บังฟุตเตอร์ */
-  body.has-bottom-marquee {
-    padding-bottom: 96px;
-  }
-}
 
 /* ---------- ข้อความประกาศ: pop up (ดีไซน์การ์ด) ---------- */
 .announce-overlay {
