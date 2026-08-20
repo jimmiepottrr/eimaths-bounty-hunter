@@ -106,7 +106,9 @@ INSERT IGNORE INTO settings (skey, sval) VALUES
 ('announce_mode', 'marquee'),   -- 'marquee' (แถบวิ่ง) | 'popup'
 ('announce_active', '0'),        -- '1' = เปิดแสดง, '0' = ปิด
 -- ยอดมัดจำ (เครดิต) ต่อการจอง 1 ครั้ง — แอดมินตั้งเอง · 0 = ปิดระบบมัดจำ (ไม่กันเครดิต)
-('booking_deposit', '0');
+('booking_deposit', '0'),
+-- เครดิตเริ่มต้นให้ลูกค้าที่สมัครใหม่อัตโนมัติ — แอดมินตั้งเอง · 0 = ไม่ให้
+('default_credit', '0');
 
 -- สินค้าเริ่มต้น (ราคา บาท/กก. — แอดมินแก้ได้จากหน้าเว็บ)
 INSERT INTO products (material, name_th, name_en, price_per_kg, prev_price_per_kg, high_of_day, low_of_day, sort_order) VALUES

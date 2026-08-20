@@ -315,6 +315,31 @@ test('เครดิต: ยกเลิกการจองคืนเคร
   await expect(demoRow).not.toContainText('1/2'); // ไม่มีใบเตือนอัตโนมัติ (badge 'เตือน n/2')
 });
 
+test('เครดิตเริ่มต้น: แอดมินตั้งค่า → ลูกค้าสมัครใหม่ได้เครดิตอัตโนมัติ', async ({ page }) => {
+  // แอดมินตั้งเครดิตเริ่มต้น 20,000
+  await login(page, 'admin@copper8000.co.th', 'admin1234');
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
+  await page.fill('#default-credit', '20000');
+  await page.getByRole('button', { name: 'บันทึกเครดิตเริ่มต้น' }).click();
+  await expect(page.locator('.toast')).toContainText('บันทึกเครดิตเริ่มต้นแล้ว');
+  await logout(page);
+
+  // สมัครสมาชิกใหม่ → ได้เครดิตเริ่มต้น 20,000 อัตโนมัติ
+  await page.goto('/#/signup');
+  await page.fill('#name', 'ลูกค้าเครดิตเริ่มต้น');
+  await page.fill('#phone', '089-555-0000');
+  await page.fill('#email', 'startcredit@test.co.th');
+  await page.fill('#password', 'start1234');
+  await page.fill('#confirm', 'start1234');
+  await page.locator('form button[type="submit"]').click();
+  await expect(page.getByText('รอการอนุมัติจากแอดมิน')).toBeVisible();
+
+  // หน้าโปรไฟล์โชว์เครดิตคงเหลือ 20,000
+  await page.goto('/#/profile');
+  await expect(page.locator('.contact-list', { hasText: 'เครดิตคงเหลือ' })).toContainText('20,000');
+});
+
 test('ราคาเปลี่ยนระหว่างเปิด modal → โดนบล็อก + โชว์ราคาใหม่ให้ยืนยันอีกครั้ง', async ({ page }) => {
   await login(page, 'demo@copper8000.co.th', 'demo1234');
   await page.getByRole('button', { name: /Bright Copper|ทองแดงเงา/ }).click();

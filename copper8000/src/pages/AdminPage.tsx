@@ -391,7 +391,9 @@ const CreditTab = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t } = useI18n();
   const [customers, setCustomers] = useState<User[] | null>(null);
   const [deposit, setDeposit] = useState('');
+  const [defaultCredit, setDefaultCredit] = useState('');
   const [busy, setBusy] = useState(false);
+  const [busy2, setBusy2] = useState(false);
 
   const reload = useCallback(() => {
     dataService
@@ -400,7 +402,10 @@ const CreditTab = ({ onToast }: { onToast: (m: string) => void }) => {
       .catch((e) => onToast((e as Error).message));
     dataService
       .getSettings()
-      .then((s) => setDeposit(String(s.booking_deposit)))
+      .then((s) => {
+        setDeposit(String(s.booking_deposit));
+        setDefaultCredit(String(s.default_credit));
+      })
       .catch(() => {});
   }, [onToast]);
 
@@ -423,8 +428,46 @@ const CreditTab = ({ onToast }: { onToast: (m: string) => void }) => {
     }
   };
 
+  const saveDefaultCredit = async () => {
+    const num = Number(defaultCredit);
+    if (!(num >= 0)) {
+      onToast(t('adminCredit.defaultRange'));
+      return;
+    }
+    setBusy2(true);
+    try {
+      await dataService.setDefaultCredit(num);
+      onToast(t('adminCredit.toastDefaultSaved'));
+    } catch (e) {
+      onToast((e as Error).message);
+    } finally {
+      setBusy2(false);
+    }
+  };
+
   return (
     <>
+      <div className="card" style={{ marginBottom: 20 }}>
+        <h3 style={{ marginTop: 0 }}>{t('adminCredit.defaultTitle')}</h3>
+        <p style={{ color: 'var(--ink-soft)', fontSize: 'calc(13.5px * var(--fs))', marginTop: 0 }}>
+          {t('adminCredit.defaultNote')}
+        </p>
+        <div className="field">
+          <label htmlFor="default-credit">{t('adminCredit.defaultLabel')}</label>
+          <input
+            id="default-credit"
+            type="number"
+            step="any"
+            min="0"
+            value={defaultCredit}
+            onChange={(e) => setDefaultCredit(e.target.value)}
+          />
+        </div>
+        <button type="button" className="btn btn-primary" onClick={saveDefaultCredit} disabled={busy2}>
+          {t('adminCredit.saveDefault')}
+        </button>
+      </div>
+
       <div className="card" style={{ marginBottom: 20 }}>
         <h3 style={{ marginTop: 0 }}>{t('adminCredit.depositTitle')}</h3>
         <p style={{ color: 'var(--ink-soft)', fontSize: 'calc(13.5px * var(--fs))', marginTop: 0 }}>

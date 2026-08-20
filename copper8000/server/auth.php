@@ -43,15 +43,18 @@ if ($action === 'signup') {
   $st->execute([$email]);
   if ($st->fetch()) json_err('อีเมลนี้ถูกใช้สมัครแล้ว', 409);
 
+  // เครดิตเริ่มต้นให้ลูกค้าใหม่อัตโนมัติ (แอดมินตั้งได้ · 0 = ไม่ให้)
+  $defaultCredit = (float) get_setting('default_credit', '0');
+
   pdo()->prepare(
-    "INSERT INTO users (email, password_hash, name, phone, role, approved, agent_id) VALUES (?, ?, ?, ?, 'user', 0, ?)"
-  )->execute([$email, password_hash($password, PASSWORD_DEFAULT), $name, $phone, $agentId]);
+    "INSERT INTO users (email, password_hash, name, phone, role, approved, agent_id, credit_balance) VALUES (?, ?, ?, ?, 'user', 0, ?, ?)"
+  )->execute([$email, password_hash($password, PASSWORD_DEFAULT), $name, $phone, $agentId, $defaultCredit]);
   $userId = (int) pdo()->lastInsertId();
 
   $st = pdo()->prepare('SELECT * FROM users WHERE id = ?');
   $st->execute([$userId]);
   $newUser = $st->fetch();
-  audit_log('signup', ['user' => $newUser, 'entity' => 'user', 'entity_id' => $userId, 'detail' => ['email' => $email, 'name' => $name, 'agent_id' => $agentId]]);
+  audit_log('signup', ['user' => $newUser, 'entity' => 'user', 'entity_id' => $userId, 'detail' => ['email' => $email, 'name' => $name, 'agent_id' => $agentId, 'credit_balance' => $defaultCredit]]);
   json_out(['token' => new_session($userId), 'user' => user_public($newUser)], 201);
 }
 

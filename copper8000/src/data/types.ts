@@ -96,7 +96,12 @@ export type Announcement = {
   active: boolean;
 };
 
-export type AppSettings = { theme: string; announcement: Announcement; booking_deposit: number };
+export type AppSettings = {
+  theme: string;
+  announcement: Announcement;
+  booking_deposit: number;
+  default_credit: number;
+};
 
 /** หนึ่งรายการในบันทึกการใช้งาน (audit log) — บันทึกฝั่งเซิร์ฟเวอร์ ผู้ใช้ปลอมไม่ได้ */
 export type AuditEntry = {
@@ -211,6 +216,8 @@ export interface DataService {
   grantCredit(user_id: number, amount: number): Promise<void>;
   /** ตั้งยอดมัดจำ (เครดิต) ต่อการจอง 1 ครั้ง — 0 = ปิดระบบมัดจำ */
   setBookingDeposit(amount: number): Promise<void>;
+  /** ตั้งเครดิตเริ่มต้นให้ลูกค้าที่สมัครใหม่อัตโนมัติ — 0 = ไม่ให้ */
+  setDefaultCredit(amount: number): Promise<void>;
   /** แอดมินกดตักเตือนลูกค้าเอง → ใบเตือน +1 (ครบ 3 = ระงับสิทธิ์จองอัตโนมัติ) */
   warnUser(user_id: number): Promise<{ warnings: number; suspended: boolean }>;
   /** รีเซ็ตใบเตือน + ปลดระงับสิทธิ์จอง */

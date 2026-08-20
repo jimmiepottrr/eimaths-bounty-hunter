@@ -76,7 +76,7 @@ const loadDb = (): Db => {
         dirty = true;
       }
       if (!db.settings) {
-        db.settings = { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT }, booking_deposit: 0 };
+        db.settings = { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT }, booking_deposit: 0, default_credit: 0 };
         dirty = true;
       }
       if (!db.settings.announcement) {
@@ -85,6 +85,10 @@ const loadDb = (): Db => {
       }
       if (db.settings.booking_deposit === undefined) {
         db.settings.booking_deposit = 0;
+        dirty = true;
+      }
+      if (db.settings.default_credit === undefined) {
+        db.settings.default_credit = 0;
         dirty = true;
       }
       // db เวอร์ชันก่อนหน้าไม่มีคอลัมน์ sort_order/active ในสินค้า และไม่มี nextProductId
@@ -120,7 +124,7 @@ const loadDb = (): Db => {
     bookings: [...SEED_BOOKINGS],
     sessions: {},
     languages: [...SEED_LANGUAGES],
-    settings: { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT }, booking_deposit: 0 },
+    settings: { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT }, booking_deposit: 0, default_credit: 0 },
     audit: [],
     nextUserId: 100,
     nextBookingId: 100,
@@ -240,6 +244,7 @@ export const mockAdapter: DataService = {
     if (db.users.some((u) => u.email === normEmail)) {
       throw new ApiError('อีเมลนี้ถูกใช้สมัครแล้ว', 409);
     }
+    const defaultCredit = db.settings.default_credit ?? 0;
     const user: SeedUser = {
       id: db.nextUserId++,
       email: normEmail,
@@ -249,9 +254,10 @@ export const mockAdapter: DataService = {
       role: 'user',
       approved: false,
       agent_id: agentId,
+      credit_balance: defaultCredit,
     };
     db.users.push(user);
-    recordAudit(db, 'signup', { actor: user, entity: 'user', entity_id: user.id, detail: { email: user.email, name: user.name, agent_id: agentId } });
+    recordAudit(db, 'signup', { actor: user, entity: 'user', entity_id: user.id, detail: { email: user.email, name: user.name, agent_id: agentId, credit_balance: defaultCredit } });
     const token = createSession(db, user.id);
     authToken = token;
     return { user: publicUser(user), token };
@@ -596,6 +602,16 @@ export const mockAdapter: DataService = {
     saveDb(db);
   },
 
+  async setDefaultCredit(amount): Promise<void> {
+    await delay();
+    const db = loadDb();
+    const admin = requireAdmin(db);
+    if (amount < 0) throw new ApiError('เครดิตเริ่มต้นต้องไม่ติดลบ', 400);
+    db.settings.default_credit = Math.round(amount * 100) / 100;
+    recordAudit(db, 'set_default_credit', { actor: admin, entity: 'settings', detail: { default_credit: amount } });
+    saveDb(db);
+  },
+
   async resetWarnings(user_id): Promise<void> {
     await delay();
     const db = loadDb();
@@ -720,6 +736,7 @@ export const mockAdapter: DataService = {
       theme: s.theme,
       announcement: { ...s.announcement, text: { ...s.announcement.text } },
       booking_deposit: s.booking_deposit ?? 0,
+      default_credit: s.default_credit ?? 0,
     };
   },
 

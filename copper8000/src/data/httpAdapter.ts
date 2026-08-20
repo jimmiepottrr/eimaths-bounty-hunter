@@ -189,6 +189,10 @@ export const httpAdapter: DataService = {
     await request('/admin.php', { method: 'POST', body: { action: 'set_booking_deposit', amount } });
   },
 
+  async setDefaultCredit(amount): Promise<void> {
+    await request('/admin.php', { method: 'POST', body: { action: 'set_default_credit', amount } });
+  },
+
   async warnUser(user_id): Promise<{ warnings: number; suspended: boolean }> {
     const res = await request<{ warnings?: number; suspended?: boolean }>('/admin.php', {
       method: 'POST',
@@ -316,6 +320,7 @@ export const httpAdapter: DataService = {
         active: a?.active ?? false,
       },
       booking_deposit: Number(res.settings.booking_deposit ?? 0) || 0,
+      default_credit: Number(res.settings.default_credit ?? 0) || 0,
     };
   },
 

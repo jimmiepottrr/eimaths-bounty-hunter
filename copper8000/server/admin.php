@@ -269,6 +269,16 @@ if ($action === 'set_booking_deposit') {
   json_out([]);
 }
 
+// แอดมินตั้งเครดิตเริ่มต้นให้ลูกค้าที่สมัครใหม่ (0 = ไม่ให้)
+if ($action === 'set_default_credit') {
+  $amount = (float) ($body['amount'] ?? 0);
+  if ($amount < 0) json_err('เครดิตเริ่มต้นต้องไม่ติดลบ');
+  if ($amount > 1000000000) json_err('เครดิตเริ่มต้นมากเกินไป');
+  set_setting('default_credit', (string) $amount);
+  audit_log('set_default_credit', ['user' => $admin, 'entity' => 'settings', 'detail' => ['default_credit' => $amount]]);
+  json_out([]);
+}
+
 // แอดมินรีเซ็ตใบเตือน + ปลดระงับสิทธิ์จอง
 if ($action === 'reset_warnings') {
   $userId = (int) ($body['user_id'] ?? 0);

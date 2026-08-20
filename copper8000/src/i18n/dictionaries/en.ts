@@ -332,6 +332,12 @@ export const en: Dict = {
   'agent.approved': 'Approved',
   'agent.waiting': 'Pending',
   // ---- Credit / deposit / warnings (admin) ----
+  'adminCredit.defaultTitle': 'Starting credit for new customers',
+  'adminCredit.defaultNote': 'New customers automatically receive this starting credit on sign-up. Set 0 to give none (existing customers are unaffected).',
+  'adminCredit.defaultLabel': 'Starting credit',
+  'adminCredit.saveDefault': 'Save starting credit',
+  'adminCredit.toastDefaultSaved': 'Starting credit saved',
+  'adminCredit.defaultRange': 'Starting credit must not be negative',
   'adminCredit.depositTitle': 'Deposit per booking',
   'adminCredit.depositNote': 'When a customer books, this amount of credit is held and returned when an admin confirms the booking. Set 0 to disable deposits (no credit held).',
   'adminCredit.depositLabel': 'Deposit (credit)',
