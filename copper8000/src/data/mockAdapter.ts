@@ -527,7 +527,7 @@ export const mockAdapter: DataService = {
     saveDb(db);
   },
 
-  async cancelBooking(booking_id): Promise<{ warnings: number; suspended: boolean }> {
+  async cancelBooking(booking_id): Promise<void> {
     await delay();
     const db = loadDb();
     const admin = requireAdmin(db);
@@ -536,25 +536,31 @@ export const mockAdapter: DataService = {
     if (booking.status === 'cancelled') throw new ApiError('รายการนี้ถูกยกเลิกไปแล้ว', 409);
     const cust = db.users.find((u) => u.id === booking.user_id);
     const dep = booking.deposit_held ?? 0;
-    // คืนเครดิตที่กันไว้ (ถ้ายังไม่ยืนยัน)
+    // คืนเครดิตที่กันไว้ (ถ้ายังไม่ยืนยัน) · ไม่เตือนอัตโนมัติ (แอดมินกดเตือนเอง)
     if (dep > 0 && cust) {
       cust.credit_balance = (cust.credit_balance ?? 0) + dep;
       cust.credit_held = Math.max(0, (cust.credit_held ?? 0) - dep);
     }
     booking.deposit_held = 0;
     booking.status = 'cancelled';
-    // ใบเตือน +1 · ครบ 3 = ระงับสิทธิ์จองอัตโนมัติ
-    let warnings = 0;
+    recordAudit(db, 'cancel_booking', { actor: admin, entity: 'booking', entity_id: booking_id, detail: { deposit_returned: dep } });
+    saveDb(db);
+  },
+
+  async warnUser(user_id): Promise<{ warnings: number; suspended: boolean }> {
+    await delay();
+    const db = loadDb();
+    const admin = requireAdmin(db);
+    const cust = db.users.find((u) => u.id === user_id && u.role === 'user');
+    if (!cust) throw new ApiError('ไม่พบลูกค้า', 404);
+    const warnings = (cust.warnings ?? 0) + 1;
+    cust.warnings = warnings;
     let suspended = false;
-    if (cust) {
-      warnings = (cust.warnings ?? 0) + 1;
-      cust.warnings = warnings;
-      if (warnings >= 3) {
-        cust.booking_suspended = true;
-        suspended = true;
-      }
+    if (warnings >= 3) {
+      cust.booking_suspended = true;
+      suspended = true;
     }
-    recordAudit(db, 'cancel_booking', { actor: admin, entity: 'booking', entity_id: booking_id, detail: { warnings, suspended, deposit_returned: dep } });
+    recordAudit(db, 'warn_user', { actor: admin, entity: 'user', entity_id: user_id, detail: { warnings, suspended } });
     saveDb(db);
     return { warnings, suspended };
   },

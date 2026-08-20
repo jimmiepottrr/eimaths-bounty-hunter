@@ -211,14 +211,16 @@ export interface DataService {
   grantCredit(user_id: number, amount: number): Promise<void>;
   /** ตั้งยอดมัดจำ (เครดิต) ต่อการจอง 1 ครั้ง — 0 = ปิดระบบมัดจำ */
   setBookingDeposit(amount: number): Promise<void>;
+  /** แอดมินกดตักเตือนลูกค้าเอง → ใบเตือน +1 (ครบ 3 = ระงับสิทธิ์จองอัตโนมัติ) */
+  warnUser(user_id: number): Promise<{ warnings: number; suspended: boolean }>;
   /** รีเซ็ตใบเตือน + ปลดระงับสิทธิ์จอง */
   resetWarnings(user_id: number): Promise<void>;
   /** ระงับ/ปลดระงับสิทธิ์จองด้วยตนเอง */
   setBookingSuspended(user_id: number, suspended: boolean): Promise<void>;
   listAllBookings(): Promise<Booking[]>;
   confirmBooking(booking_id: number): Promise<void>;
-  /** ยกเลิก/ไม่มาส่งของ → คืนเครดิตที่กันไว้ + บันทึกใบเตือน (ครบ 3 = ระงับสิทธิ์) */
-  cancelBooking(booking_id: number): Promise<{ warnings: number; suspended: boolean }>;
+  /** ยกเลิกการจอง → คืนเครดิตที่กันไว้ (ไม่เตือนอัตโนมัติ) */
+  cancelBooking(booking_id: number): Promise<void>;
   /** แอดมินบันทึกน้ำหนักส่งจริง + น้ำหนักสุทธิหลัง QC (ส่ง null เพื่อล้างค่า) */
   setBookingWeights(
     booking_id: number,

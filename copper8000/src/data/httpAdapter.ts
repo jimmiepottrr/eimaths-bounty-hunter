@@ -189,6 +189,14 @@ export const httpAdapter: DataService = {
     await request('/admin.php', { method: 'POST', body: { action: 'set_booking_deposit', amount } });
   },
 
+  async warnUser(user_id): Promise<{ warnings: number; suspended: boolean }> {
+    const res = await request<{ warnings?: number; suspended?: boolean }>('/admin.php', {
+      method: 'POST',
+      body: { action: 'warn_user', user_id },
+    });
+    return { warnings: res.warnings ?? 0, suspended: res.suspended ?? false };
+  },
+
   async resetWarnings(user_id): Promise<void> {
     await request('/admin.php', { method: 'POST', body: { action: 'reset_warnings', user_id } });
   },
@@ -212,12 +220,8 @@ export const httpAdapter: DataService = {
     });
   },
 
-  async cancelBooking(booking_id): Promise<{ warnings: number; suspended: boolean }> {
-    const res = await request<{ warnings?: number; suspended?: boolean }>('/admin.php', {
-      method: 'POST',
-      body: { action: 'cancel_booking', booking_id },
-    });
-    return { warnings: res.warnings ?? 0, suspended: res.suspended ?? false };
+  async cancelBooking(booking_id): Promise<void> {
+    await request('/admin.php', { method: 'POST', body: { action: 'cancel_booking', booking_id } });
   },
 
   async setBookingWeights(booking_id, input): Promise<void> {
