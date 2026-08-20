@@ -13,6 +13,11 @@ CREATE TABLE IF NOT EXISTS users (
   agent_id INT NULL,                                  -- (ลูกค้า) สังกัด agent คนไหน
   referral_code VARCHAR(20) NULL UNIQUE,              -- (agent) โค้ดแนะนำของ agent
   commission_rate DECIMAL(5,2) NOT NULL DEFAULT 0,    -- (agent) % ค่าคอม
+  -- ระบบเครดิต/มัดจำ: แอดมินเติมเครดิตให้ลูกค้า · จองแล้วกันมัดจำ · คืนเมื่อยืนยัน · ยกเลิก=ตักเตือน
+  credit_balance DECIMAL(12,2) NOT NULL DEFAULT 0,    -- เครดิตคงเหลือที่ใช้ได้
+  credit_held DECIMAL(12,2) NOT NULL DEFAULT 0,       -- เครดิตที่ถูกกันไว้ (มัดจำการจองที่ค้าง)
+  warnings INT NOT NULL DEFAULT 0,                    -- จำนวนใบเตือน (ยกเลิก/ไม่มาส่งของ)
+  booking_suspended TINYINT(1) NOT NULL DEFAULT 0,    -- 1 = ถูกระงับสิทธิ์จอง (ครบ 3 เตือน)
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -45,7 +50,8 @@ CREATE TABLE IF NOT EXISTS bookings (
   unit ENUM('kg','ton') NOT NULL DEFAULT 'ton',
   price_at_booking DECIMAL(10,2) NOT NULL,
   total_estimate DECIMAL(14,2) NOT NULL,
-  status ENUM('pending','confirmed') NOT NULL DEFAULT 'pending',
+  status ENUM('pending','confirmed','cancelled') NOT NULL DEFAULT 'pending',
+  deposit_held DECIMAL(12,2) NOT NULL DEFAULT 0,      -- เครดิตมัดจำที่การจองนี้กันไว้ (0 = คืน/ยกเลิกแล้ว)
   delivery_date DATE NULL,
   actual_weight_kg DECIMAL(12,3) NULL,
   qc_weight_kg DECIMAL(12,3) NULL,
@@ -98,7 +104,9 @@ INSERT IGNORE INTO settings (skey, sval) VALUES
 -- ข้อความประกาศ (แอดมินตั้งจากหน้าตั้งค่า) — แสดงแบบแถบอักษรวิ่งใต้เมนู หรือ pop up
 ('announce_text', ''),
 ('announce_mode', 'marquee'),   -- 'marquee' (แถบวิ่ง) | 'popup'
-('announce_active', '0');        -- '1' = เปิดแสดง, '0' = ปิด
+('announce_active', '0'),        -- '1' = เปิดแสดง, '0' = ปิด
+-- ยอดมัดจำ (เครดิต) ต่อการจอง 1 ครั้ง — แอดมินตั้งเอง · 0 = ปิดระบบมัดจำ (ไม่กันเครดิต)
+('booking_deposit', '0');
 
 -- สินค้าเริ่มต้น (ราคา บาท/กก. — แอดมินแก้ได้จากหน้าเว็บ)
 INSERT INTO products (material, name_th, name_en, price_per_kg, prev_price_per_kg, high_of_day, low_of_day, sort_order) VALUES

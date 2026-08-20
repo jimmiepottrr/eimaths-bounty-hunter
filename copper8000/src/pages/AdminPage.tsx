@@ -9,7 +9,7 @@ import { DICT_TEMPLATE } from '../i18n/core';
 import { bookingProductName, productName, productSubName, useI18n } from '../i18n';
 import { applyTheme, currentTheme, type ThemeCode } from '../themeManager';
 
-type Tab = 'users' | 'agents' | 'bookings' | 'report' | 'products' | 'prices' | 'languages' | 'settings' | 'audit';
+type Tab = 'users' | 'agents' | 'credit' | 'bookings' | 'report' | 'products' | 'prices' | 'languages' | 'settings' | 'audit';
 
 const PendingUsersTab = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t } = useI18n();
@@ -286,6 +286,178 @@ const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
   );
 };
 
+// ---------- แท็บเครดิต/มัดจำ/ตักเตือน (admin) ----------
+const CustomerCreditRow = ({
+  c,
+  onReload,
+  onToast,
+}: {
+  c: User;
+  onReload: () => void;
+  onToast: (m: string) => void;
+}) => {
+  const { t } = useI18n();
+  const [amount, setAmount] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const grant = async () => {
+    const num = Number(amount);
+    if (!num) {
+      onToast(t('adminCredit.enterAmount'));
+      return;
+    }
+    setBusy(true);
+    try {
+      await dataService.grantCredit(c.id, num);
+      onToast(t('adminCredit.toastGranted'));
+      setAmount('');
+      onReload();
+    } catch (e) {
+      onToast((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const reset = async () => {
+    if (!window.confirm(t('adminCredit.confirmReset', { name: c.name }))) return;
+    try {
+      await dataService.resetWarnings(c.id);
+      onToast(t('adminCredit.toastReset'));
+      onReload();
+    } catch (e) {
+      onToast((e as Error).message);
+    }
+  };
+
+  const warnings = c.warnings ?? 0;
+  return (
+    <tr>
+      <td>{c.name}</td>
+      <td>{c.email}</td>
+      <td>{fmtBaht(c.credit_balance ?? 0)}</td>
+      <td>{(c.credit_held ?? 0) > 0 ? fmtBaht(c.credit_held ?? 0) : '—'}</td>
+      <td>
+        {c.booking_suspended ? (
+          <span className="badge badge-cancelled">{t('adminCredit.suspended')}</span>
+        ) : warnings > 0 ? (
+          <span className="badge badge-pending">{t('adminCredit.warnCount', { n: warnings })}</span>
+        ) : (
+          '—'
+        )}
+      </td>
+      <td style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+        <input
+          className="w-input"
+          type="number"
+          step="any"
+          aria-label={t('adminCredit.amountPh')}
+          placeholder={t('adminCredit.amountPh')}
+          value={amount}
+          onChange={(e) => setAmount(e.target.value)}
+          style={{ width: 96 }}
+        />
+        <button type="button" className="btn btn-primary btn-small" onClick={grant} disabled={busy}>
+          {t('adminCredit.grantBtn')}
+        </button>
+        {(warnings > 0 || c.booking_suspended) && (
+          <button type="button" className="btn btn-outline btn-small" onClick={reset}>
+            {t('adminCredit.resetBtn')}
+          </button>
+        )}
+      </td>
+    </tr>
+  );
+};
+
+const CreditTab = ({ onToast }: { onToast: (m: string) => void }) => {
+  const { t } = useI18n();
+  const [customers, setCustomers] = useState<User[] | null>(null);
+  const [deposit, setDeposit] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const reload = useCallback(() => {
+    dataService
+      .listCustomers()
+      .then(setCustomers)
+      .catch((e) => onToast((e as Error).message));
+    dataService
+      .getSettings()
+      .then((s) => setDeposit(String(s.booking_deposit)))
+      .catch(() => {});
+  }, [onToast]);
+
+  useEffect(reload, [reload]);
+
+  const saveDeposit = async () => {
+    const num = Number(deposit);
+    if (!(num >= 0)) {
+      onToast(t('adminCredit.depositRange'));
+      return;
+    }
+    setBusy(true);
+    try {
+      await dataService.setBookingDeposit(num);
+      onToast(t('adminCredit.toastDepositSaved'));
+    } catch (e) {
+      onToast((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <div className="card" style={{ marginBottom: 20 }}>
+        <h3 style={{ marginTop: 0 }}>{t('adminCredit.depositTitle')}</h3>
+        <p style={{ color: 'var(--ink-soft)', fontSize: 'calc(13.5px * var(--fs))', marginTop: 0 }}>
+          {t('adminCredit.depositNote')}
+        </p>
+        <div className="field">
+          <label htmlFor="deposit-amount">{t('adminCredit.depositLabel')}</label>
+          <input
+            id="deposit-amount"
+            type="number"
+            step="any"
+            min="0"
+            value={deposit}
+            onChange={(e) => setDeposit(e.target.value)}
+          />
+        </div>
+        <button type="button" className="btn btn-primary" onClick={saveDeposit} disabled={busy}>
+          {t('adminCredit.saveDeposit')}
+        </button>
+      </div>
+
+      <div className="table-wrap">
+        {!customers ? (
+          <div className="empty-state">{t('admin.loading')}</div>
+        ) : customers.length === 0 ? (
+          <div className="empty-state">{t('adminCredit.noCustomers')}</div>
+        ) : (
+          <table className="report-table">
+            <thead>
+              <tr>
+                <th>{t('admin.colName')}</th>
+                <th>{t('login.email')}</th>
+                <th>{t('adminCredit.colBalance')}</th>
+                <th>{t('adminCredit.colHeld')}</th>
+                <th>{t('adminCredit.colStatus')}</th>
+                <th>{t('admin.colManage')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {customers.map((c) => (
+                <CustomerCreditRow key={c.id} c={c} onReload={reload} onToast={onToast} />
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+    </>
+  );
+};
+
 /** แถวการจอง 1 รายการ — แอดมินกรอกน้ำหนักส่งจริง + QC ได้ในตัว (หลังยืนยันแล้ว) */
 const BookingRow = ({
   b,
@@ -316,6 +488,18 @@ const BookingRow = ({
       onToast((e as Error).message);
     } finally {
       setBusy(false);
+    }
+  };
+
+  // ยกเลิก/ไม่มาส่งของ → คืนเครดิตที่กันไว้ + บันทึกใบเตือน (ครบ 3 = ระงับสิทธิ์จอง)
+  const cancel = async () => {
+    if (!window.confirm(t('adminCredit.confirmCancel'))) return;
+    try {
+      const res = await dataService.cancelBooking(b.id);
+      onToast(res.suspended ? t('adminCredit.toastCancelSuspended') : t('adminCredit.toastCancelled', { n: res.warnings }));
+      onReload();
+    } catch (e) {
+      onToast((e as Error).message);
     }
   };
 
@@ -354,7 +538,7 @@ const BookingRow = ({
           onChange={(e) => setQc(e.target.value)}
         />
       </td>
-      <td style={{ display: 'flex', gap: 8 }}>
+      <td style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         {b.status === 'pending' && (
           <button type="button" className="btn btn-primary btn-small" onClick={() => onConfirm(b.id)}>
             {t('admin.confirmBtn')}
@@ -363,6 +547,11 @@ const BookingRow = ({
         <button type="button" className="btn btn-outline btn-small" onClick={saveWeights} disabled={busy}>
           {t('admin.saveWeights')}
         </button>
+        {b.status !== 'cancelled' && (
+          <button type="button" className="btn btn-outline btn-small btn-danger" onClick={cancel}>
+            {t('adminCredit.cancelBtn')}
+          </button>
+        )}
       </td>
     </tr>
   );
@@ -1522,6 +1711,9 @@ const AdminPage = () => {
         <button type="button" className={tab === 'agents' ? 'active' : ''} onClick={() => setTab('agents')}>
           {t('admin.tabAgents')}
         </button>
+        <button type="button" className={tab === 'credit' ? 'active' : ''} onClick={() => setTab('credit')}>
+          {t('admin.tabCredit')}
+        </button>
         <button type="button" className={tab === 'bookings' ? 'active' : ''} onClick={() => setTab('bookings')}>
           {t('admin.tabBookings')}
         </button>
@@ -1547,6 +1739,7 @@ const AdminPage = () => {
 
       {tab === 'users' && <PendingUsersTab onToast={notify} />}
       {tab === 'agents' && <AgentsTab onToast={notify} />}
+      {tab === 'credit' && <CreditTab onToast={notify} />}
       {tab === 'bookings' && <BookingsTab onToast={notify} />}
       {tab === 'report' && <ReportTab onToast={notify} />}
       {tab === 'products' && <ProductsManageTab onToast={notify} />}

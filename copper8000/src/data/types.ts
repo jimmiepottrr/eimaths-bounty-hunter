@@ -12,6 +12,10 @@ export type User = {
   agent_id?: number | null; // (ลูกค้า) สังกัด agent คนไหน
   referral_code?: string | null; // (agent) โค้ดแนะนำ
   commission_rate?: number; // (agent) % ค่าคอม
+  credit_balance?: number; // (ลูกค้า) เครดิตคงเหลือที่ใช้ได้
+  credit_held?: number; // (ลูกค้า) เครดิตที่ถูกกันไว้ (มัดจำการจองที่ค้าง)
+  warnings?: number; // (ลูกค้า) จำนวนใบเตือน
+  booking_suspended?: boolean; // (ลูกค้า) ถูกระงับสิทธิ์จอง
 };
 
 /** agent + สรุปค่าคอม (หน้าแอดมิน) */
@@ -56,7 +60,7 @@ export type Product = {
 
 export type Unit = 'kg' | 'ton';
 
-export type BookingStatus = 'pending' | 'confirmed';
+export type BookingStatus = 'pending' | 'confirmed' | 'cancelled';
 
 export type Booking = {
   id: number;
@@ -70,6 +74,7 @@ export type Booking = {
   price_at_booking: number; // บาท/กก. ณ เวลาจอง
   total_estimate: number; // ยอดประมาณการ (บาท)
   status: BookingStatus;
+  deposit_held?: number; // เครดิตมัดจำที่การจองนี้กันไว้ (0 = คืน/ยกเลิกแล้ว)
   delivery_date?: string | null; // วันที่ลูกค้าจะส่งของ (YYYY-MM-DD)
   actual_weight_kg?: number | null; // น้ำหนักส่งจริง (แอดมินกรอก)
   qc_weight_kg?: number | null; // น้ำหนักสุทธิหลัง QC (แอดมินกรอก)
@@ -91,7 +96,7 @@ export type Announcement = {
   active: boolean;
 };
 
-export type AppSettings = { theme: string; announcement: Announcement };
+export type AppSettings = { theme: string; announcement: Announcement; booking_deposit: number };
 
 /** หนึ่งรายการในบันทึกการใช้งาน (audit log) — บันทึกฝั่งเซิร์ฟเวอร์ ผู้ใช้ปลอมไม่ได้ */
 export type AuditEntry = {
@@ -199,8 +204,21 @@ export interface DataService {
   agentCommission(): Promise<AgentCommission>;
   /** รายชื่อลูกค้าที่ผูกกับ agent ที่ล็อกอินอยู่ */
   agentMembers(): Promise<AgentMember[]>;
+  // ---- เครดิต / มัดจำ / ตักเตือน (admin) ----
+  /** รายชื่อลูกค้าทั้งหมด + เครดิต/ใบเตือน/สถานะระงับ */
+  listCustomers(): Promise<User[]>;
+  /** เติม/ปรับเครดิตให้ลูกค้า (amount บวก=เติม, ลบ=หัก) */
+  grantCredit(user_id: number, amount: number): Promise<void>;
+  /** ตั้งยอดมัดจำ (เครดิต) ต่อการจอง 1 ครั้ง — 0 = ปิดระบบมัดจำ */
+  setBookingDeposit(amount: number): Promise<void>;
+  /** รีเซ็ตใบเตือน + ปลดระงับสิทธิ์จอง */
+  resetWarnings(user_id: number): Promise<void>;
+  /** ระงับ/ปลดระงับสิทธิ์จองด้วยตนเอง */
+  setBookingSuspended(user_id: number, suspended: boolean): Promise<void>;
   listAllBookings(): Promise<Booking[]>;
   confirmBooking(booking_id: number): Promise<void>;
+  /** ยกเลิก/ไม่มาส่งของ → คืนเครดิตที่กันไว้ + บันทึกใบเตือน (ครบ 3 = ระงับสิทธิ์) */
+  cancelBooking(booking_id: number): Promise<{ warnings: number; suspended: boolean }>;
   /** แอดมินบันทึกน้ำหนักส่งจริง + น้ำหนักสุทธิหลัง QC (ส่ง null เพื่อล้างค่า) */
   setBookingWeights(
     booking_id: number,

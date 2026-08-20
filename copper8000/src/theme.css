@@ -921,6 +921,22 @@ button {
   border: 1px solid #bfe3c8;
 }
 
+.badge-cancelled {
+  background: #f6e9e9;
+  color: #a33a3a;
+  border: 1px solid #e3bfbf;
+}
+
+/* ปุ่มยกเลิก (โทนแดง) — ใช้คู่กับ btn-outline */
+.btn-outline.btn-danger {
+  color: #a33a3a;
+  border-color: #e3bfbf;
+}
+.btn-outline.btn-danger:hover {
+  background: #f6e9e9;
+  border-color: #d99a9a;
+}
+
 /* ---------- Admin ---------- */
 
 .admin-tabs {

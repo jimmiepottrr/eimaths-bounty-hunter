@@ -24,6 +24,7 @@ if ($method === 'GET') {
 if ($method !== 'POST') json_err('method ไม่ถูกต้อง', 405);
 
 if (!(bool) $user['approved']) json_err('บัญชียังไม่ได้รับการอนุมัติ จึงยังจองไม่ได้', 403);
+if ((bool) ($user['booking_suspended'] ?? false)) json_err('บัญชีถูกระงับสิทธิ์การจองชั่วคราว กรุณาติดต่อบริษัท', 403);
 
 $body = read_json_body();
 $productId = (int) ($body['product_id'] ?? 0);
@@ -60,15 +61,38 @@ if ($expected !== null && abs(((float) $expected) - $price) > 0.001) {
 
 $total = round($kg * $price, 2);
 
-pdo()->prepare(
-  "INSERT INTO bookings (user_id, product_id, quantity, unit, price_at_booking, total_estimate, status, delivery_date)
-   VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)"
-)->execute([(int) $user['id'], $productId, $quantity, $unit, $price, $total, $deliveryDate]);
-$bookingId = (int) pdo()->lastInsertId();
+// ---- มัดจำ (เครดิต): กันเครดิตตอนจอง (ถ้าแอดมินตั้ง booking_deposit > 0) ----
+// ทำเป็น transaction: กันเครดิตแบบมีเงื่อนไข (credit_balance ต้องพอ) แล้วค่อยสร้างการจอง
+$deposit = (float) get_setting('booking_deposit', '0');
+$uid = (int) $user['id'];
+pdo()->beginTransaction();
+try {
+  if ($deposit > 0) {
+    // หักจากยอดที่ใช้ได้ → ย้ายไปเป็นยอดกันไว้ (เงื่อนไข credit_balance >= deposit กัน race/ติดลบ)
+    $hold = pdo()->prepare(
+      'UPDATE users SET credit_balance = credit_balance - ?, credit_held = credit_held + ?
+       WHERE id = ? AND credit_balance >= ?'
+    );
+    $hold->execute([$deposit, $deposit, $uid, $deposit]);
+    if ($hold->rowCount() === 0) {
+      pdo()->rollBack();
+      json_err('เครดิตไม่พอสำหรับมัดจำการจอง (ต้องมีอย่างน้อย ' . rtrim(rtrim(number_format($deposit, 2), '0'), '.') . ' เครดิต) — กรุณาติดต่อบริษัทเพื่อเติมเครดิต', 402);
+    }
+  }
+  pdo()->prepare(
+    "INSERT INTO bookings (user_id, product_id, quantity, unit, price_at_booking, total_estimate, status, deposit_held, delivery_date)
+     VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)"
+  )->execute([$uid, $productId, $quantity, $unit, $price, $total, $deposit > 0 ? $deposit : 0, $deliveryDate]);
+  $bookingId = (int) pdo()->lastInsertId();
+  pdo()->commit();
+} catch (Throwable $e) {
+  if (pdo()->inTransaction()) pdo()->rollBack();
+  throw $e;
+}
 
 audit_log('create_booking', ['user' => $user, 'entity' => 'booking', 'entity_id' => $bookingId, 'detail' => [
   'product_id' => $productId, 'product' => $product['name_th'], 'quantity' => $quantity, 'unit' => $unit,
-  'price_at_booking' => $price, 'total_estimate' => $total,
+  'price_at_booking' => $price, 'total_estimate' => $total, 'deposit_held' => $deposit > 0 ? $deposit : 0,
 ]]);
 
 $st = pdo()->prepare(
