@@ -330,6 +330,18 @@ const CustomerCreditRow = ({
     }
   };
 
+  // แอดมินกดตักเตือนเอง (ครบ 3 = ระงับสิทธิ์จองอัตโนมัติ)
+  const warn = async () => {
+    if (!window.confirm(t('adminCredit.confirmWarn', { name: c.name }))) return;
+    try {
+      const res = await dataService.warnUser(c.id);
+      onToast(res.suspended ? t('adminCredit.toastWarnedSuspended') : t('adminCredit.toastWarned', { n: res.warnings }));
+      onReload();
+    } catch (e) {
+      onToast((e as Error).message);
+    }
+  };
+
   const warnings = c.warnings ?? 0;
   return (
     <tr>
@@ -360,6 +372,11 @@ const CustomerCreditRow = ({
         <button type="button" className="btn btn-primary btn-small" onClick={grant} disabled={busy}>
           {t('adminCredit.grantBtn')}
         </button>
+        {!c.booking_suspended && (
+          <button type="button" className="btn btn-outline btn-small btn-danger" onClick={warn}>
+            {t('adminCredit.warnBtn')}
+          </button>
+        )}
         {(warnings > 0 || c.booking_suspended) && (
           <button type="button" className="btn btn-outline btn-small" onClick={reset}>
             {t('adminCredit.resetBtn')}
@@ -491,12 +508,12 @@ const BookingRow = ({
     }
   };
 
-  // ยกเลิก/ไม่มาส่งของ → คืนเครดิตที่กันไว้ + บันทึกใบเตือน (ครบ 3 = ระงับสิทธิ์จอง)
+  // ยกเลิกการจอง → คืนเครดิตที่กันไว้ (ไม่เตือนอัตโนมัติ — แอดมินกดเตือนเองในแท็บเครดิต)
   const cancel = async () => {
     if (!window.confirm(t('adminCredit.confirmCancel'))) return;
     try {
-      const res = await dataService.cancelBooking(b.id);
-      onToast(res.suspended ? t('adminCredit.toastCancelSuspended') : t('adminCredit.toastCancelled', { n: res.warnings }));
+      await dataService.cancelBooking(b.id);
+      onToast(t('adminCredit.toastCancelled'));
       onReload();
     } catch (e) {
       onToast((e as Error).message);

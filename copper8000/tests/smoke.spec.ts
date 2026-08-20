@@ -254,33 +254,22 @@ test('เครดิต/มัดจำ: แอดมินตั้งมั�
   await expect(page.locator('tr', { hasText: 'demo@copper8000.co.th' })).toContainText('100,000');
 });
 
-test('เครดิต: แอดมินยกเลิก 3 ครั้ง → เตือนครบ → ระงับสิทธิ์จองอัตโนมัติ → ลูกค้าจองไม่ได้', async ({ page }) => {
+test('เครดิต: แอดมินกดตักเตือนเอง 3 ครั้ง → ระงับสิทธิ์จองอัตโนมัติ → ลูกค้าจองไม่ได้', async ({ page }) => {
   page.on('dialog', (d) => d.accept()); // รับ window.confirm ทุกครั้ง
 
-  // demo จองเพิ่ม 1 (มี seed 2 → รวม 3 รายการ)
-  await login(page, 'demo@copper8000.co.th', 'demo1234');
-  await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
-  const modal = page.locator('.modal');
-  await modal.locator('#qty').fill('50');
-  await modal.getByRole('button', { name: 'ถัดไป' }).click();
-  await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
-  await expect(page).toHaveURL(/#\/booking-report/);
-  await logout(page);
-
-  // แอดมินยกเลิกทั้ง 3 รายการ
+  // แอดมินตักเตือน demo เอง 3 ครั้งในแท็บเครดิต
   await login(page, 'admin@copper8000.co.th', 'admin1234');
   await page.goto('/#/admin');
-  await page.getByRole('button', { name: 'ยืนยันการจอง', exact: true }).click(); // แท็บการจอง
-  const cancelBtns = page.getByRole('button', { name: 'ยกเลิก', exact: true });
-  await expect(cancelBtns).toHaveCount(3);
-  await cancelBtns.first().click();
+  await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
+  const demoRow = page.locator('tr', { hasText: 'demo@copper8000.co.th' });
+  await demoRow.getByRole('button', { name: 'ตักเตือน' }).click();
   await expect(page.locator('.toast')).toContainText('เตือนครั้งที่ 1');
-  await expect(cancelBtns).toHaveCount(2);
-  await cancelBtns.first().click();
+  await demoRow.getByRole('button', { name: 'ตักเตือน' }).click();
   await expect(page.locator('.toast')).toContainText('เตือนครั้งที่ 2');
-  await expect(cancelBtns).toHaveCount(1);
-  await cancelBtns.first().click();
+  await demoRow.getByRole('button', { name: 'ตักเตือน' }).click();
   await expect(page.locator('.toast')).toContainText('ระงับสิทธิ์จอง');
+  // แถว demo ขึ้นสถานะถูกระงับ
+  await expect(page.locator('tr', { hasText: 'demo@copper8000.co.th' })).toContainText('ถูกระงับสิทธิ์จอง');
   await logout(page);
 
   // ลูกค้าถูกระงับ — จองไม่ได้ (เซิร์ฟเวอร์บล็อก)
@@ -291,6 +280,39 @@ test('เครดิต: แอดมินยกเลิก 3 ครั้ง
   await m2.getByRole('button', { name: 'ถัดไป' }).click();
   await m2.getByRole('button', { name: 'ยืนยันการจอง' }).click();
   await expect(page.locator('.toast')).toContainText('ระงับสิทธิ์');
+});
+
+test('เครดิต: ยกเลิกการจองคืนเครดิตมัดจำ แต่ไม่เตือนอัตโนมัติ', async ({ page }) => {
+  page.on('dialog', (d) => d.accept());
+  // ตั้งมัดจำ 5,000
+  await login(page, 'admin@copper8000.co.th', 'admin1234');
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
+  await page.fill('#deposit-amount', '5000');
+  await page.getByRole('button', { name: 'บันทึกยอดมัดจำ' }).click();
+  await expect(page.locator('.toast')).toContainText('บันทึกยอดมัดจำแล้ว');
+  await logout(page);
+
+  // demo จอง (กัน 5,000)
+  await login(page, 'demo@copper8000.co.th', 'demo1234');
+  await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
+  const modal = page.locator('.modal');
+  await modal.locator('#qty').fill('100');
+  await modal.getByRole('button', { name: 'ถัดไป' }).click();
+  await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
+  await expect(page).toHaveURL(/#\/booking-report/);
+  await logout(page);
+
+  // แอดมินยกเลิก → คืนเครดิต (กลับเป็น 100,000) และไม่มีใบเตือน (ไม่มีปุ่มล้างเตือน)
+  await login(page, 'admin@copper8000.co.th', 'admin1234');
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: 'ยืนยันการจอง', exact: true }).click(); // แท็บการจอง
+  await page.getByRole('button', { name: 'ยกเลิก', exact: true }).first().click();
+  await expect(page.locator('.toast')).toContainText('ยกเลิกการจองแล้ว');
+  await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
+  const demoRow = page.locator('tr', { hasText: 'demo@copper8000.co.th' });
+  await expect(demoRow).toContainText('100,000'); // คืนแล้ว
+  await expect(demoRow).not.toContainText('1/2'); // ไม่มีใบเตือนอัตโนมัติ (badge 'เตือน n/2')
 });
 
 test('ราคาเปลี่ยนระหว่างเปิด modal → โดนบล็อก + โชว์ราคาใหม่ให้ยืนยันอีกครั้ง', async ({ page }) => {

@@ -186,11 +186,9 @@ if ($action === 'confirm_booking') {
   json_out([]);
 }
 
-// ยกเลิก/ไม่มาส่งของ → คืนเครดิตที่กันไว้ (ถ้ายังไม่ยืนยัน) + บันทึกใบเตือน · ครบ 3 = ระงับสิทธิ์จองอัตโนมัติ
+// ยกเลิกการจอง → คืนเครดิตที่กันไว้ (ถ้ายังไม่ยืนยัน) · ไม่เตือนอัตโนมัติ (แอดมินกดเตือนเองแยกต่างหาก)
 if ($action === 'cancel_booking') {
   $bookingId = (int) ($body['booking_id'] ?? 0);
-  $suspendedNow = false;
-  $warnCount = 0;
   pdo()->beginTransaction();
   try {
     $bk = pdo()->prepare('SELECT id, user_id, status, deposit_held FROM bookings WHERE id = ? FOR UPDATE');
@@ -198,21 +196,37 @@ if ($action === 'cancel_booking') {
     $booking = $bk->fetch();
     if (!$booking) { pdo()->rollBack(); json_err('ไม่พบรายการจอง', 404); }
     if ($booking['status'] === 'cancelled') { pdo()->rollBack(); json_err('รายการนี้ถูกยกเลิกไปแล้ว', 409); }
-    $customerId = (int) $booking['user_id'];
     $dep = (float) $booking['deposit_held'];
     // คืนเครดิตที่กันไว้ (ถ้ามี) แล้วเคลียร์ยอดกันของการจองนี้
     if ($dep > 0) {
       pdo()->prepare('UPDATE users SET credit_balance = credit_balance + ?, credit_held = credit_held - ? WHERE id = ?')
-        ->execute([$dep, $dep, $customerId]);
+        ->execute([$dep, $dep, (int) $booking['user_id']]);
     }
     pdo()->prepare("UPDATE bookings SET status = 'cancelled', deposit_held = 0 WHERE id = ?")->execute([$bookingId]);
-    // บันทึกใบเตือน +1 · ครบ 3 ครั้ง ระงับสิทธิ์จองอัตโนมัติ
-    pdo()->prepare('UPDATE users SET warnings = warnings + 1 WHERE id = ?')->execute([$customerId]);
-    $wc = pdo()->prepare('SELECT warnings FROM users WHERE id = ?');
-    $wc->execute([$customerId]);
-    $warnCount = (int) $wc->fetchColumn();
+    pdo()->commit();
+  } catch (Throwable $e) {
+    if (pdo()->inTransaction()) pdo()->rollBack();
+    throw $e;
+  }
+  audit_log('cancel_booking', ['user' => $admin, 'entity' => 'booking', 'entity_id' => $bookingId, 'detail' => ['deposit_returned' => (float) $booking['deposit_held']]]);
+  json_out([]);
+}
+
+// แอดมินกดตักเตือนลูกค้าเอง → ใบเตือน +1 · ครบ 3 ครั้ง ระงับสิทธิ์จองอัตโนมัติ
+if ($action === 'warn_user') {
+  $userId = (int) ($body['user_id'] ?? 0);
+  $suspendedNow = false;
+  $warnCount = 0;
+  pdo()->beginTransaction();
+  try {
+    $u = pdo()->prepare("SELECT warnings FROM users WHERE id = ? AND role = 'user' FOR UPDATE");
+    $u->execute([$userId]);
+    $row = $u->fetch();
+    if (!$row) { pdo()->rollBack(); json_err('ไม่พบลูกค้า', 404); }
+    $warnCount = (int) $row['warnings'] + 1;
+    pdo()->prepare('UPDATE users SET warnings = warnings + 1 WHERE id = ?')->execute([$userId]);
     if ($warnCount >= 3) {
-      pdo()->prepare('UPDATE users SET booking_suspended = 1 WHERE id = ?')->execute([$customerId]);
+      pdo()->prepare('UPDATE users SET booking_suspended = 1 WHERE id = ?')->execute([$userId]);
       $suspendedNow = true;
     }
     pdo()->commit();
@@ -220,7 +234,7 @@ if ($action === 'cancel_booking') {
     if (pdo()->inTransaction()) pdo()->rollBack();
     throw $e;
   }
-  audit_log('cancel_booking', ['user' => $admin, 'entity' => 'booking', 'entity_id' => $bookingId, 'detail' => ['warnings' => $warnCount, 'suspended' => $suspendedNow, 'deposit_returned' => (float) $booking['deposit_held']]]);
+  audit_log('warn_user', ['user' => $admin, 'entity' => 'user', 'entity_id' => $userId, 'detail' => ['warnings' => $warnCount, 'suspended' => $suspendedNow]]);
   json_out(['warnings' => $warnCount, 'suspended' => $suspendedNow]);
 }
 
