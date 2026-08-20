@@ -331,6 +331,12 @@ export const th: Dict = {
   'agent.approved': 'อนุมัติแล้ว',
   'agent.waiting': 'รออนุมัติ',
   // ---- เครดิต / มัดจำ / ตักเตือน (แอดมิน) ----
+  'adminCredit.defaultTitle': 'เครดิตเริ่มต้นของลูกค้าใหม่',
+  'adminCredit.defaultNote': 'ลูกค้าที่สมัครใหม่จะได้รับเครดิตเริ่มต้นนี้อัตโนมัติ · ตั้ง 0 = ไม่ให้ (ไม่กระทบลูกค้าเดิม)',
+  'adminCredit.defaultLabel': 'เครดิตเริ่มต้น',
+  'adminCredit.saveDefault': 'บันทึกเครดิตเริ่มต้น',
+  'adminCredit.toastDefaultSaved': 'บันทึกเครดิตเริ่มต้นแล้ว',
+  'adminCredit.defaultRange': 'เครดิตเริ่มต้นต้องไม่ติดลบ',
   'adminCredit.depositTitle': 'ยอดมัดจำต่อการจอง',
   'adminCredit.depositNote': 'เวลาลูกค้าจอง ระบบจะกันเครดิตเท่ายอดนี้ไว้ และคืนให้เมื่อแอดมินกดยืนยันการจอง · ตั้ง 0 = ปิดระบบมัดจำ (ไม่กันเครดิต)',
   'adminCredit.depositLabel': 'ยอดมัดจำ (เครดิต)',

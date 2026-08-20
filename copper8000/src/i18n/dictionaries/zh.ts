@@ -327,6 +327,12 @@ export const zh: Dict = {
   'agent.approved': '已批准',
   'agent.waiting': '待审核',
   // ---- 信用额度 / 押金 / 警告（管理员）----
+  'adminCredit.defaultTitle': '新客户初始信用',
+  'adminCredit.defaultNote': '新注册客户将自动获得此初始信用。设为 0 = 不发放（不影响老客户）。',
+  'adminCredit.defaultLabel': '初始信用',
+  'adminCredit.saveDefault': '保存初始信用',
+  'adminCredit.toastDefaultSaved': '已保存初始信用',
+  'adminCredit.defaultRange': '初始信用不能为负',
   'adminCredit.depositTitle': '每次预订押金',
   'adminCredit.depositNote': '客户预订时冻结此额度的信用，管理员确认预订后退还。设为 0 = 关闭押金（不冻结信用）。',
   'adminCredit.depositLabel': '押金（信用）',

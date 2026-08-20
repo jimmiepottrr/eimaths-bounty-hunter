@@ -42,6 +42,7 @@ if ($method === 'GET') {
       'active' => get_setting('announce_active', '0') === '1',
     ],
     'booking_deposit' => (float) get_setting('booking_deposit', '0'),
+    'default_credit' => (float) get_setting('default_credit', '0'),
   ]]);
 }
 
