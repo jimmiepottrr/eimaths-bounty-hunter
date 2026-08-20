@@ -2,14 +2,20 @@
  * ข้อมูลผู้ใช้ — ดูข้อมูลได้อย่างเดียว (แก้ไขต้องติดต่อบริษัท) + เปลี่ยนรหัสผ่านได้
  */
 
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { dataService } from '../data/service';
+import { fmtBaht } from '../format';
 import { useT } from '../i18n';
 import { useAuth } from '../store';
 
 const ProfilePage = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const t = useT();
+
+  // ดึงข้อมูลล่าสุด (เครดิต/ใบเตือน อาจเปลี่ยนหลังจอง/แอดมินปรับ) ตอนเปิดหน้า
+  useEffect(() => {
+    refreshUser().catch(() => {});
+  }, [refreshUser]);
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -77,6 +83,37 @@ const ProfilePage = () => {
           </span>
         </li>
       </ul>
+
+      {user.role === 'user' && (
+        <>
+          {user.booking_suspended && (
+            <div className="error-box" style={{ marginBottom: 14 }}>
+              {t('profile.suspendedNote')}
+            </div>
+          )}
+          <ul className="contact-list" style={{ marginBottom: 14 }}>
+            <li>
+              <span className="k">{t('profile.creditBalance')}</span>
+              <span>{fmtBaht(user.credit_balance ?? 0)}</span>
+            </li>
+            {(user.credit_held ?? 0) > 0 && (
+              <li>
+                <span className="k">{t('profile.creditHeld')}</span>
+                <span>{fmtBaht(user.credit_held ?? 0)}</span>
+              </li>
+            )}
+            {(user.warnings ?? 0) > 0 && !user.booking_suspended && (
+              <li>
+                <span className="k">{t('profile.warnings')}</span>
+                <span>
+                  <span className="badge badge-pending">{t('adminCredit.warnCount', { n: user.warnings ?? 0 })}</span>
+                </span>
+              </li>
+            )}
+          </ul>
+        </>
+      )}
+
       <div className="info-box" style={{ marginBottom: 22 }}>
         {t('profile.readonlyNote')}
       </div>

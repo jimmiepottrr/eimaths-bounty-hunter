@@ -76,11 +76,15 @@ const loadDb = (): Db => {
         dirty = true;
       }
       if (!db.settings) {
-        db.settings = { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT } };
+        db.settings = { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT }, booking_deposit: 0 };
         dirty = true;
       }
       if (!db.settings.announcement) {
         db.settings.announcement = { ...DEMO_ANNOUNCEMENT };
+        dirty = true;
+      }
+      if (db.settings.booking_deposit === undefined) {
+        db.settings.booking_deposit = 0;
         dirty = true;
       }
       // db เวอร์ชันก่อนหน้าไม่มีคอลัมน์ sort_order/active ในสินค้า และไม่มี nextProductId
@@ -116,7 +120,7 @@ const loadDb = (): Db => {
     bookings: [...SEED_BOOKINGS],
     sessions: {},
     languages: [...SEED_LANGUAGES],
-    settings: { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT } },
+    settings: { theme: 'gold', announcement: { ...DEMO_ANNOUNCEMENT }, booking_deposit: 0 },
     audit: [],
     nextUserId: 100,
     nextBookingId: 100,
@@ -296,6 +300,9 @@ export const mockAdapter: DataService = {
     if (!user.approved) {
       throw new ApiError('บัญชียังไม่ได้รับการอนุมัติ จึงยังจองไม่ได้', 403);
     }
+    if (user.booking_suspended) {
+      throw new ApiError('บัญชีถูกระงับสิทธิ์การจองชั่วคราว กรุณาติดต่อบริษัท', 403);
+    }
     const product = db.products.find((p) => p.id === product_id);
     if (!product) throw new ApiError('ไม่พบสินค้า', 404);
     if (!(quantity > 0)) throw new ApiError('จำนวนต้องมากกว่า 0', 400);
@@ -304,6 +311,19 @@ export const mockAdapter: DataService = {
       Math.abs(product.price_per_kg - expected_price_per_kg) > 0.001
     ) {
       throw new ApiError('ราคามีการเปลี่ยนแปลง กรุณาตรวจสอบราคาใหม่', 409);
+    }
+    // มัดจำ (เครดิต): กันเครดิตตอนจอง ถ้าแอดมินตั้ง booking_deposit > 0
+    const deposit = db.settings.booking_deposit ?? 0;
+    if (deposit > 0) {
+      const bal = user.credit_balance ?? 0;
+      if (bal < deposit) {
+        throw new ApiError(
+          `เครดิตไม่พอสำหรับมัดจำการจอง (ต้องมีอย่างน้อย ${deposit} เครดิต) — กรุณาติดต่อบริษัทเพื่อเติมเครดิต`,
+          402,
+        );
+      }
+      user.credit_balance = bal - deposit;
+      user.credit_held = (user.credit_held ?? 0) + deposit;
     }
     const kg = unit === 'ton' ? quantity * 1000 : quantity;
     const booking: Booking = {
@@ -318,6 +338,7 @@ export const mockAdapter: DataService = {
       price_at_booking: product.price_per_kg,
       total_estimate: Math.round(kg * product.price_per_kg * 100) / 100,
       status: 'pending',
+      deposit_held: deposit > 0 ? deposit : 0,
       delivery_date: delivery_date ?? null,
       actual_weight_kg: null,
       qc_weight_kg: null,
@@ -335,6 +356,7 @@ export const mockAdapter: DataService = {
         unit,
         price_at_booking: booking.price_at_booking,
         total_estimate: booking.total_estimate,
+        deposit_held: booking.deposit_held,
       },
     });
     saveDb(db);
@@ -489,8 +511,105 @@ export const mockAdapter: DataService = {
     const admin = requireAdmin(db);
     const booking = db.bookings.find((b) => b.id === booking_id);
     if (!booking) throw new ApiError('ไม่พบรายการจอง', 404);
+    if (booking.status !== 'pending') throw new ApiError('รายการนี้ถูกยืนยันหรือยกเลิกไปแล้ว', 409);
     booking.status = 'confirmed';
-    recordAudit(db, 'confirm_booking', { actor: admin, entity: 'booking', entity_id: booking_id });
+    // คืนเครดิตมัดจำให้ลูกค้า (การซื้อขายสำเร็จ = ยืนยัน)
+    const dep = booking.deposit_held ?? 0;
+    if (dep > 0) {
+      const cust = db.users.find((u) => u.id === booking.user_id);
+      if (cust) {
+        cust.credit_balance = (cust.credit_balance ?? 0) + dep;
+        cust.credit_held = Math.max(0, (cust.credit_held ?? 0) - dep);
+      }
+      booking.deposit_held = 0;
+    }
+    recordAudit(db, 'confirm_booking', { actor: admin, entity: 'booking', entity_id: booking_id, detail: { deposit_returned: dep } });
+    saveDb(db);
+  },
+
+  async cancelBooking(booking_id): Promise<{ warnings: number; suspended: boolean }> {
+    await delay();
+    const db = loadDb();
+    const admin = requireAdmin(db);
+    const booking = db.bookings.find((b) => b.id === booking_id);
+    if (!booking) throw new ApiError('ไม่พบรายการจอง', 404);
+    if (booking.status === 'cancelled') throw new ApiError('รายการนี้ถูกยกเลิกไปแล้ว', 409);
+    const cust = db.users.find((u) => u.id === booking.user_id);
+    const dep = booking.deposit_held ?? 0;
+    // คืนเครดิตที่กันไว้ (ถ้ายังไม่ยืนยัน)
+    if (dep > 0 && cust) {
+      cust.credit_balance = (cust.credit_balance ?? 0) + dep;
+      cust.credit_held = Math.max(0, (cust.credit_held ?? 0) - dep);
+    }
+    booking.deposit_held = 0;
+    booking.status = 'cancelled';
+    // ใบเตือน +1 · ครบ 3 = ระงับสิทธิ์จองอัตโนมัติ
+    let warnings = 0;
+    let suspended = false;
+    if (cust) {
+      warnings = (cust.warnings ?? 0) + 1;
+      cust.warnings = warnings;
+      if (warnings >= 3) {
+        cust.booking_suspended = true;
+        suspended = true;
+      }
+    }
+    recordAudit(db, 'cancel_booking', { actor: admin, entity: 'booking', entity_id: booking_id, detail: { warnings, suspended, deposit_returned: dep } });
+    saveDb(db);
+    return { warnings, suspended };
+  },
+
+  async listCustomers(): Promise<User[]> {
+    await delay();
+    const db = loadDb();
+    requireAdmin(db);
+    return db.users.filter((u) => u.role === 'user').map(publicUser);
+  },
+
+  async grantCredit(user_id, amount): Promise<void> {
+    await delay();
+    const db = loadDb();
+    const admin = requireAdmin(db);
+    if (!amount) throw new ApiError('กรุณาระบุจำนวนเครดิต', 400);
+    const cust = db.users.find((u) => u.id === user_id && u.role === 'user');
+    if (!cust) throw new ApiError('ไม่พบลูกค้า', 404);
+    const next = (cust.credit_balance ?? 0) + amount;
+    if (next < 0) throw new ApiError(`เครดิตคงเหลือไม่พอสำหรับหักออก (คงเหลือ ${cust.credit_balance ?? 0})`, 400);
+    cust.credit_balance = Math.round(next * 100) / 100;
+    recordAudit(db, 'grant_credit', { actor: admin, entity: 'user', entity_id: user_id, detail: { amount } });
+    saveDb(db);
+  },
+
+  async setBookingDeposit(amount): Promise<void> {
+    await delay();
+    const db = loadDb();
+    const admin = requireAdmin(db);
+    if (amount < 0) throw new ApiError('ยอดมัดจำต้องไม่ติดลบ', 400);
+    db.settings.booking_deposit = Math.round(amount * 100) / 100;
+    recordAudit(db, 'set_booking_deposit', { actor: admin, entity: 'settings', detail: { booking_deposit: amount } });
+    saveDb(db);
+  },
+
+  async resetWarnings(user_id): Promise<void> {
+    await delay();
+    const db = loadDb();
+    const admin = requireAdmin(db);
+    const cust = db.users.find((u) => u.id === user_id && u.role === 'user');
+    if (!cust) throw new ApiError('ไม่พบลูกค้า', 404);
+    cust.warnings = 0;
+    cust.booking_suspended = false;
+    recordAudit(db, 'reset_warnings', { actor: admin, entity: 'user', entity_id: user_id });
+    saveDb(db);
+  },
+
+  async setBookingSuspended(user_id, suspended): Promise<void> {
+    await delay();
+    const db = loadDb();
+    const admin = requireAdmin(db);
+    const cust = db.users.find((u) => u.id === user_id && u.role === 'user');
+    if (!cust) throw new ApiError('ไม่พบลูกค้า', 404);
+    cust.booking_suspended = suspended;
+    recordAudit(db, suspended ? 'suspend_user' : 'unsuspend_user', { actor: admin, entity: 'user', entity_id: user_id });
     saveDb(db);
   },
 
@@ -594,6 +713,7 @@ export const mockAdapter: DataService = {
     return {
       theme: s.theme,
       announcement: { ...s.announcement, text: { ...s.announcement.text } },
+      booking_deposit: s.booking_deposit ?? 0,
     };
   },
 

@@ -75,6 +75,14 @@ if ($method === 'GET') {
     json_out(['bookings' => array_map('booking_public', $rows)]);
   }
 
+  if ($view === 'customers') {
+    // ลูกค้าทั้งหมด + ข้อมูลเครดิต/เตือน/ระงับ (user_public มีฟิลด์เครดิตอยู่แล้ว)
+    $rows = pdo()->query(
+      "SELECT * FROM users WHERE role = 'user' ORDER BY created_at DESC"
+    )->fetchAll();
+    json_out(['customers' => array_map('user_public', $rows)]);
+  }
+
   json_err('view ไม่ถูกต้อง');
 }
 
@@ -154,9 +162,125 @@ if ($action === 'delete_agent') {
 
 if ($action === 'confirm_booking') {
   $bookingId = (int) ($body['booking_id'] ?? 0);
-  $st = pdo()->prepare("UPDATE bookings SET status = 'confirmed' WHERE id = ?");
-  $st->execute([$bookingId]);
-  audit_log('confirm_booking', ['user' => $admin, 'entity' => 'booking', 'entity_id' => $bookingId]);
+  pdo()->beginTransaction();
+  try {
+    // ยืนยันเฉพาะรายการที่ยัง pending (กันยืนยันซ้ำ/ยืนยันรายการที่ยกเลิกแล้ว)
+    $bk = pdo()->prepare('SELECT id, user_id, status, deposit_held FROM bookings WHERE id = ? FOR UPDATE');
+    $bk->execute([$bookingId]);
+    $booking = $bk->fetch();
+    if (!$booking) { pdo()->rollBack(); json_err('ไม่พบรายการจอง', 404); }
+    if ($booking['status'] !== 'pending') { pdo()->rollBack(); json_err('รายการนี้ถูกยืนยันหรือยกเลิกไปแล้ว', 409); }
+    pdo()->prepare("UPDATE bookings SET status = 'confirmed', deposit_held = 0 WHERE id = ?")->execute([$bookingId]);
+    // คืนเครดิตมัดจำให้ลูกค้า (การซื้อขายสำเร็จ = แอดมินยืนยัน)
+    $dep = (float) $booking['deposit_held'];
+    if ($dep > 0) {
+      pdo()->prepare('UPDATE users SET credit_balance = credit_balance + ?, credit_held = credit_held - ? WHERE id = ?')
+        ->execute([$dep, $dep, (int) $booking['user_id']]);
+    }
+    pdo()->commit();
+  } catch (Throwable $e) {
+    if (pdo()->inTransaction()) pdo()->rollBack();
+    throw $e;
+  }
+  audit_log('confirm_booking', ['user' => $admin, 'entity' => 'booking', 'entity_id' => $bookingId, 'detail' => ['deposit_returned' => (float) $booking['deposit_held']]]);
+  json_out([]);
+}
+
+// ยกเลิก/ไม่มาส่งของ → คืนเครดิตที่กันไว้ (ถ้ายังไม่ยืนยัน) + บันทึกใบเตือน · ครบ 3 = ระงับสิทธิ์จองอัตโนมัติ
+if ($action === 'cancel_booking') {
+  $bookingId = (int) ($body['booking_id'] ?? 0);
+  $suspendedNow = false;
+  $warnCount = 0;
+  pdo()->beginTransaction();
+  try {
+    $bk = pdo()->prepare('SELECT id, user_id, status, deposit_held FROM bookings WHERE id = ? FOR UPDATE');
+    $bk->execute([$bookingId]);
+    $booking = $bk->fetch();
+    if (!$booking) { pdo()->rollBack(); json_err('ไม่พบรายการจอง', 404); }
+    if ($booking['status'] === 'cancelled') { pdo()->rollBack(); json_err('รายการนี้ถูกยกเลิกไปแล้ว', 409); }
+    $customerId = (int) $booking['user_id'];
+    $dep = (float) $booking['deposit_held'];
+    // คืนเครดิตที่กันไว้ (ถ้ามี) แล้วเคลียร์ยอดกันของการจองนี้
+    if ($dep > 0) {
+      pdo()->prepare('UPDATE users SET credit_balance = credit_balance + ?, credit_held = credit_held - ? WHERE id = ?')
+        ->execute([$dep, $dep, $customerId]);
+    }
+    pdo()->prepare("UPDATE bookings SET status = 'cancelled', deposit_held = 0 WHERE id = ?")->execute([$bookingId]);
+    // บันทึกใบเตือน +1 · ครบ 3 ครั้ง ระงับสิทธิ์จองอัตโนมัติ
+    pdo()->prepare('UPDATE users SET warnings = warnings + 1 WHERE id = ?')->execute([$customerId]);
+    $wc = pdo()->prepare('SELECT warnings FROM users WHERE id = ?');
+    $wc->execute([$customerId]);
+    $warnCount = (int) $wc->fetchColumn();
+    if ($warnCount >= 3) {
+      pdo()->prepare('UPDATE users SET booking_suspended = 1 WHERE id = ?')->execute([$customerId]);
+      $suspendedNow = true;
+    }
+    pdo()->commit();
+  } catch (Throwable $e) {
+    if (pdo()->inTransaction()) pdo()->rollBack();
+    throw $e;
+  }
+  audit_log('cancel_booking', ['user' => $admin, 'entity' => 'booking', 'entity_id' => $bookingId, 'detail' => ['warnings' => $warnCount, 'suspended' => $suspendedNow, 'deposit_returned' => (float) $booking['deposit_held']]]);
+  json_out(['warnings' => $warnCount, 'suspended' => $suspendedNow]);
+}
+
+// แอดมินเติม/ปรับเครดิตให้ลูกค้า (amount บวก=เติม, ลบ=หัก — ห้ามให้ยอดใช้ได้ติดลบ)
+if ($action === 'grant_credit') {
+  $userId = (int) ($body['user_id'] ?? 0);
+  $amount = (float) ($body['amount'] ?? 0);
+  if ($amount === 0.0) json_err('กรุณาระบุจำนวนเครดิต');
+  if (abs($amount) > 1000000000) json_err('จำนวนเครดิตมากเกินไป');
+  $upd = pdo()->prepare(
+    "UPDATE users SET credit_balance = credit_balance + ? WHERE id = ? AND role = 'user' AND credit_balance + ? >= 0"
+  );
+  $upd->execute([$amount, $userId, $amount]);
+  if ($upd->rowCount() === 0) {
+    $chk = pdo()->prepare("SELECT credit_balance FROM users WHERE id = ? AND role = 'user'");
+    $chk->execute([$userId]);
+    $row = $chk->fetch();
+    if (!$row) json_err('ไม่พบลูกค้า', 404);
+    json_err('เครดิตคงเหลือไม่พอสำหรับหักออก (คงเหลือ ' . (float) $row['credit_balance'] . ')', 400);
+  }
+  audit_log('grant_credit', ['user' => $admin, 'entity' => 'user', 'entity_id' => $userId, 'detail' => ['amount' => $amount]]);
+  json_out([]);
+}
+
+// แอดมินตั้งยอดมัดจำต่อการจอง (0 = ปิดระบบมัดจำ)
+if ($action === 'set_booking_deposit') {
+  $amount = (float) ($body['amount'] ?? 0);
+  if ($amount < 0) json_err('ยอดมัดจำต้องไม่ติดลบ');
+  if ($amount > 1000000000) json_err('ยอดมัดจำมากเกินไป');
+  set_setting('booking_deposit', (string) $amount);
+  audit_log('set_booking_deposit', ['user' => $admin, 'entity' => 'settings', 'detail' => ['booking_deposit' => $amount]]);
+  json_out([]);
+}
+
+// แอดมินรีเซ็ตใบเตือน + ปลดระงับสิทธิ์จอง
+if ($action === 'reset_warnings') {
+  $userId = (int) ($body['user_id'] ?? 0);
+  $st = pdo()->prepare("UPDATE users SET warnings = 0, booking_suspended = 0 WHERE id = ? AND role = 'user'");
+  $st->execute([$userId]);
+  if ($st->rowCount() === 0) {
+    $chk = pdo()->prepare("SELECT id FROM users WHERE id = ? AND role = 'user'");
+    $chk->execute([$userId]);
+    if (!$chk->fetch()) json_err('ไม่พบลูกค้า', 404);
+  }
+  audit_log('reset_warnings', ['user' => $admin, 'entity' => 'user', 'entity_id' => $userId]);
+  json_out([]);
+}
+
+// แอดมินระงับ/ปลดระงับสิทธิ์จองด้วยตนเอง
+if ($action === 'set_booking_suspended') {
+  $userId = (int) ($body['user_id'] ?? 0);
+  $suspended = (bool) ($body['suspended'] ?? false);
+  $st = pdo()->prepare("UPDATE users SET booking_suspended = ? WHERE id = ? AND role = 'user'");
+  $st->execute([$suspended ? 1 : 0, $userId]);
+  if ($st->rowCount() === 0) {
+    $chk = pdo()->prepare("SELECT id FROM users WHERE id = ? AND role = 'user'");
+    $chk->execute([$userId]);
+    if (!$chk->fetch()) json_err('ไม่พบลูกค้า', 404);
+  }
+  audit_log($suspended ? 'suspend_user' : 'unsuspend_user', ['user' => $admin, 'entity' => 'user', 'entity_id' => $userId]);
   json_out([]);
 }
 

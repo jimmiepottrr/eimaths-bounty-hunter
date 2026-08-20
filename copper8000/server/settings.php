@@ -13,17 +13,7 @@ const VALID_THEMES = ['gold', 'copper', 'silver'];
 const VALID_ANNOUNCE_MODES = ['marquee', 'popup'];
 const ANNOUNCE_MAX_LEN = 500;
 
-function get_setting(string $key, string $default): string {
-  $st = pdo()->prepare('SELECT sval FROM settings WHERE skey = ?');
-  $st->execute([$key]);
-  $row = $st->fetch();
-  return $row ? (string) $row['sval'] : $default;
-}
-
-function set_setting(string $key, string $value): void {
-  pdo()->prepare('INSERT INTO settings (skey, sval) VALUES (?, ?) ON DUPLICATE KEY UPDATE sval = VALUES(sval)')
-    ->execute([$key, $value]);
-}
+// get_setting / set_setting ย้ายไปอยู่ใน _bootstrap.php (ใช้ร่วมกันทุก endpoint)
 
 $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
 
@@ -51,6 +41,7 @@ if ($method === 'GET') {
       'mode' => $mode,
       'active' => get_setting('announce_active', '0') === '1',
     ],
+    'booking_deposit' => (float) get_setting('booking_deposit', '0'),
   ]]);
 }
 

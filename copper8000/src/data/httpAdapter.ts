@@ -176,6 +176,30 @@ export const httpAdapter: DataService = {
     return res.members ?? [];
   },
 
+  async listCustomers(): Promise<User[]> {
+    const res = await request<{ customers: User[] }>('/admin.php?view=customers');
+    return res.customers ?? [];
+  },
+
+  async grantCredit(user_id, amount): Promise<void> {
+    await request('/admin.php', { method: 'POST', body: { action: 'grant_credit', user_id, amount } });
+  },
+
+  async setBookingDeposit(amount): Promise<void> {
+    await request('/admin.php', { method: 'POST', body: { action: 'set_booking_deposit', amount } });
+  },
+
+  async resetWarnings(user_id): Promise<void> {
+    await request('/admin.php', { method: 'POST', body: { action: 'reset_warnings', user_id } });
+  },
+
+  async setBookingSuspended(user_id, suspended): Promise<void> {
+    await request('/admin.php', {
+      method: 'POST',
+      body: { action: 'set_booking_suspended', user_id, suspended },
+    });
+  },
+
   async listAllBookings(): Promise<Booking[]> {
     const res = await request<{ bookings: Booking[] }>('/admin.php?view=bookings');
     return res.bookings;
@@ -186,6 +210,14 @@ export const httpAdapter: DataService = {
       method: 'POST',
       body: { action: 'confirm_booking', booking_id },
     });
+  },
+
+  async cancelBooking(booking_id): Promise<{ warnings: number; suspended: boolean }> {
+    const res = await request<{ warnings?: number; suspended?: boolean }>('/admin.php', {
+      method: 'POST',
+      body: { action: 'cancel_booking', booking_id },
+    });
+    return { warnings: res.warnings ?? 0, suspended: res.suspended ?? false };
   },
 
   async setBookingWeights(booking_id, input): Promise<void> {
@@ -279,6 +311,7 @@ export const httpAdapter: DataService = {
         mode: a?.mode === 'popup' ? 'popup' : 'marquee',
         active: a?.active ?? false,
       },
+      booking_deposit: Number(res.settings.booking_deposit ?? 0) || 0,
     };
   },
 

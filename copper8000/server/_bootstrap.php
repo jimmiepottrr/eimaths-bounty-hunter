@@ -108,6 +108,18 @@ function new_session(int $userId): string {
   return $token;
 }
 
+// ---------- Settings (key-value) — ใช้ร่วมกันทุก endpoint ----------
+function get_setting(string $key, string $default): string {
+  $st = pdo()->prepare('SELECT sval FROM settings WHERE skey = ?');
+  $st->execute([$key]);
+  $row = $st->fetch();
+  return $row ? (string) $row['sval'] : $default;
+}
+function set_setting(string $key, string $value): void {
+  pdo()->prepare('INSERT INTO settings (skey, sval) VALUES (?, ?) ON DUPLICATE KEY UPDATE sval = VALUES(sval)')
+    ->execute([$key, $value]);
+}
+
 // ---------- Audit log (บันทึกการใช้งาน) ----------
 /** IP ผู้เรียก — ใช้ REMOTE_ADDR เป็นหลัก (ปลอมยาก) ตัดความยาวกัน overflow */
 function client_ip(): string {
@@ -154,6 +166,10 @@ function user_public(array $u): array {
     'agent_id'        => isset($u['agent_id']) && $u['agent_id'] !== null ? (int) $u['agent_id'] : null,
     'referral_code'   => $u['referral_code'] ?? null,
     'commission_rate' => isset($u['commission_rate']) ? (float) $u['commission_rate'] : 0,
+    'credit_balance'  => isset($u['credit_balance']) ? (float) $u['credit_balance'] : 0,
+    'credit_held'     => isset($u['credit_held']) ? (float) $u['credit_held'] : 0,
+    'warnings'        => isset($u['warnings']) ? (int) $u['warnings'] : 0,
+    'booking_suspended' => (bool) ($u['booking_suspended'] ?? false),
   ];
 }
 
@@ -186,6 +202,7 @@ function booking_public(array $b): array {
     'price_at_booking' => (float) $b['price_at_booking'],
     'total_estimate'   => (float) $b['total_estimate'],
     'status'           => $b['status'],
+    'deposit_held'     => isset($b['deposit_held']) ? (float) $b['deposit_held'] : 0,
     'delivery_date'    => $b['delivery_date'] ?? null,
     'actual_weight_kg' => isset($b['actual_weight_kg']) ? (float) $b['actual_weight_kg'] : null,
     'qc_weight_kg'     => isset($b['qc_weight_kg']) ? (float) $b['qc_weight_kg'] : null,

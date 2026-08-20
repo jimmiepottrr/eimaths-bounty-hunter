@@ -218,6 +218,81 @@ test('รหัสแนะนำผิด → สมัครไม่ผ่า
   await expect(page.locator('.error-box')).toContainText('referral');
 });
 
+test('เครดิต/มัดจำ: แอดมินตั้งมัดจำ → ลูกค้าจองแล้วกันเครดิต → ยืนยันแล้วคืนเครดิต', async ({ page }) => {
+  // แอดมินตั้งยอดมัดจำ 5,000
+  await login(page, 'admin@copper8000.co.th', 'admin1234');
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
+  await page.fill('#deposit-amount', '5000');
+  await page.getByRole('button', { name: 'บันทึกยอดมัดจำ' }).click();
+  await expect(page.locator('.toast')).toContainText('บันทึกยอดมัดจำแล้ว');
+  await logout(page);
+
+  // ลูกค้า (demo มีเครดิตตั้งต้น 100,000) จอง → มัดจำ 5,000 ถูกกัน
+  await login(page, 'demo@copper8000.co.th', 'demo1234');
+  await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
+  const modal = page.locator('.modal');
+  await modal.locator('#qty').fill('100');
+  await modal.getByRole('button', { name: 'ถัดไป' }).click();
+  await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
+  await expect(page).toHaveURL(/#\/booking-report/);
+  // โปรไฟล์: เครดิตคงเหลือ 95,000 + กันไว้ 5,000
+  await page.goto('/#/profile');
+  const clist = page.locator('.contact-list', { hasText: 'เครดิตคงเหลือ' });
+  await expect(clist).toContainText('95,000');
+  await expect(clist).toContainText('5,000');
+  await logout(page);
+
+  // แอดมินยืนยันการจองล่าสุด (ใหม่สุด = คอปเปอร์ที่เพิ่งจอง) → คืนเครดิต
+  await login(page, 'admin@copper8000.co.th', 'admin1234');
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: 'ยืนยันการจอง', exact: true }).click(); // แท็บการจอง
+  await page.getByRole('button', { name: 'ยืนยัน', exact: true }).first().click();
+  await expect(page.locator('.toast')).toContainText('ยืนยัน');
+  // แท็บเครดิต: demo กลับเป็น 100,000 (คืนแล้ว)
+  await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
+  await expect(page.locator('tr', { hasText: 'demo@copper8000.co.th' })).toContainText('100,000');
+});
+
+test('เครดิต: แอดมินยกเลิก 3 ครั้ง → เตือนครบ → ระงับสิทธิ์จองอัตโนมัติ → ลูกค้าจองไม่ได้', async ({ page }) => {
+  page.on('dialog', (d) => d.accept()); // รับ window.confirm ทุกครั้ง
+
+  // demo จองเพิ่ม 1 (มี seed 2 → รวม 3 รายการ)
+  await login(page, 'demo@copper8000.co.th', 'demo1234');
+  await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
+  const modal = page.locator('.modal');
+  await modal.locator('#qty').fill('50');
+  await modal.getByRole('button', { name: 'ถัดไป' }).click();
+  await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
+  await expect(page).toHaveURL(/#\/booking-report/);
+  await logout(page);
+
+  // แอดมินยกเลิกทั้ง 3 รายการ
+  await login(page, 'admin@copper8000.co.th', 'admin1234');
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: 'ยืนยันการจอง', exact: true }).click(); // แท็บการจอง
+  const cancelBtns = page.getByRole('button', { name: 'ยกเลิก', exact: true });
+  await expect(cancelBtns).toHaveCount(3);
+  await cancelBtns.first().click();
+  await expect(page.locator('.toast')).toContainText('เตือนครั้งที่ 1');
+  await expect(cancelBtns).toHaveCount(2);
+  await cancelBtns.first().click();
+  await expect(page.locator('.toast')).toContainText('เตือนครั้งที่ 2');
+  await expect(cancelBtns).toHaveCount(1);
+  await cancelBtns.first().click();
+  await expect(page.locator('.toast')).toContainText('ระงับสิทธิ์จอง');
+  await logout(page);
+
+  // ลูกค้าถูกระงับ — จองไม่ได้ (เซิร์ฟเวอร์บล็อก)
+  await login(page, 'demo@copper8000.co.th', 'demo1234');
+  await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
+  const m2 = page.locator('.modal');
+  await m2.locator('#qty').fill('10');
+  await m2.getByRole('button', { name: 'ถัดไป' }).click();
+  await m2.getByRole('button', { name: 'ยืนยันการจอง' }).click();
+  await expect(page.locator('.toast')).toContainText('ระงับสิทธิ์');
+});
+
 test('ราคาเปลี่ยนระหว่างเปิด modal → โดนบล็อก + โชว์ราคาใหม่ให้ยืนยันอีกครั้ง', async ({ page }) => {
   await login(page, 'demo@copper8000.co.th', 'demo1234');
   await page.getByRole('button', { name: /Bright Copper|ทองแดงเงา/ }).click();
