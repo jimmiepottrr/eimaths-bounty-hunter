@@ -367,6 +367,38 @@ test('ราคาเปลี่ยนระหว่างเปิด modal �
   await expect(page.locator('tr', { hasText: /ทองแดงเงา/ }).first()).toContainText('300');
 });
 
+test('แก้ราคา: เปลี่ยนเกิน 20% เด้งกล่องยืนยัน (ยกเลิก/ยืนยัน) · ไม่เกิน 20% บันทึกเลย', async ({ page }) => {
+  await login(page, 'admin@copper8000.co.th', 'admin1234');
+  await page.goto('/#/admin');
+  await page.getByRole('button', { name: 'แก้ไขราคา', exact: true }).click();
+  const row = page.locator('.price-edit-row').filter({ hasText: 'ทองแดงเงา' });
+  const priceInput = row.locator('input[aria-label="price"]');
+  const cur = Number(await priceInput.inputValue());
+
+  // เปลี่ยน +25% → เด้งกล่องยืนยัน
+  await priceInput.fill(String(Math.round(cur * 1.25)));
+  await row.getByRole('button', { name: 'บันทึก' }).click();
+  const modal = page.locator('.modal');
+  await expect(modal.getByText('ยืนยันการเปลี่ยนราคา')).toBeVisible();
+  // กดยกเลิก → ปิดกล่อง ไม่บันทึก
+  await modal.getByRole('button', { name: 'ยกเลิก' }).click();
+  await expect(page.locator('.modal')).toHaveCount(0);
+
+  // เปลี่ยนเล็กน้อย +10% → บันทึกเลย ไม่มีกล่องยืนยัน
+  await priceInput.fill(String(Math.round(cur * 1.1)));
+  await row.getByRole('button', { name: 'บันทึก' }).click();
+  await expect(page.locator('.modal')).toHaveCount(0);
+  await expect(page.locator('.toast')).toContainText('บันทึกราคา');
+
+  // เปลี่ยน −30% → เด้งกล่อง แล้วกดยืนยัน → บันทึกสำเร็จ
+  await priceInput.fill(String(Math.round(cur * 0.7)));
+  await row.getByRole('button', { name: 'บันทึก' }).click();
+  await expect(modal.getByText('ยืนยันการเปลี่ยนราคา')).toBeVisible();
+  await modal.getByRole('button', { name: 'ยืนยันบันทึกราคา' }).click();
+  await expect(page.locator('.modal')).toHaveCount(0);
+  await expect(page.locator('.toast')).toContainText('บันทึกราคา');
+});
+
 test('แอดมินเปลี่ยนธีมเป็นทองแดง → เว็บเปลี่ยนสีทันทีและจำค่าหลัง reload', async ({ page }) => {
   await login(page, 'admin@copper8000.co.th', 'admin1234');
   // default = gold

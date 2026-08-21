@@ -629,14 +629,19 @@ const BookingsTab = ({ onToast }: { onToast: (m: string) => void }) => {
   );
 };
 
+/** เกณฑ์เตือน: ราคาใหม่ต่างจากราคาปัจจุบันเกิน ±20% */
+const PRICE_WARN_THRESHOLD = 0.2;
+
 const PriceEditRow = ({ product, onToast }: { product: Product; onToast: (m: string) => void }) => {
   const { lang, t } = useI18n();
   const [price, setPrice] = useState(String(product.price_per_kg));
   const [high, setHigh] = useState(String(product.high_of_day));
   const [low, setLow] = useState(String(product.low_of_day));
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const save = async () => {
+  const doSave = async () => {
+    setConfirmOpen(false);
     setBusy(true);
     try {
       await dataService.updatePrice(product.id, {
@@ -652,6 +657,17 @@ const PriceEditRow = ({ product, onToast }: { product: Product; onToast: (m: str
     }
   };
 
+  const oldPrice = product.price_per_kg;
+  const newPrice = Number(price);
+  // เปอร์เซ็นต์เปลี่ยนแปลง (บวก=ขึ้น ลบ=ลง) — ใช้เตือนเมื่อเกิน ±20%
+  const pct = oldPrice > 0 ? ((newPrice - oldPrice) / oldPrice) * 100 : 0;
+  const bigChange = oldPrice > 0 && newPrice > 0 && Math.abs(pct) > PRICE_WARN_THRESHOLD * 100;
+
+  const onSaveClick = () => {
+    if (bigChange) setConfirmOpen(true); // เกิน 20% → ขอยืนยันก่อน
+    else doSave(); // อยู่ในช่วงปกติ → บันทึกเลย
+  };
+
   return (
     <div className="price-edit-row">
       <div>
@@ -663,9 +679,47 @@ const PriceEditRow = ({ product, onToast }: { product: Product; onToast: (m: str
       <input aria-label="price" type="number" step="any" value={price} onChange={(e) => setPrice(e.target.value)} />
       <input aria-label="high" type="number" step="any" value={high} onChange={(e) => setHigh(e.target.value)} />
       <input aria-label="low" type="number" step="any" value={low} onChange={(e) => setLow(e.target.value)} />
-      <button type="button" className="btn btn-primary btn-small" onClick={save} disabled={busy}>
+      <button type="button" className="btn btn-primary btn-small" onClick={onSaveClick} disabled={busy}>
         {t('admin.save')}
       </button>
+
+      {confirmOpen && (
+        <div className="modal-backdrop" onClick={() => setConfirmOpen(false)} role="presentation">
+          <div className="modal" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+            <h3>⚠️ {t('adminPrice.warnTitle')}</h3>
+            <p className="m-review-note">{t('adminPrice.warnNote')}</p>
+            <div className="review-list">
+              <div className="review-row">
+                <span>{t('report.colProduct')}</span>
+                <strong>{productName(product, lang)}</strong>
+              </div>
+              <div className="review-row">
+                <span>{t('adminPrice.currentPrice')}</span>
+                <strong>{fmtNumber(oldPrice)} {t('unit.bahtPerKg')}</strong>
+              </div>
+              <div className="review-row">
+                <span>{t('adminPrice.newPrice')}</span>
+                <strong>{fmtNumber(newPrice)} {t('unit.bahtPerKg')}</strong>
+              </div>
+              <div className="review-row total">
+                <span>{t('adminPrice.change')}</span>
+                <strong style={{ color: pct >= 0 ? 'var(--confirmed)' : '#a33a3a' }}>
+                  {pct >= 0 ? '▲ +' : '▼ '}
+                  {fmtNumber(Math.abs(pct), 1)}%
+                </strong>
+              </div>
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn btn-outline" onClick={() => setConfirmOpen(false)} disabled={busy}>
+                {t('booking.cancel')}
+              </button>
+              <button type="button" className="btn btn-primary" onClick={doSave} disabled={busy}>
+                {busy ? t('adminProd.saving') : t('adminPrice.confirmSave')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
