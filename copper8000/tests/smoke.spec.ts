@@ -66,6 +66,12 @@ test('flow ครบวงจร: สมัคร → รออนุมัต�
   const userRow = page.locator('tr', { hasText: NEW_EMAIL });
   await userRow.getByRole('button', { name: 'อนุมัติ', exact: true }).click();
   await expect(page.locator('tr', { hasText: NEW_EMAIL })).toHaveCount(0);
+  // เติมเครดิตให้ลูกค้าใหม่ (ต้องมีเครดิตพอจึงจะจองได้)
+  await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
+  const creditRow = page.locator('tr', { hasText: NEW_EMAIL });
+  await creditRow.locator('input[type="number"]').fill('1000000');
+  await creditRow.getByRole('button', { name: 'เติม/ปรับ' }).click();
+  await expect(page.locator('.toast')).toContainText('ปรับเครดิตแล้ว');
   await logout(page);
 
   // 4) ผู้ใช้ใหม่จองสินค้า — หน่วยกิโลกรัม, จำนวนเริ่มว่าง, ต้องตรวจสอบอีก 1 สเต็ป
@@ -218,17 +224,8 @@ test('รหัสแนะนำผิด → สมัครไม่ผ่า
   await expect(page.locator('.error-box')).toContainText('referral');
 });
 
-test('เครดิต/มัดจำ: แอดมินตั้งมัดจำ → ลูกค้าจองแล้วกันเครดิต → ยืนยันแล้วคืนเครดิต', async ({ page }) => {
-  // แอดมินตั้งยอดมัดจำ 5,000
-  await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
-  await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
-  await page.fill('#deposit-amount', '5000');
-  await page.getByRole('button', { name: 'บันทึกยอดมัดจำ' }).click();
-  await expect(page.locator('.toast')).toContainText('บันทึกยอดมัดจำแล้ว');
-  await logout(page);
-
-  // ลูกค้า (demo มีเครดิตตั้งต้น 100,000) จอง → มัดจำ 5,000 ถูกกัน
+test('เครดิต: จอง 100 กก. → หักเครดิตเท่ายอดจอง (28,500) → ยืนยันแล้วคืนเครดิต', async ({ page }) => {
+  // ลูกค้า demo (เครดิตตั้งต้น 1,000,000) จอง 100 กก. × 285 = 28,500 → หักเครดิต
   await login(page, 'demo@copper8000.co.th', 'demo1234');
   await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
   const modal = page.locator('.modal');
@@ -236,22 +233,31 @@ test('เครดิต/มัดจำ: แอดมินตั้งมั�
   await modal.getByRole('button', { name: 'ถัดไป' }).click();
   await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
   await expect(page).toHaveURL(/#\/booking-report/);
-  // โปรไฟล์: เครดิตคงเหลือ 95,000 + กันไว้ 5,000
+  // โปรไฟล์: เครดิตคงเหลือ 971,500 + กันไว้ 28,500
   await page.goto('/#/profile');
   const clist = page.locator('.contact-list', { hasText: 'เครดิตคงเหลือ' });
-  await expect(clist).toContainText('95,000');
-  await expect(clist).toContainText('5,000');
+  await expect(clist).toContainText('971,500');
+  await expect(clist).toContainText('28,500');
   await logout(page);
 
-  // แอดมินยืนยันการจองล่าสุด (ใหม่สุด = คอปเปอร์ที่เพิ่งจอง) → คืนเครดิต
+  // แอดมินยืนยันการจองล่าสุด → คืนเครดิต (กลับเป็น 1,000,000)
   await login(page, 'admin@copper8000.co.th', 'admin1234');
   await page.goto('/#/admin');
   await page.getByRole('button', { name: 'ยืนยันการจอง', exact: true }).click(); // แท็บการจอง
   await page.getByRole('button', { name: 'ยืนยัน', exact: true }).first().click();
   await expect(page.locator('.toast')).toContainText('ยืนยัน');
-  // แท็บเครดิต: demo กลับเป็น 100,000 (คืนแล้ว)
   await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
-  await expect(page.locator('tr', { hasText: 'demo@copper8000.co.th' })).toContainText('100,000');
+  await expect(page.locator('tr', { hasText: 'demo@copper8000.co.th' })).toContainText('1,000,000');
+});
+
+test('เครดิต: จองต่ำกว่า 100 กก. ไม่ได้ (ปุ่มถัดไปถูกปิด)', async ({ page }) => {
+  await login(page, 'demo@copper8000.co.th', 'demo1234');
+  await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
+  const modal = page.locator('.modal');
+  await modal.locator('#qty').fill('50');
+  await expect(modal.getByRole('button', { name: 'ถัดไป' })).toBeDisabled();
+  await modal.locator('#qty').fill('100');
+  await expect(modal.getByRole('button', { name: 'ถัดไป' })).toBeEnabled();
 });
 
 test('เครดิต: แอดมินกดตักเตือนเอง 3 ครั้ง → ระงับสิทธิ์จองอัตโนมัติ → ลูกค้าจองไม่ได้', async ({ page }) => {
@@ -276,24 +282,16 @@ test('เครดิต: แอดมินกดตักเตือนเอ
   await login(page, 'demo@copper8000.co.th', 'demo1234');
   await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
   const m2 = page.locator('.modal');
-  await m2.locator('#qty').fill('10');
+  await m2.locator('#qty').fill('100');
   await m2.getByRole('button', { name: 'ถัดไป' }).click();
   await m2.getByRole('button', { name: 'ยืนยันการจอง' }).click();
   await expect(page.locator('.toast')).toContainText('ระงับสิทธิ์');
 });
 
-test('เครดิต: ยกเลิกการจองคืนเครดิตมัดจำ แต่ไม่เตือนอัตโนมัติ', async ({ page }) => {
+test('เครดิต: ยกเลิกการจองคืนเครดิต แต่ไม่เตือนอัตโนมัติ', async ({ page }) => {
   page.on('dialog', (d) => d.accept());
-  // ตั้งมัดจำ 5,000
-  await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
-  await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
-  await page.fill('#deposit-amount', '5000');
-  await page.getByRole('button', { name: 'บันทึกยอดมัดจำ' }).click();
-  await expect(page.locator('.toast')).toContainText('บันทึกยอดมัดจำแล้ว');
-  await logout(page);
 
-  // demo จอง (กัน 5,000)
+  // demo จอง 100 กก. (หัก 28,500)
   await login(page, 'demo@copper8000.co.th', 'demo1234');
   await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
   const modal = page.locator('.modal');
@@ -303,7 +301,7 @@ test('เครดิต: ยกเลิกการจองคืนเคร
   await expect(page).toHaveURL(/#\/booking-report/);
   await logout(page);
 
-  // แอดมินยกเลิก → คืนเครดิต (กลับเป็น 100,000) และไม่มีใบเตือน (ไม่มีปุ่มล้างเตือน)
+  // แอดมินยกเลิก → คืนเครดิต (กลับเป็น 1,000,000) และไม่มีใบเตือน
   await login(page, 'admin@copper8000.co.th', 'admin1234');
   await page.goto('/#/admin');
   await page.getByRole('button', { name: 'ยืนยันการจอง', exact: true }).click(); // แท็บการจอง
@@ -311,7 +309,7 @@ test('เครดิต: ยกเลิกการจองคืนเคร
   await expect(page.locator('.toast')).toContainText('ยกเลิกการจองแล้ว');
   await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
   const demoRow = page.locator('tr', { hasText: 'demo@copper8000.co.th' });
-  await expect(demoRow).toContainText('100,000'); // คืนแล้ว
+  await expect(demoRow).toContainText('1,000,000'); // คืนแล้ว
   await expect(demoRow).not.toContainText('1/2'); // ไม่มีใบเตือนอัตโนมัติ (badge 'เตือน n/2')
 });
 

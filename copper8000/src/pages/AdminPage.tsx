@@ -390,9 +390,7 @@ const CustomerCreditRow = ({
 const CreditTab = ({ onToast }: { onToast: (m: string) => void }) => {
   const { t } = useI18n();
   const [customers, setCustomers] = useState<User[] | null>(null);
-  const [deposit, setDeposit] = useState('');
   const [defaultCredit, setDefaultCredit] = useState('');
-  const [busy, setBusy] = useState(false);
   const [busy2, setBusy2] = useState(false);
 
   const reload = useCallback(() => {
@@ -402,31 +400,11 @@ const CreditTab = ({ onToast }: { onToast: (m: string) => void }) => {
       .catch((e) => onToast((e as Error).message));
     dataService
       .getSettings()
-      .then((s) => {
-        setDeposit(String(s.booking_deposit));
-        setDefaultCredit(String(s.default_credit));
-      })
+      .then((s) => setDefaultCredit(String(s.default_credit)))
       .catch(() => {});
   }, [onToast]);
 
   useEffect(reload, [reload]);
-
-  const saveDeposit = async () => {
-    const num = Number(deposit);
-    if (!(num >= 0)) {
-      onToast(t('adminCredit.depositRange'));
-      return;
-    }
-    setBusy(true);
-    try {
-      await dataService.setBookingDeposit(num);
-      onToast(t('adminCredit.toastDepositSaved'));
-    } catch (e) {
-      onToast((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
 
   const saveDefaultCredit = async () => {
     const num = Number(defaultCredit);
@@ -468,25 +446,8 @@ const CreditTab = ({ onToast }: { onToast: (m: string) => void }) => {
         </button>
       </div>
 
-      <div className="card" style={{ marginBottom: 20 }}>
-        <h3 style={{ marginTop: 0 }}>{t('adminCredit.depositTitle')}</h3>
-        <p style={{ color: 'var(--ink-soft)', fontSize: 'calc(13.5px * var(--fs))', marginTop: 0 }}>
-          {t('adminCredit.depositNote')}
-        </p>
-        <div className="field">
-          <label htmlFor="deposit-amount">{t('adminCredit.depositLabel')}</label>
-          <input
-            id="deposit-amount"
-            type="number"
-            step="any"
-            min="0"
-            value={deposit}
-            onChange={(e) => setDeposit(e.target.value)}
-          />
-        </div>
-        <button type="button" className="btn btn-primary" onClick={saveDeposit} disabled={busy}>
-          {t('adminCredit.saveDeposit')}
-        </button>
+      <div className="info-box" style={{ marginBottom: 20 }}>
+        {t('adminCredit.howNote')}
       </div>
 
       <div className="table-wrap">

@@ -34,7 +34,7 @@ export const SEED_USERS: SeedUser[] = [
     role: 'user',
     approved: true,
     agent_id: 4, // ลูกค้าคนนี้ผูกกับ agent (ไว้โชว์ค่าคอมในโหมดสาธิต)
-    credit_balance: 100000, // เครดิตตั้งต้น (ไว้ทดลองระบบมัดจำในโหมดสาธิต)
+    credit_balance: 1000000, // เครดิตตั้งต้น (ไว้ทดลองระบบเครดิตในโหมดสาธิต)
   },
   {
     id: 3,
