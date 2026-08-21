@@ -318,20 +318,19 @@ export const mockAdapter: DataService = {
     ) {
       throw new ApiError('ราคามีการเปลี่ยนแปลง กรุณาตรวจสอบราคาใหม่', 409);
     }
-    // มัดจำ (เครดิต): กันเครดิตตอนจอง ถ้าแอดมินตั้ง booking_deposit > 0
-    const deposit = db.settings.booking_deposit ?? 0;
-    if (deposit > 0) {
-      const bal = user.credit_balance ?? 0;
-      if (bal < deposit) {
-        throw new ApiError(
-          `เครดิตไม่พอสำหรับมัดจำการจอง (ต้องมีอย่างน้อย ${deposit} เครดิต) — กรุณาติดต่อบริษัทเพื่อเติมเครดิต`,
-          402,
-        );
-      }
-      user.credit_balance = bal - deposit;
-      user.credit_held = (user.credit_held ?? 0) + deposit;
-    }
     const kg = unit === 'ton' ? quantity * 1000 : quantity;
+    if (kg < 100) throw new ApiError('ต้องจองอย่างน้อย 100 กิโลกรัม', 400);
+    const total = Math.round(kg * product.price_per_kg * 100) / 100;
+    // เครดิต: หักเท่ายอดจองจริง (คืนเมื่อแอดมินยืนยัน/ยกเลิก)
+    const bal = user.credit_balance ?? 0;
+    if (bal < total) {
+      throw new ApiError(
+        `เครดิตไม่พอ ต้องใช้ ${total.toLocaleString()} บาท (คุณมี ${bal.toLocaleString()} บาท) — กรุณาติดต่อบริษัทเพื่อเติมเครดิต`,
+        402,
+      );
+    }
+    user.credit_balance = Math.round((bal - total) * 100) / 100;
+    user.credit_held = Math.round(((user.credit_held ?? 0) + total) * 100) / 100;
     const booking: Booking = {
       id: db.nextBookingId++,
       user_id: user.id,
@@ -342,9 +341,9 @@ export const mockAdapter: DataService = {
       quantity,
       unit: unit as Unit,
       price_at_booking: product.price_per_kg,
-      total_estimate: Math.round(kg * product.price_per_kg * 100) / 100,
+      total_estimate: total,
       status: 'pending',
-      deposit_held: deposit > 0 ? deposit : 0,
+      deposit_held: total,
       delivery_date: delivery_date ?? null,
       actual_weight_kg: null,
       qc_weight_kg: null,
@@ -361,8 +360,8 @@ export const mockAdapter: DataService = {
         quantity,
         unit,
         price_at_booking: booking.price_at_booking,
-        total_estimate: booking.total_estimate,
-        deposit_held: booking.deposit_held,
+        total_estimate: total,
+        deposit_held: total,
       },
     });
     saveDb(db);

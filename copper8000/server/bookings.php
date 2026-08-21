@@ -51,6 +51,7 @@ $product = $st->fetch();
 if (!$product) json_err('ไม่พบสินค้า', 404);
 
 $kg = $unit === 'ton' ? $quantity * 1000 : $quantity;
+if ($kg < 100) json_err('ต้องจองอย่างน้อย 100 กิโลกรัม');
 $price = (float) $product['price_per_kg'];
 
 // กันจองติดราคาที่เปลี่ยนไประหว่างเปิดหน้าจอ: client ส่งราคาที่เห็นมาเทียบ ไม่ตรง = 409
@@ -61,28 +62,27 @@ if ($expected !== null && abs(((float) $expected) - $price) > 0.001) {
 
 $total = round($kg * $price, 2);
 
-// ---- มัดจำ (เครดิต): กันเครดิตตอนจอง (ถ้าแอดมินตั้ง booking_deposit > 0) ----
-// ทำเป็น transaction: กันเครดิตแบบมีเงื่อนไข (credit_balance ต้องพอ) แล้วค่อยสร้างการจอง
-$deposit = (float) get_setting('booking_deposit', '0');
+// ---- เครดิต: จองแล้วหักเครดิตเท่ายอดจองจริง (คืนเมื่อแอดมินยืนยัน/ยกเลิก) ----
+// transaction: หักเครดิตแบบมีเงื่อนไข (credit_balance ต้องพอ) แล้วค่อยสร้างการจอง
+$hold = $total;
 $uid = (int) $user['id'];
 pdo()->beginTransaction();
 try {
-  if ($deposit > 0) {
-    // หักจากยอดที่ใช้ได้ → ย้ายไปเป็นยอดกันไว้ (เงื่อนไข credit_balance >= deposit กัน race/ติดลบ)
-    $hold = pdo()->prepare(
-      'UPDATE users SET credit_balance = credit_balance - ?, credit_held = credit_held + ?
-       WHERE id = ? AND credit_balance >= ?'
-    );
-    $hold->execute([$deposit, $deposit, $uid, $deposit]);
-    if ($hold->rowCount() === 0) {
-      pdo()->rollBack();
-      json_err('เครดิตไม่พอสำหรับมัดจำการจอง (ต้องมีอย่างน้อย ' . rtrim(rtrim(number_format($deposit, 2), '0'), '.') . ' เครดิต) — กรุณาติดต่อบริษัทเพื่อเติมเครดิต', 402);
-    }
+  // หักจากยอดที่ใช้ได้ → ย้ายไปเป็นยอดกันไว้ (เงื่อนไข credit_balance >= hold กัน race/ติดลบ)
+  $st = pdo()->prepare(
+    'UPDATE users SET credit_balance = credit_balance - ?, credit_held = credit_held + ?
+     WHERE id = ? AND credit_balance >= ?'
+  );
+  $st->execute([$hold, $hold, $uid, $hold]);
+  if ($st->rowCount() === 0) {
+    pdo()->rollBack();
+    $have = (float) ($user['credit_balance'] ?? 0);
+    json_err('เครดิตไม่พอ ต้องใช้ ' . number_format($total, 0) . ' บาท (คุณมี ' . number_format($have, 0) . ' บาท) — กรุณาติดต่อบริษัทเพื่อเติมเครดิต', 402);
   }
   pdo()->prepare(
     "INSERT INTO bookings (user_id, product_id, quantity, unit, price_at_booking, total_estimate, status, deposit_held, delivery_date)
      VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)"
-  )->execute([$uid, $productId, $quantity, $unit, $price, $total, $deposit > 0 ? $deposit : 0, $deliveryDate]);
+  )->execute([$uid, $productId, $quantity, $unit, $price, $total, $hold, $deliveryDate]);
   $bookingId = (int) pdo()->lastInsertId();
   pdo()->commit();
 } catch (Throwable $e) {
@@ -92,7 +92,7 @@ try {
 
 audit_log('create_booking', ['user' => $user, 'entity' => 'booking', 'entity_id' => $bookingId, 'detail' => [
   'product_id' => $productId, 'product' => $product['name_th'], 'quantity' => $quantity, 'unit' => $unit,
-  'price_at_booking' => $price, 'total_estimate' => $total, 'deposit_held' => $deposit > 0 ? $deposit : 0,
+  'price_at_booking' => $price, 'total_estimate' => $total, 'deposit_held' => $hold,
 ]]);
 
 $st = pdo()->prepare(

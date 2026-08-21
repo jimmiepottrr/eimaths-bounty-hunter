@@ -28,9 +28,10 @@ const BookingModal = ({
     setStep('form');
   }, [product.price_per_kg]);
 
+  const MIN_KG = 100;
   const quantity = Number(quantityText);
-  const valid = Number.isFinite(quantity) && quantity > 0;
-  const estimate = valid ? quantity * product.price_per_kg : 0; // กิโลกรัมเท่านั้น
+  const valid = Number.isFinite(quantity) && quantity >= MIN_KG; // จองขั้นต่ำ 100 กก.
+  const estimate = quantity > 0 ? quantity * product.price_per_kg : 0; // กิโลกรัมเท่านั้น
 
   return (
     <div className="modal-backdrop" onClick={onClose} role="presentation">
@@ -53,6 +54,9 @@ const BookingModal = ({
                 onChange={(e) => setQuantityText(e.target.value)}
                 autoFocus
               />
+              <p style={{ fontSize: 'calc(12.5px * var(--fs))', color: 'var(--ink-soft)', margin: '4px 0 0' }}>
+                {t('booking.minKgHint')}
+              </p>
             </div>
 
             <div className="field">
