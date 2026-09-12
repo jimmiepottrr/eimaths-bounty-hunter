@@ -1,10 +1,7 @@
 /** ติดต่อบริษัท — ข้อมูลจำลอง + ลิงก์ Google Maps + แผนที่ (embed) */
 
+import { EMAIL, LINE_ID, LINE_URL, MAP_EMBED, MAP_LINK, PHONES } from '../contactInfo';
 import { useT } from '../i18n';
-
-const MAP_QUERY = encodeURIComponent('Copper 8000 Co., Ltd. บางนา กรุงเทพมหานคร');
-const MAP_LINK = `https://www.google.com/maps/search/?api=1&query=${MAP_QUERY}`;
-const MAP_EMBED = `https://maps.google.com/maps?q=${MAP_QUERY}&z=14&output=embed`;
 
 const ContactPage = () => {
   const t = useT();
@@ -26,17 +23,26 @@ const ContactPage = () => {
             <li>
               <span className="k">{t('contact.phoneLabel')}</span>
               <span>
-                <a href="tel:020008000">02-000-8000</a> · <a href="tel:0818008000">081-800-8000</a>
+                {PHONES.map((p, i) => (
+                  <span key={p.tel}>
+                    {i > 0 && ' · '}
+                    <a href={`tel:${p.tel}`}>{p.label}</a>
+                  </span>
+                ))}
               </span>
             </li>
             <li>
               <span className="k">LINE</span>
-              <span>@copper8000</span>
+              <span>
+                <a href={LINE_URL} target="_blank" rel="noreferrer">
+                  {LINE_ID}
+                </a>
+              </span>
             </li>
             <li>
               <span className="k">{t('contact.emailLabel')}</span>
               <span>
-                <a href="mailto:contact@copper8000.co.th">contact@copper8000.co.th</a>
+                <a href={`mailto:${EMAIL}`}>{EMAIL}</a>
               </span>
             </li>
             <li>
