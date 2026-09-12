@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
+import { LINE_ID, LINE_URL, MAP_EMBED, MAP_LINK, PHONES } from '../contactInfo';
 import { dataService, IS_DEMO } from '../data/service';
 import { useT } from '../i18n';
 import { useAuth } from '../store';
@@ -157,6 +158,27 @@ const Layout = () => {
       </main>
 
       <footer className="footer">
+        {/* ติดต่อ — ทุกอันเป็นลิงก์กดได้ (โทร / LINE / แผนที่) + แผนที่ฝัง · อยู่เหนือ copyright */}
+        <div className="footer-contact" aria-label={t('footer.contactTitle')}>
+          {PHONES.map((p) => (
+            <a key={p.tel} className="footer-contact-link" href={`tel:${p.tel}`}>
+              <span aria-hidden="true">📞</span> {p.label}
+            </a>
+          ))}
+          <a className="footer-contact-link line" href={LINE_URL} target="_blank" rel="noreferrer">
+            <span aria-hidden="true">💬</span> LINE {LINE_ID}
+          </a>
+          <a className="footer-contact-link" href={MAP_LINK} target="_blank" rel="noreferrer">
+            <span aria-hidden="true">📍</span> {t('footer.openMap')}
+          </a>
+        </div>
+        <iframe
+          className="footer-map"
+          title={t('contact.mapTitle')}
+          src={MAP_EMBED}
+          loading="lazy"
+          referrerPolicy="no-referrer-when-downgrade"
+        />
         <div className="footer-copy">{t('layout.footer', { year: new Date().getFullYear() })}</div>
         <div className="footer-slogan" aria-label={t('home.trust.aria')}>
           <span>{t('home.trust.fair.title')}</span>

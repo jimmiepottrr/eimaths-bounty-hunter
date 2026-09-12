@@ -309,10 +309,60 @@ button {
 
 .footer {
   border-top: 1px solid var(--line);
-  padding: 4px 16px 40px;
+  padding: 22px 16px 40px;
   text-align: center;
   color: var(--ink-soft);
   font-size: calc(13px * var(--fs));
+}
+
+/* ช่องทางติดต่อในฟุตเตอร์ — ทุกอันเป็นลิงก์กดได้ (โทร/LINE/แผนที่) */
+.footer-contact {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 10px;
+  margin-bottom: 14px;
+}
+
+.footer-contact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-size: calc(13.5px * var(--fs));
+  font-weight: 600;
+  text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.12s ease, box-shadow 0.15s ease;
+}
+
+.footer-contact-link:hover {
+  border-color: var(--copper);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow);
+}
+
+.footer-contact-link.line {
+  border-color: #06c755;
+  color: #06864a;
+}
+.footer-contact-link.line:hover {
+  background: #eafaf0;
+  border-color: #06c755;
+}
+
+/* แผนที่ฝังในฟุตเตอร์ — โหลดเมื่อเลื่อนถึง (lazy) · ขนาดพอดี ไม่บังเนื้อหา */
+.footer-map {
+  display: block;
+  width: 92%;
+  max-width: 560px;
+  height: 200px;
+  margin: 0 auto 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
 
 /* สโลแกนท้ายสุด — กระจายตรงกลาง กว้างไม่เกินบรรทัด copyright */

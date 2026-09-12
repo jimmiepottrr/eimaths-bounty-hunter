@@ -31,6 +31,8 @@ export const zh: Dict = {
   'auth.demoBadge': '演示模式',
 
   'layout.footer': '© {year} Copper 8000 有限公司 — 收购铜、黄铜、铝',
+  'footer.contactTitle': '联系方式',
+  'footer.openMap': '查看地图 / 导航',
 
   'home.title': '今日金属收购价格',
   'home.subtitle': '铜 · 黄铜 · 铝 — 已批准的会员可在"产品"页预订价格',
