@@ -17,16 +17,16 @@ const NEW_PASSWORD = 'test1234';
 const NEW_NAME = 'ทดสอบ อัตโนมัติ';
 
 const login = async (page: Page, email: string, password: string) => {
-  await page.goto('/#/login');
+  await page.goto('/login');
   await page.fill('#email', email);
   await page.fill('#password', password);
   await page.locator('form button[type="submit"]').click();
-  await expect(page).toHaveURL(/#\/products/);
+  await expect(page).toHaveURL(/\/products/);
 };
 
 const logout = async (page: Page) => {
   await page.getByRole('button', { name: 'ออกจากระบบ' }).click();
-  await expect(page).toHaveURL(/#\/$/);
+  await expect(page).toHaveURL(/\/$/);
 };
 
 test('หน้าแรกแสดงบอร์ดราคาครบ 3 กลุ่ม และกดแถวราคาไม่ได้', async ({ page }) => {
@@ -44,7 +44,7 @@ test('flow ครบวงจร: สมัคร → รออนุมัต�
   page,
 }) => {
   // 1) สมัครสมาชิกใหม่ → ขึ้นข้อความรอการอนุมัติ
-  await page.goto('/#/signup');
+  await page.goto('/signup');
   await page.fill('#name', NEW_NAME);
   await page.fill('#phone', '089-999-9999');
   await page.fill('#email', NEW_EMAIL);
@@ -54,7 +54,7 @@ test('flow ครบวงจร: สมัคร → รออนุมัต�
   await expect(page.getByText('รอการอนุมัติจากแอดมิน')).toBeVisible();
 
   // 2) ยังไม่อนุมัติ → แตะสินค้าแล้วโดนบล็อก
-  await page.goto('/#/products');
+  await page.goto('/products');
   await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
   await expect(page.locator('.toast')).toContainText('รอการอนุมัติ');
   await expect(page.locator('.modal')).toHaveCount(0);
@@ -62,7 +62,7 @@ test('flow ครบวงจร: สมัคร → รออนุมัต�
 
   // 3) แอดมินอนุมัติสมาชิกใหม่
   await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   const userRow = page.locator('tr', { hasText: NEW_EMAIL });
   await userRow.getByRole('button', { name: 'อนุมัติ', exact: true }).click();
   await expect(page.locator('tr', { hasText: NEW_EMAIL })).toHaveCount(0);
@@ -89,7 +89,7 @@ test('flow ครบวงจร: สมัคร → รออนุมัต�
   await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
 
   // 5) เด้งไปหน้ารายงานการจอง — มีแถวใหม่สถานะ "รอการยืนยัน"
-  await expect(page).toHaveURL(/#\/booking-report/);
+  await expect(page).toHaveURL(/\/booking-report/);
   const bookingRow = page.locator('tr', { hasText: 'ทองแดงเงา' });
   await expect(bookingRow).toContainText('2,000 กิโลกรัม');
   await expect(bookingRow).toContainText('รอการยืนยัน');
@@ -97,7 +97,7 @@ test('flow ครบวงจร: สมัคร → รออนุมัต�
 
   // 6) แอดมินยืนยันการจอง → ผู้ใช้เห็น "ได้รับการยืนยันแล้ว"
   await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'ยืนยันการจอง' }).click();
   const adminBookingRow = page.locator('tr', { hasText: NEW_NAME });
   await adminBookingRow.getByRole('button', { name: 'ยืนยัน', exact: true }).click();
@@ -105,7 +105,7 @@ test('flow ครบวงจร: สมัคร → รออนุมัต�
   await logout(page);
 
   await login(page, NEW_EMAIL, NEW_PASSWORD);
-  await page.goto('/#/booking-report');
+  await page.goto('/booking-report');
   await expect(page.locator('tr', { hasText: 'ทองแดงเงา' })).toContainText('ได้รับการยืนยันแล้ว');
 });
 
@@ -118,8 +118,8 @@ test('role พนักงาน (agent): login แล้วแถบหัว�
   // agent ไม่เห็นแท็บแอดมิน
   await expect(page.getByRole('link', { name: 'แอดมิน' })).toHaveCount(0);
   // เข้า /admin ตรงๆ ก็ถูก redirect ออก (เฉพาะแอดมินเท่านั้น)
-  await page.goto('/#/admin');
-  await expect(page).toHaveURL(/#\/$/);
+  await page.goto('/admin');
+  await expect(page).toHaveURL(/\/$/);
 });
 
 test('แอดมินสร้างพนักงาน → พนักงานล็อกอินผ่านหน้า login พนักงาน · เห็นมุมมองพนักงาน · จองไม่ได้', async ({
@@ -130,7 +130,7 @@ test('แอดมินสร้างพนักงาน → พนักง
 
   // แอดมินสร้างบัญชีพนักงานจากแท็บ "พนักงาน"
   await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'พนักงาน', exact: true }).click();
   await page.fill('#agent-name', 'พนักงานใหม่ ทดสอบ');
   await page.fill('#agent-email', AGENT_EMAIL);
@@ -141,26 +141,26 @@ test('แอดมินสร้างพนักงาน → พนักง
   await logout(page);
 
   // พนักงานล็อกอินผ่านหน้า login พนักงานแยกต่างหาก
-  await page.goto('/#/agent-login');
+  await page.goto('/agent-login');
   await page.fill('#email', AGENT_EMAIL);
   await page.fill('#password', AGENT_PW);
   await page.locator('form button[type="submit"]').click();
-  await expect(page).toHaveURL(/#\/agent/);
+  await expect(page).toHaveURL(/\/agent/);
   await expect(page.locator('a.userbox .status')).toHaveText('พนักงาน');
 
   // แตะสินค้า → ไม่มี modal จอง (พนักงานดูราคาอย่างเดียว)
-  await page.goto('/#/products');
+  await page.goto('/products');
   await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
   await expect(page.locator('.modal')).toHaveCount(0);
 });
 
 test('หน้า login พนักงาน: ผู้ใช้ทั่วไปถูกปฏิเสธ (ไม่พาเข้าระบบ)', async ({ page }) => {
-  await page.goto('/#/agent-login');
+  await page.goto('/agent-login');
   await page.fill('#email', 'demo@copper8000.co.th');
   await page.fill('#password', 'demo1234');
   await page.locator('form button[type="submit"]').click();
   await expect(page.locator('.error-box')).toContainText('ไม่ใช่พนักงาน');
-  await expect(page).toHaveURL(/#\/agent-login/);
+  await expect(page).toHaveURL(/\/agent-login/);
 });
 
 test('พนักงาน (agent) เห็นค่าคอมของตัวเอง: รหัสแนะนำ + ยอดยืนยัน + ค่าคอม 3% × 564,000 = 16,920', async ({
@@ -168,7 +168,7 @@ test('พนักงาน (agent) เห็นค่าคอมของต�
 }) => {
   await login(page, 'agent@copper8000.co.th', 'agent1234');
   // มีแท็บ "พนักงานขาย" ในเมนู → เข้าหน้า /agent
-  await page.goto('/#/agent');
+  await page.goto('/agent');
   await expect(page.getByRole('heading', { name: 'ค่าคอมมิชชั่นของฉัน' })).toBeVisible();
   // รหัสแนะนำ + อัตรา + ยอดยืนยัน + ค่าคอม (คำนวณฝั่งระบบ)
   await expect(page.locator('.agent-stat-card', { hasText: 'รหัสแนะนำของฉัน' })).toContainText('AGENT1');
@@ -180,7 +180,7 @@ test('พนักงาน (agent) เห็นค่าคอมของต�
 
 test('แอดมินตั้ง % ค่าคอมให้ agent → สรุปค่าคอมอัปเดต (5% × 564,000 = 28,200)', async ({ page }) => {
   await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'พนักงาน', exact: true }).click();
   const agentRow = page.locator('tr', { hasText: 'AGENT1' });
   await expect(agentRow).toContainText('16,920'); // ค่าคอมเริ่มต้น 3%
@@ -194,7 +194,7 @@ test('แอดมินตั้ง % ค่าคอมให้ agent → ส
 test('ลูกค้ากรอกรหัสแนะนำตอนสมัคร → ผูกกับ agent เจ้าของโค้ด (agent เห็นลูกค้าเพิ่ม)', async ({ page }) => {
   const REF_EMAIL = 'referred@test.co.th';
   // สมัครพร้อมกรอก referral = AGENT1
-  await page.goto('/#/signup');
+  await page.goto('/signup');
   await page.fill('#name', 'ลูกค้าจากเซลล์');
   await page.fill('#phone', '089-111-2222');
   await page.fill('#email', REF_EMAIL);
@@ -207,13 +207,13 @@ test('ลูกค้ากรอกรหัสแนะนำตอนสม�
 
   // agent เห็นลูกค้าใหม่ในรายชื่อของตัวเอง (customer_count เพิ่มเป็น 2)
   await login(page, 'agent@copper8000.co.th', 'agent1234');
-  await page.goto('/#/agent');
+  await page.goto('/agent');
   await expect(page.locator('.agent-stat-card', { hasText: 'จำนวนลูกค้า' })).toContainText('2');
   await expect(page.locator('tr', { hasText: 'ลูกค้าจากเซลล์' })).toBeVisible();
 });
 
 test('รหัสแนะนำผิด → สมัครไม่ผ่าน', async ({ page }) => {
-  await page.goto('/#/signup');
+  await page.goto('/signup');
   await page.fill('#name', 'รหัสผิด ทดสอบ');
   await page.fill('#phone', '089-000-0000');
   await page.fill('#email', 'badref@test.co.th');
@@ -232,9 +232,9 @@ test('เครดิต: จอง 100 กก. → หักเครดิต�
   await modal.locator('#qty').fill('100');
   await modal.getByRole('button', { name: 'ถัดไป' }).click();
   await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
-  await expect(page).toHaveURL(/#\/booking-report/);
+  await expect(page).toHaveURL(/\/booking-report/);
   // โปรไฟล์: เครดิตคงเหลือ 971,500 + กันไว้ 28,500
-  await page.goto('/#/profile');
+  await page.goto('/profile');
   const clist = page.locator('.contact-list', { hasText: 'เครดิตคงเหลือ' });
   await expect(clist).toContainText('971,500');
   await expect(clist).toContainText('28,500');
@@ -242,7 +242,7 @@ test('เครดิต: จอง 100 กก. → หักเครดิต�
 
   // แอดมินยืนยันการจองล่าสุด → คืนเครดิต (กลับเป็น 1,000,000)
   await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'ยืนยันการจอง', exact: true }).click(); // แท็บการจอง
   await page.getByRole('button', { name: 'ยืนยัน', exact: true }).first().click();
   await expect(page.locator('.toast')).toContainText('ยืนยัน');
@@ -265,7 +265,7 @@ test('เครดิต: แอดมินกดตักเตือนเอ
 
   // แอดมินตักเตือน demo เอง 3 ครั้งในแท็บเครดิต
   await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
   const demoRow = page.locator('tr', { hasText: 'demo@copper8000.co.th' });
   await demoRow.getByRole('button', { name: 'ตักเตือน' }).click();
@@ -298,12 +298,12 @@ test('เครดิต: ยกเลิกการจองคืนเคร
   await modal.locator('#qty').fill('100');
   await modal.getByRole('button', { name: 'ถัดไป' }).click();
   await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
-  await expect(page).toHaveURL(/#\/booking-report/);
+  await expect(page).toHaveURL(/\/booking-report/);
   await logout(page);
 
   // แอดมินยกเลิก → คืนเครดิต (กลับเป็น 1,000,000) และไม่มีใบเตือน
   await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'ยืนยันการจอง', exact: true }).click(); // แท็บการจอง
   await page.getByRole('button', { name: 'ยกเลิก', exact: true }).first().click();
   await expect(page.locator('.toast')).toContainText('ยกเลิกการจองแล้ว');
@@ -316,7 +316,7 @@ test('เครดิต: ยกเลิกการจองคืนเคร
 test('เครดิตเริ่มต้น: แอดมินตั้งค่า → ลูกค้าสมัครใหม่ได้เครดิตอัตโนมัติ', async ({ page }) => {
   // แอดมินตั้งเครดิตเริ่มต้น 20,000
   await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'เครดิต', exact: true }).click();
   await page.fill('#default-credit', '20000');
   await page.getByRole('button', { name: 'บันทึกเครดิตเริ่มต้น' }).click();
@@ -324,7 +324,7 @@ test('เครดิตเริ่มต้น: แอดมินตั้ง
   await logout(page);
 
   // สมัครสมาชิกใหม่ → ได้เครดิตเริ่มต้น 20,000 อัตโนมัติ
-  await page.goto('/#/signup');
+  await page.goto('/signup');
   await page.fill('#name', 'ลูกค้าเครดิตเริ่มต้น');
   await page.fill('#phone', '089-555-0000');
   await page.fill('#email', 'startcredit@test.co.th');
@@ -334,7 +334,7 @@ test('เครดิตเริ่มต้น: แอดมินตั้ง
   await expect(page.getByText('รอการอนุมัติจากแอดมิน')).toBeVisible();
 
   // หน้าโปรไฟล์โชว์เครดิตคงเหลือ 20,000
-  await page.goto('/#/profile');
+  await page.goto('/profile');
   await expect(page.locator('.contact-list', { hasText: 'เครดิตคงเหลือ' })).toContainText('20,000');
 });
 
@@ -363,13 +363,13 @@ test('ราคาเปลี่ยนระหว่างเปิด modal �
   // ตรวจสอบใหม่แล้วยืนยันอีกครั้งด้วยราคาใหม่ → สำเร็จ และรายงานบันทึกราคา 300
   await modal.getByRole('button', { name: 'ถัดไป' }).click();
   await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
-  await expect(page).toHaveURL(/#\/booking-report/);
+  await expect(page).toHaveURL(/\/booking-report/);
   await expect(page.locator('tr', { hasText: /ทองแดงเงา/ }).first()).toContainText('300');
 });
 
 test('แก้ราคา: เปลี่ยนเกิน 20% เด้งกล่องยืนยัน (ยกเลิก/ยืนยัน) · ไม่เกิน 20% บันทึกเลย', async ({ page }) => {
   await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'แก้ไขราคา', exact: true }).click();
   const row = page.locator('.price-edit-row').filter({ hasText: 'ทองแดงเงา' });
   const priceInput = row.locator('input[aria-label="price"]');
@@ -403,7 +403,7 @@ test('แอดมินเปลี่ยนธีมเป็นทองแ�
   await login(page, 'admin@copper8000.co.th', 'admin1234');
   // default = gold
   expect(await page.evaluate(() => document.documentElement.dataset.theme ?? 'gold')).toBe('gold');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'ตั้งค่า', exact: true }).click();
   await page.getByRole('button', { name: 'ทองแดง', exact: true }).click();
   await expect(page.locator('.toast')).toContainText('บันทึกธีมแล้ว');
@@ -416,7 +416,7 @@ test('แอดมินเปลี่ยนธีมเป็นทองแ�
 test('ข้อมูลผู้ใช้: เปลี่ยนรหัสผ่านได้ ข้อมูลอื่นอ่านอย่างเดียว + login ด้วยรหัสใหม่ได้', async ({ page }) => {
   await login(page, 'demo@copper8000.co.th', 'demo1234');
   await page.locator('a.userbox').click();
-  await expect(page).toHaveURL(/#\/profile/);
+  await expect(page).toHaveURL(/\/profile/);
   // ข้อมูลส่วนตัวเป็นข้อความอ่านอย่างเดียว — input มีเฉพาะช่องรหัสผ่าน 3 ช่อง
   expect(await page.locator('.card input').count()).toBe(3);
   await page.fill('#pw-current', 'demo1234');
@@ -430,19 +430,19 @@ test('ข้อมูลผู้ใช้: เปลี่ยนรหัสผ
 
 test('หน้าแรก: ข้อความแนะนำโชว์ตอน guest · ซ่อนเมื่อ login แล้ว', async ({ page }) => {
   // guest: มีบล็อก hero + หัวข้อ "ราคารับซื้อโลหะวันนี้"
-  await page.goto('/#/');
+  await page.goto('/');
   await expect(page.locator('.hero')).toBeVisible();
   await expect(page.getByRole('heading', { name: 'ราคารับซื้อโลหะวันนี้' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'ทองแดง', exact: true })).toBeVisible();
   // หลัง login: hero หาย ขึ้นตารางราคาเลย
   await login(page, 'demo@copper8000.co.th', 'demo1234');
-  await page.goto('/#/');
+  await page.goto('/');
   await expect(page.locator('.hero')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'ทองแดง', exact: true })).toBeVisible();
 });
 
 test('ติดต่อบริษัท: มีลิงก์ Google Maps และแผนที่', async ({ page }) => {
-  await page.goto('/#/contact');
+  await page.goto('/contact');
   await expect(page.getByRole('heading', { name: 'ติดต่อบริษัท' })).toBeVisible();
   await expect(page.locator('a[href*="google.com/maps"]').first()).toBeVisible();
   await expect(page.locator('iframe.map-frame')).toBeVisible();
