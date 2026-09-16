@@ -33,6 +33,7 @@ export const en: Dict = {
   'layout.footer': '© {year} Copper 8000 Co., Ltd. — Buyers of copper, brass and aluminium',
   'footer.contactTitle': 'Contact us',
   'footer.openMap': 'Open map / directions',
+  'footer.sitemapTitle': 'Site map',
 
   'home.title': "Today's Metal Buying Prices",
   'home.subtitle':

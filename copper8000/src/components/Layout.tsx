@@ -158,6 +158,16 @@ const Layout = () => {
       </main>
 
       <footer className="footer">
+        {/* แผนผังเว็บไซต์ (sitemap menu) — ลิงก์ภายในทุกหน้าสาธารณะ ช่วย SEO (internal linking) + ให้ผู้ใช้/บอทไล่หน้าได้ครบ */}
+        <nav className="footer-nav" aria-label={t('footer.sitemapTitle')}>
+          <span className="footer-nav-title">{t('footer.sitemapTitle')}</span>
+          <Link to="/">{t('nav.home')}</Link>
+          <Link to="/products">{t('nav.products')}</Link>
+          <Link to="/company">{t('nav.company')}</Link>
+          <Link to="/contact">{t('nav.contact')}</Link>
+          <Link to="/login">{t('auth.login')}</Link>
+          <Link to="/signup">{t('auth.signup')}</Link>
+        </nav>
         {/* ติดต่อ — ทุกอันเป็นลิงก์กดได้ (โทร / LINE / แผนที่) + แผนที่ฝัง · อยู่เหนือ copyright */}
         <div className="footer-contact" aria-label={t('footer.contactTitle')}>
           {PHONES.map((p) => (

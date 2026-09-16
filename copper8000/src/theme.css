@@ -315,6 +315,46 @@ button {
   font-size: calc(13px * var(--fs));
 }
 
+/* แผนผังเว็บไซต์ในฟุตเตอร์ (sitemap menu) — internal links ทุกหน้าสาธารณะ ช่วย SEO */
+.footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px 8px;
+  width: 92%;
+  max-width: 560px;
+  margin: 0 auto 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.footer-nav-title {
+  width: 100%;
+  font-weight: 700;
+  font-size: calc(12px * var(--fs));
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin-bottom: 2px;
+}
+
+.footer-nav a {
+  color: var(--ink);
+  font-size: calc(13px * var(--fs));
+  font-weight: 600;
+  text-decoration: none;
+  padding: 3px 8px;
+  border-radius: 6px;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.footer-nav a:hover {
+  color: var(--copper-dark);
+  background: var(--wash, #faf6ec);
+  text-decoration: underline;
+}
+
 /* ช่องทางติดต่อในฟุตเตอร์ — ทุกอันเป็นลิงก์กดได้ (โทร/LINE/แผนที่) */
 .footer-contact {
   display: flex;
