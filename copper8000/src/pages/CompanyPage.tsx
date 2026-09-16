@@ -1,81 +1,132 @@
-/** ข้อมูลบริษัท — เนื้อหาจำลอง (รอข้อมูลจริงจาก Jim มาแทนที่) รองรับ 3 ภาษา */
+/** ข้อมูลบริษัท — จัดรูปแบบให้ดูน่าเชื่อถือ · เนื้อหาอยู่ที่ src/data/companyContent.ts (3 ภาษา) */
 
 import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
-import { useT } from '../i18n';
-
-const REG_NO = '0105554088000'; // เลขทะเบียนจำลอง
-
-const STATS = [
-  { num: '15+', key: 'company.statYears' },
-  { num: '800+', key: 'company.statTons' },
-  { num: '500+', key: 'company.statClients' },
-];
-
-const SERVICES = ['company.service1', 'company.service2', 'company.service3', 'company.service4'];
+import { companyContent } from '../data/companyContent';
+import { useI18n } from '../i18n';
 
 const CompanyPage = () => {
-  const t = useT();
+  const { lang, t } = useI18n();
+  const c = companyContent(lang);
+
   return (
     <>
+      {/* หัวหน้า — โลโก้ + ชื่อบริษัท */}
       <div className="company-hero">
         <Logo />
         <h1 style={{ margin: '16px 0 4px' }}>{t('company.title')}</h1>
-        <p style={{ color: 'var(--ink-soft)', letterSpacing: '0.12em', margin: '0 0 6px' }}>
-          COPPER 8000 CO., LTD.
-        </p>
+        <p style={{ color: 'var(--ink-soft)', letterSpacing: '0.12em', margin: '0 0 6px' }}>COPPER 8000 CO., LTD.</p>
         <p style={{ color: 'var(--copper-dark)', fontWeight: 600, margin: 0 }}>{t('company.tagline')}</p>
       </div>
 
-      <div className="stats-grid">
-        {STATS.map((s) => (
-          <div className="stat" key={s.key}>
-            <div className="num">{s.num}</div>
-            <div className="lbl">{t(s.key)}</div>
-          </div>
+      {/* เกี่ยวกับบริษัท */}
+      <div className="card company-about">
+        <div className="section-heading">
+          <h2>{c.about.title}</h2>
+          <span className="en">About Us</span>
+        </div>
+        {c.about.paragraphs.map((p, i) => (
+          <p key={i} className="company-para">
+            {p}
+          </p>
+        ))}
+        <div className="company-closing">
+          {c.about.closing.map((line, i) => (
+            <p key={i}>{line}</p>
+          ))}
+        </div>
+      </div>
+
+      {/* แนวคิด — CONNECT · VALUE · GROW */}
+      <section className="company-section">
+        <div className="section-heading">
+          <h2>{c.concept.title}</h2>
+          <span className="en">{c.concept.tagline}</span>
+        </div>
+        <div className="concept-grid">
+          {c.concept.pillars.map((p, i) => (
+            <div className="concept-pillar" key={p.key}>
+              <div className="concept-no">{String(i + 1).padStart(2, '0')}</div>
+              <div className="concept-key">{p.key}</div>
+              <p>{p.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* วิสัยทัศน์ */}
+      <div className="card vision-card">
+        <div className="section-heading">
+          <h2>{c.vision.title}</h2>
+          <span className="en">Vision</span>
+        </div>
+        <blockquote className="vision-quote">{c.vision.quote}</blockquote>
+        {c.vision.paragraphs.map((p, i) => (
+          <p key={i} className="company-para">
+            {p}
+          </p>
         ))}
       </div>
 
-      <div className="company-grid">
-        <div className="card">
-          <h3 style={{ marginTop: 0 }}>{t('company.aboutTitle')}</h3>
-          <p style={{ lineHeight: 1.8, margin: 0 }}>{t('company.aboutBody')}</p>
+      {/* พันธกิจ */}
+      <section className="company-section">
+        <div className="section-heading">
+          <h2>{c.mission.title}</h2>
+          <span className="en">Mission</span>
         </div>
-        <div className="card">
-          <h3 style={{ marginTop: 0 }}>{t('company.visionTitle')}</h3>
-          <p style={{ lineHeight: 1.8 }}>{t('company.visionBody')}</p>
-          <h3>{t('company.regTitle')}</h3>
-          <table className="reg-table">
-            <tbody>
-              <tr>
-                <td className="k">{t('company.regNoLabel')}</td>
-                <td>{REG_NO}</td>
-              </tr>
-              <tr>
-                <td className="k">{t('company.regCapitalLabel')}</td>
-                <td>{t('company.regCapitalValue')}</td>
-              </tr>
-              <tr>
-                <td className="k">{t('company.foundedLabel')}</td>
-                <td>{t('company.foundedValue')}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <div className="card" style={{ marginTop: 16 }}>
-        <h3 style={{ marginTop: 0 }}>{t('company.servicesTitle')}</h3>
-        <ul className="service-list">
-          {SERVICES.map((key) => (
-            <li key={key}>
-              <span className="tick">✓</span>
-              <span>{t(key)}</span>
-            </li>
+        <div className="mission-grid">
+          {c.mission.items.map((m, i) => (
+            <div className="mission-item" key={i}>
+              <span className="mission-check" aria-hidden="true">
+                ✓
+              </span>
+              <div>
+                <strong>{m.head}</strong>
+                <p>{m.desc}</p>
+              </div>
+            </div>
           ))}
-        </ul>
-      </div>
+        </div>
+      </section>
 
+      {/* บริการของเรา */}
+      <section className="company-section">
+        <div className="section-heading">
+          <h2>{c.services.title}</h2>
+          <span className="en">Services</span>
+        </div>
+        <p className="company-para company-intro">{c.services.intro}</p>
+        <div className="service-cards">
+          {c.services.items.map((s, i) => (
+            <div className="service-card" key={i}>
+              <span className="service-tick" aria-hidden="true">
+                ✓
+              </span>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* จุดเด่น — Why Copper 8000 */}
+      <section className="company-section">
+        <div className="section-heading">
+          <h2>{c.why.title}</h2>
+          <span className="en">Why Copper 8000?</span>
+        </div>
+        <div className="why-grid">
+          {c.why.items.map((w) => (
+            <div className="why-card" key={w.no}>
+              <div className="why-no">{w.no}</div>
+              <div className="why-en">{w.en}</div>
+              <div className="why-th">{w.th}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
       <div className="cta-box">
         <h3 style={{ marginTop: 0 }}>{t('company.ctaTitle')}</h3>
         <p style={{ color: 'var(--ink-soft)' }}>{t('company.ctaBody')}</p>
