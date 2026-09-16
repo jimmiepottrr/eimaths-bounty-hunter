@@ -441,9 +441,12 @@ test('หน้าแรก: ข้อความแนะนำโชว์ต
   await expect(page.getByRole('heading', { name: 'ทองแดง', exact: true })).toBeVisible();
 });
 
-test('ติดต่อบริษัท: มีลิงก์ Google Maps และแผนที่', async ({ page }) => {
+test('ติดต่อบริษัท: แสดงข้อมูลติดต่อ (โทร/LINE) · ไม่มีแผนที่แล้ว', async ({ page }) => {
   await page.goto('/contact');
   await expect(page.getByRole('heading', { name: 'ติดต่อบริษัท' })).toBeVisible();
-  await expect(page.locator('a[href*="google.com/maps"]').first()).toBeVisible();
-  await expect(page.locator('iframe.map-frame')).toBeVisible();
+  await expect(page.locator('a[href^="tel:"]').first()).toBeVisible();
+  await expect(page.locator('a[href*="line.me"]').first()).toBeVisible();
+  // เอาแผนที่ออกแล้ว (ค้นหาเจอที่ผิด) — ต้องไม่มี iframe แผนที่/ลิงก์ Google Maps
+  await expect(page.locator('iframe.map-frame')).toHaveCount(0);
+  await expect(page.locator('a[href*="google.com/maps"]')).toHaveCount(0);
 });
