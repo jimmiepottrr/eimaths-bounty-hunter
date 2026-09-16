@@ -1,6 +1,6 @@
-/** ติดต่อบริษัท — ข้อมูลจำลอง + ลิงก์ Google Maps + แผนที่ (embed) */
+/** ติดต่อบริษัท — ข้อมูลติดต่อ (โทร/LINE/อีเมล/เวลาทำการ) */
 
-import { EMAIL, LINE_ID, LINE_URL, MAP_EMBED, MAP_LINK, PHONES } from '../contactInfo';
+import { EMAIL, LINE_ID, LINE_URL, PHONES } from '../contactInfo';
 import { useT } from '../i18n';
 
 const ContactPage = () => {
@@ -50,29 +50,6 @@ const ContactPage = () => {
               <span style={{ whiteSpace: 'pre-line' }}>{t('contact.hoursValue')}</span>
             </li>
           </ul>
-          <div style={{ marginTop: 20 }}>
-            <a href={MAP_LINK} target="_blank" rel="noreferrer">
-              <button type="button" className="btn btn-primary">
-                {t('contact.openMaps')}
-              </button>
-            </a>
-          </div>
-        </div>
-
-        <div>
-          <iframe
-            className="map-frame"
-            title={t('contact.mapTitle')}
-            src={MAP_EMBED}
-            loading="lazy"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-          <p style={{ fontSize: 'calc(12px * var(--fs))', color: 'var(--ink-soft)', textAlign: 'center' }}>
-            {t('contact.mapCaption')}{' '}
-            <a href={MAP_LINK} target="_blank" rel="noreferrer">
-              {t('contact.fullMap')}
-            </a>
-          </p>
         </div>
       </div>
     </>
