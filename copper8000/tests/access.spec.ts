@@ -10,15 +10,15 @@ test.beforeEach(async ({ page }) => {
 });
 
 const login = async (page: Page, email: string, password: string) => {
-  await page.goto('/#/login');
+  await page.goto('/login');
   await page.fill('#email', email);
   await page.fill('#password', password);
   await page.locator('form button[type="submit"]').click();
-  await expect(page).toHaveURL(/#\/products/);
+  await expect(page).toHaveURL(/\/products/);
 };
 const logout = async (page: Page) => {
   await page.getByRole('button', { name: 'ออกจากระบบ' }).click();
-  await expect(page).toHaveURL(/#\/$/);
+  await expect(page).toHaveURL(/\/$/);
 };
 
 const ADMIN = 'แอดมิน';
@@ -26,11 +26,11 @@ const AGENT = 'พนักงานขาย';
 const MYBOOKINGS = 'การจองของฉัน';
 const PROFILE = 'ข้อมูลผู้ใช้';
 
-/** ลิงก์เมนูในแถบหัว (นับเฉพาะที่มองเห็น) */
-const navLink = (page: Page, name: string) => page.getByRole('link', { name, exact: true });
+/** ลิงก์เมนูในแถบหัว (นับเฉพาะแถบหัว — footer มี sitemap ลิงก์ซ้ำชื่อเดียวกัน) */
+const navLink = (page: Page, name: string) => page.locator('.tabs').getByRole('link', { name, exact: true });
 
 test('guest (ไม่ล็อกอิน): เห็นเฉพาะเมนูสาธารณะ · ไม่เห็นเมนูสมาชิก/เอเจนต์/แอดมิน', async ({ page }) => {
-  await page.goto('/#/');
+  await page.goto('/');
   // เมนูสาธารณะเห็นได้
   await expect(navLink(page, 'หน้าแรก')).toBeVisible();
   await expect(navLink(page, 'สินค้า')).toBeVisible();
@@ -44,14 +44,14 @@ test('guest (ไม่ล็อกอิน): เห็นเฉพาะเม�
 });
 
 test('guest: เข้าหน้าปิดตรงๆ ไม่ได้ (redirect ออกทุกหน้า)', async ({ page }) => {
-  await page.goto('/#/admin');
-  await expect(page).toHaveURL(/#\/login/); // RequireAdmin → login
-  await page.goto('/#/agent');
-  await expect(page).toHaveURL(/#\/agent-login/); // RequireAgent → agent-login
-  await page.goto('/#/profile');
-  await expect(page).toHaveURL(/#\/login/);
-  await page.goto('/#/booking-report');
-  await expect(page).toHaveURL(/#\/login/);
+  await page.goto('/admin');
+  await expect(page).toHaveURL(/\/login/); // RequireAdmin → login
+  await page.goto('/agent');
+  await expect(page).toHaveURL(/\/agent-login/); // RequireAgent → agent-login
+  await page.goto('/profile');
+  await expect(page).toHaveURL(/\/login/);
+  await page.goto('/booking-report');
+  await expect(page).toHaveURL(/\/login/);
 });
 
 test('ลูกค้า (user): เห็นเมนูการจอง/ข้อมูลผู้ใช้ · ไม่เห็นแอดมิน/เอเจนต์ · เข้า /admin,/agent ไม่ได้', async ({ page }) => {
@@ -60,20 +60,20 @@ test('ลูกค้า (user): เห็นเมนูการจอง/ข�
   await expect(navLink(page, PROFILE)).toBeVisible();
   await expect(navLink(page, ADMIN)).toHaveCount(0);
   await expect(navLink(page, AGENT)).toHaveCount(0);
-  await page.goto('/#/admin');
-  await expect(page).toHaveURL(/#\/$/); // เด้งกลับหน้าแรก
-  await page.goto('/#/agent');
-  await expect(page).toHaveURL(/#\/$/);
+  await page.goto('/admin');
+  await expect(page).toHaveURL(/\/$/); // เด้งกลับหน้าแรก
+  await page.goto('/agent');
+  await expect(page).toHaveURL(/\/$/);
 });
 
 test('เอเจนต์ (agent): เห็นเมนูพนักงานขาย · ไม่เห็นแอดมิน · เข้า /admin ไม่ได้ · เข้า /agent ได้', async ({ page }) => {
   await login(page, 'agent@copper8000.co.th', 'agent1234');
   await expect(navLink(page, AGENT)).toBeVisible();
   await expect(navLink(page, ADMIN)).toHaveCount(0);
-  await page.goto('/#/admin');
-  await expect(page).toHaveURL(/#\/$/);
-  await page.goto('/#/agent');
-  await expect(page).toHaveURL(/#\/agent/);
+  await page.goto('/admin');
+  await expect(page).toHaveURL(/\/$/);
+  await page.goto('/agent');
+  await expect(page).toHaveURL(/\/agent/);
   await expect(page.getByRole('heading', { name: 'ค่าคอมมิชชั่นของฉัน' })).toBeVisible();
 });
 
@@ -81,8 +81,8 @@ test('แอดมิน (admin): เห็นเมนูแอดมิน · 
   await login(page, 'admin@copper8000.co.th', 'admin1234');
   await expect(navLink(page, ADMIN)).toBeVisible();
   await expect(navLink(page, AGENT)).toHaveCount(0); // แอดมินไม่ใช่ระดับเอเจนต์
-  await page.goto('/#/agent');
-  await expect(page).toHaveURL(/#\/$/); // RequireAgent → เด้งออก
+  await page.goto('/agent');
+  await expect(page).toHaveURL(/\/$/); // RequireAgent → เด้งออก
 });
 
 test('flow: แอดมินสร้างเอเจนต์ → ลูกค้าสมัครด้วยรหัสแนะนำ → เอเจนต์เห็นเมมเบอร์ (ไม่มี error)', async ({ page }) => {
@@ -92,7 +92,7 @@ test('flow: แอดมินสร้างเอเจนต์ → ลูก
 
   // 1) แอดมินสร้างเอเจนต์ + ตั้ง % ค่าคอม → ได้รหัสแนะนำ
   await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'พนักงาน', exact: true }).click();
   await page.fill('#agent-name', 'เอเจนต์ตรวจสอบ');
   await page.fill('#agent-email', AGENT_EMAIL);
@@ -109,7 +109,7 @@ test('flow: แอดมินสร้างเอเจนต์ → ลูก
   await logout(page);
 
   // 2) ลูกค้าสมัครด้วยรหัสแนะนำของเอเจนต์
-  await page.goto('/#/signup');
+  await page.goto('/signup');
   await page.fill('#name', 'ลูกค้าของเอเจนต์');
   await page.fill('#phone', '089-999-1111');
   await page.fill('#email', MEMBER_EMAIL);
@@ -121,11 +121,11 @@ test('flow: แอดมินสร้างเอเจนต์ → ลูก
   await logout(page);
 
   // 3) เอเจนต์ล็อกอิน → หน้า /agent เห็นเมมเบอร์ที่เพิ่งผูก · อัตราค่าคอม 4% · ไม่มี error
-  await page.goto('/#/agent-login');
+  await page.goto('/agent-login');
   await page.fill('#email', AGENT_EMAIL);
   await page.fill('#password', AGENT_PW);
   await page.locator('form button[type="submit"]').click();
-  await expect(page).toHaveURL(/#\/agent/);
+  await expect(page).toHaveURL(/\/agent/);
   await expect(page.locator('.error-box')).toHaveCount(0);
   await expect(page.locator('.agent-stat-card', { hasText: 'อัตราค่าคอม' })).toContainText('4');
   await expect(page.locator('.agent-stat-card', { hasText: 'จำนวนลูกค้า' })).toContainText('1');

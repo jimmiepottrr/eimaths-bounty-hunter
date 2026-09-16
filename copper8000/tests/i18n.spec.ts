@@ -8,11 +8,11 @@ const stubGeo = (page: Page, countryCode: string) =>
   page.route('https://ipwho.is/**', (route) => route.fulfill({ json: { country_code: countryCode } }));
 
 const loginAdmin = async (page: Page) => {
-  await page.goto('/#/login');
+  await page.goto('/login');
   await page.fill('#email', 'admin@copper8000.co.th');
   await page.fill('#password', 'admin1234');
   await page.locator('form button[type="submit"]').click();
-  await expect(page).toHaveURL(/#\/products/);
+  await expect(page).toHaveURL(/\/products/);
 };
 
 test('สลับภาษาเป็น English ที่ขวาบน แล้ว reload ยังจำภาษาอยู่', async ({ page }) => {
@@ -22,7 +22,7 @@ test('สลับภาษาเป็น English ที่ขวาบน แ�
 
   await page.locator('.lang-select-full').selectOption('en');
   await expect(page.getByRole('heading', { name: 'Copper', exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Products' })).toBeVisible();
+  await expect(page.locator('.tabs').getByRole('link', { name: 'Products' })).toBeVisible();
 
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Copper', exact: true })).toBeVisible();
@@ -42,23 +42,23 @@ test('เข้าครั้งแรกจาก IP อเมริกา →
 
 test('หน้าข้อมูลบริษัทแสดงครบ 3 ภาษา', async ({ page }) => {
   await stubGeo(page, 'TH');
-  await page.goto('/#/company');
-  await expect(page.getByRole('heading', { name: 'เกี่ยวกับเรา' })).toBeVisible();
+  await page.goto('/company');
+  await expect(page.getByRole('heading', { name: 'เกี่ยวกับบริษัท' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'บริการของเรา' })).toBeVisible();
 
   await page.locator('.lang-select-full').selectOption('en');
   await expect(page.getByRole('heading', { name: 'About Us', exact: true })).toBeVisible();
-  await expect(page.getByText('Registration no.')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Our Services', exact: true })).toBeVisible();
 
   await page.locator('.lang-select-full').selectOption('zh');
   await expect(page.getByRole('heading', { name: '关于我们' })).toBeVisible();
-  await expect(page.getByText('注册资本')).toBeVisible();
+  await expect(page.getByRole('heading', { name: '我们的服务' })).toBeVisible();
 });
 
 test('แอดมิน: เพิ่มภาษาใหม่ / ภาษาหลักไม่มีปุ่มลบ / ปิดภาษาแล้วหายจาก picker', async ({ page }) => {
   await stubGeo(page, 'TH');
   await loginAdmin(page);
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'ภาษา', exact: true }).click();
 
   // ภาษา built-in (th) ต้องไม่มีปุ่มลบ
@@ -74,12 +74,12 @@ test('แอดมิน: เพิ่มภาษาใหม่ / ภาษา
 
   // ภาษาใหม่โผล่ใน picker และใช้งานได้จริง (หัวข้อกลุ่มโลหะเปลี่ยนตาม dict)
   await page.locator('.lang-select-full').selectOption('ja');
-  await page.goto('/#/');
+  await page.goto('/');
   await expect(page.getByRole('heading', { name: '銅（テスト）', exact: true })).toBeVisible();
 
   // กลับเป็นไทย → ปิดภาษาจีน → หายจาก picker
   await page.locator('.lang-select-full').selectOption('th');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'ภาษา', exact: true }).click();
   const zhRow = page.locator('tr', { hasText: '中文(简体)' });
   await zhRow.getByRole('button', { name: 'ปิด', exact: true }).click();

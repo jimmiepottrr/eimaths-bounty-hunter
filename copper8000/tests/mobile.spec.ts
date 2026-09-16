@@ -27,7 +27,7 @@ test('มือถือ: เฮดเดอร์เตี้ย + ภาษา
   // แฮมเบอร์เกอร์เปิดเมนู → นำทางไปหน้าสินค้า → เมนูปิดเอง
   await page.locator('.hamburger').click();
   await page.locator('.mobile-menu').getByRole('link', { name: 'สินค้า' }).click();
-  await expect(page).toHaveURL(/#\/products/);
+  await expect(page).toHaveURL(/\/products/);
   await expect(page.locator('.mobile-menu')).toHaveCount(0);
 
   // สลับภาษาผ่านตัวเลือกแบบรหัส → เป็นอังกฤษ
@@ -37,14 +37,14 @@ test('มือถือ: เฮดเดอร์เตี้ย + ภาษา
 
 test('มือถือ: login แล้วมีเมนูข้อมูลผู้ใช้ในแฮมเบอร์เกอร์', async ({ page }) => {
   await stubGeo(page);
-  await page.goto('/#/login');
+  await page.goto('/login');
   await page.fill('#email', 'demo@copper8000.co.th');
   await page.fill('#password', 'demo1234');
   await page.locator('form button[type="submit"]').click();
-  await expect(page).toHaveURL(/#\/products/);
+  await expect(page).toHaveURL(/\/products/);
 
   await page.locator('.hamburger').click();
   await page.locator('.mobile-menu').getByRole('link', { name: 'ข้อมูลผู้ใช้' }).click();
-  await expect(page).toHaveURL(/#\/profile/);
+  await expect(page).toHaveURL(/\/profile/);
   await expect(page.getByText('demo@copper8000.co.th')).toBeVisible();
 });

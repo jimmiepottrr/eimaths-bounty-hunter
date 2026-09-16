@@ -56,6 +56,13 @@ jobs:
         run: |
           mkdir -p dist/copper8000
           cp -r copper8000/dist/. dist/copper8000/
+          # BrowserRouter (URL จริง): GitHub Pages เสิร์ฟไฟล์ตาม path ตรงๆ ถ้าไม่มีไฟล์จะตกไป
+          # ROOT 404.html (=เกม) ทำให้ deep-link/refresh หน้า copper8000 พัง — จึงวาง index.html
+          # ของ copper8000 ไว้ทุก route ให้เสิร์ฟ SPA (200) แล้ว router จัดการหน้าเองฝั่ง client.
+          for route in products company contact login agent-login signup profile booking-report agent admin; do
+            mkdir -p "dist/copper8000/$route"
+            cp copper8000/dist/index.html "dist/copper8000/$route/index.html"
+          done
 
       - name: Publish to gh-pages
         uses: peaceiris/actions-gh-pages@v4

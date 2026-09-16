@@ -10,28 +10,35 @@ test.beforeEach(async ({ page }) => {
 });
 
 const login = async (page: Page, email: string, password: string) => {
-  await page.goto('/#/login');
+  await page.goto('/login');
   await page.fill('#email', email);
   await page.fill('#password', password);
   await page.locator('form button[type="submit"]').click();
-  await expect(page).toHaveURL(/#\/products/);
+  await expect(page).toHaveURL(/\/products/);
 };
 
 test('audit: บันทึก login ล้มเหลว + ปรับราคา และแสดง IP/User Agent + กรองได้', async ({ page }) => {
   // 1) ลองล็อกอินผิด → ต้องถูกบันทึกเป็น "เข้าสู่ระบบล้มเหลว"
-  await page.goto('/#/login');
+  await page.goto('/login');
   await page.fill('#email', 'hacker@evil.com');
   await page.fill('#password', 'wrongpass');
   await page.locator('form button[type="submit"]').click();
-  await expect(page).toHaveURL(/#\/login/); // ยังอยู่หน้า login (ไม่ผ่าน)
+  // รอกล่อง error โผล่ = การล็อกอินล้มเหลวประมวลผล + บันทึก audit เสร็จแล้ว (กัน race ก่อนขั้นถัดไป)
+  await expect(page.locator('.error-box')).toBeVisible();
+  await expect(page).toHaveURL(/\/login/); // ยังอยู่หน้า login (ไม่ผ่าน)
 
   // 2) แอดมินเข้าระบบ (บันทึก "เข้าสู่ระบบ") แล้วปรับราคาสินค้าแรก (บันทึก "ปรับราคา")
   await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await page.getByRole('button', { name: 'แก้ไขราคา', exact: true }).click();
   const priceRow = page.locator('.price-edit-row').nth(1); // แถว 0 = หัวตาราง
   await priceRow.locator('input[aria-label="price"]').fill('999');
   await priceRow.getByRole('button', { name: 'บันทึก', exact: true }).click();
+  // เปลี่ยนราคาเกิน ±20% → มีกล่องยืนยัน (PR #45) — กดยืนยันบันทึกราคา
+  const priceModal = page.locator('.modal', { hasText: 'ยืนยันการเปลี่ยนราคา' });
+  if (await priceModal.isVisible().catch(() => false)) {
+    await priceModal.getByRole('button', { name: 'ยืนยันบันทึกราคา', exact: true }).click();
+  }
   await expect(page.locator('.toast')).toBeVisible();
 
   // 3) เปิดแท็บบันทึกการใช้งาน
@@ -65,6 +72,6 @@ test('audit: บันทึก login ล้มเหลว + ปรับรา
 test('audit: member ธรรมดาเข้าไม่ถึง — ไม่มีแท็บบันทึกการใช้งานให้ผู้ใช้ทั่วไป', async ({ page }) => {
   await login(page, 'demo@copper8000.co.th', 'demo1234');
   // ผู้ใช้ทั่วไปเข้า /admin ไม่ได้ (เด้งออก) — ไม่มีปุ่มแท็บ audit
-  await page.goto('/#/admin');
+  await page.goto('/admin');
   await expect(page.getByRole('button', { name: 'บันทึกการใช้งาน', exact: true })).toHaveCount(0);
 });
