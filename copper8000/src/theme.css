@@ -1054,7 +1054,7 @@ button {
 
 .price-edit-row {
   display: grid;
-  grid-template-columns: 1fr repeat(3, 90px) auto;
+  grid-template-columns: 1fr 110px auto;
   gap: 10px;
   align-items: center;
   padding: 10px 0;
