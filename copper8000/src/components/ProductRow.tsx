@@ -43,11 +43,6 @@ const ProductRow = ({
           {arrow} {diff === 0 ? t('row.flat') : t('row.delta', { n: fmtNumber(Math.abs(diff)) })}
         </div>
       </div>
-      <div className="t-hl">
-        High: {fmtNumber(product.high_of_day)}
-        <br />
-        Low: {fmtNumber(product.low_of_day)}
-      </div>
       <div className="t-hint">{hint}</div>
     </button>
   );
