@@ -14,8 +14,8 @@ export const MAP_EMBED = `https://maps.google.com/maps?q=${encodeURIComponent(MA
 
 /** เบอร์โทร (label = ที่แสดง, tel = สำหรับลิงก์ tel:) */
 export const PHONES = [
-  { label: '02-000-8000', tel: '020008000' },
-  { label: '081-800-8000', tel: '0818008000' },
+  { label: '081-722-8000', tel: '0817228000' },
+  { label: '089-898-8000', tel: '0898988000' },
 ];
 
 /** LINE Official Account */
