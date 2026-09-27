@@ -10,7 +10,7 @@ export const SEED_USERS: SeedUser[] = [
     email: 'admin@copper8000.co.th',
     password: 'admin1234',
     name: 'ผู้ดูแลระบบ',
-    phone: '02-000-8000',
+    phone: '081-722-8000',
     role: 'admin',
     approved: true,
   },
