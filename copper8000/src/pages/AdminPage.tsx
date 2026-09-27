@@ -635,8 +635,6 @@ const PRICE_WARN_THRESHOLD = 0.2;
 const PriceEditRow = ({ product, onToast }: { product: Product; onToast: (m: string) => void }) => {
   const { lang, t } = useI18n();
   const [price, setPrice] = useState(String(product.price_per_kg));
-  const [high, setHigh] = useState(String(product.high_of_day));
-  const [low, setLow] = useState(String(product.low_of_day));
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
@@ -644,10 +642,11 @@ const PriceEditRow = ({ product, onToast }: { product: Product; onToast: (m: str
     setConfirmOpen(false);
     setBusy(true);
     try {
+      // ไม่ใช้ High/Low แล้ว — ส่งค่าเท่าราคาใหม่เพื่อความเข้ากันได้กับ backend
       await dataService.updatePrice(product.id, {
         price_per_kg: Number(price),
-        high_of_day: Number(high),
-        low_of_day: Number(low),
+        high_of_day: Number(price),
+        low_of_day: Number(price),
       });
       onToast(t('admin.toastPriceSaved', { name: productName(product, lang) }));
     } catch (e) {
@@ -677,8 +676,6 @@ const PriceEditRow = ({ product, onToast }: { product: Product; onToast: (m: str
         )}
       </div>
       <input aria-label="price" type="number" step="any" value={price} onChange={(e) => setPrice(e.target.value)} />
-      <input aria-label="high" type="number" step="any" value={high} onChange={(e) => setHigh(e.target.value)} />
-      <input aria-label="low" type="number" step="any" value={low} onChange={(e) => setLow(e.target.value)} />
       <button type="button" className="btn btn-primary btn-small" onClick={onSaveClick} disabled={busy}>
         {t('admin.save')}
       </button>
@@ -745,8 +742,6 @@ const PricesTab = ({ onToast }: { onToast: (m: string) => void }) => {
       >
         <div>{t('report.colProduct')}</div>
         <div>{t('admin.colPriceBahtKg')}</div>
-        <div>High</div>
-        <div>Low</div>
         <div />
       </div>
       {products.map((p) => (
