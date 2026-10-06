@@ -79,10 +79,14 @@ try {
     $have = (float) ($user['credit_balance'] ?? 0);
     json_err('เครดิตไม่พอ ต้องใช้ ' . number_format($total, 0) . ' บาท (คุณมี ' . number_format($have, 0) . ' บาท) — กรุณาติดต่อบริษัทเพื่อเติมเครดิต', 402);
   }
+  // ล็อก % ค่าคอม ณ ตอนจอง — ปรับ % ทีหลังไม่กระทบการจองนี้ (นับค่าคอมเมื่อแอดมินยืนยันแล้ว)
+  $comm = commission_lock_for($uid, $total);
   pdo()->prepare(
-    "INSERT INTO bookings (user_id, product_id, quantity, unit, price_at_booking, total_estimate, status, deposit_held, delivery_date)
-     VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)"
-  )->execute([$uid, $productId, $quantity, $unit, $price, $total, $hold, $deliveryDate]);
+    "INSERT INTO bookings (user_id, product_id, quantity, unit, price_at_booking, total_estimate, status, deposit_held, delivery_date,
+                           commission_agent_id, commission_rate, commission_amount, commission_locked)
+     VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, 1)"
+  )->execute([$uid, $productId, $quantity, $unit, $price, $total, $hold, $deliveryDate,
+              $comm['agent_id'], $comm['rate'], $comm['amount']]);
   $bookingId = (int) pdo()->lastInsertId();
   pdo()->commit();
 } catch (Throwable $e) {

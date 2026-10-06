@@ -16,18 +16,15 @@ export type User = {
   credit_held?: number; // (ลูกค้า) เครดิตที่ถูกกันไว้ (มัดจำการจองที่ค้าง)
   warnings?: number; // (ลูกค้า) จำนวนใบเตือน
   booking_suspended?: boolean; // (ลูกค้า) ถูกระงับสิทธิ์จอง
-  pending_commission_rate?: number | null; // (agent) % ใหม่ที่ตั้งไว้ — มีผลตั้งแต่ pending_rate_from
-  pending_rate_from?: string | null; // (agent) วันที่ % ใหม่เริ่มมีผล (YYYY-MM-DD = วันที่ 1 ของเดือนถัดไป)
-  deleted_at?: string | null; // (agent) ปิดใช้งานแล้ว — ประวัติค่าคอมยังอยู่
+  disabled_at?: string | null; // (agent) ปิดใช้งานอยู่ — ไม่มีการลบ ข้อมูล/ประวัติยังอยู่ครบ เปิดกลับได้
 };
 
-/** agent + สรุปค่าคอม (หน้าแอดมิน) — ยอดรวมจากรายการที่ล็อกไว้ตอนยืนยัน ไม่คำนวณย้อนหลัง */
+/** agent + สรุปค่าคอม (หน้าแอดมิน) — % ล็อกตั้งแต่ตอนจอง · นับเฉพาะการจองที่ยืนยันแล้ว (ยกเลิก = ไม่นับ) */
 export type AgentSummary = User & {
   customer_count: number;
-  confirmed_total: number; // ยอดขายสะสมที่มีค่าคอม (ล็อกแล้ว)
+  confirmed_total: number; // ยอดขายสะสม (การจองที่ยืนยันแล้ว)
   commission: number; // ค่าคอมสะสม = ผลรวมค่าคอมที่ล็อกไว้ของแต่ละการจอง
   month_commission: number; // ค่าคอมเดือนปัจจุบัน
-  last_commission_at: string | null; // ค่าคอมรายการล่าสุด (ใช้กับกฎห้ามลบภายใน 1 เดือน)
 };
 
 /** ยอดค่าคอม 1 เดือน (เดือนที่ผ่านไปแล้ว = ปิดยอด ล็อก ไม่เปลี่ยน) */
@@ -44,8 +41,6 @@ export type CommissionMonth = {
 export type AgentCommission = {
   referral_code: string | null;
   commission_rate: number;
-  pending_commission_rate: number | null;
-  pending_rate_from: string | null;
   customer_count: number;
   confirmed_total: number;
   commission: number;
@@ -58,7 +53,7 @@ export type CommissionReportRow = {
   name: string;
   email: string;
   referral_code: string | null;
-  deleted: boolean;
+  disabled: boolean;
   bookings: number;
   sales: number;
   commission: number;
@@ -121,9 +116,9 @@ export type Booking = {
   qc_weight_kg?: number | null; // น้ำหนักสุทธิหลัง QC (แอดมินกรอก)
   created_at: string;
   confirmed_at?: string | null; // เวลาที่แอดมินยืนยัน (เวลาไทย) — ใช้จัดค่าคอมเข้าเดือน
-  commission_agent_id?: number | null; // ค่าคอมของการจองนี้เป็นของ agent คนไหน (ล็อกตอนยืนยัน)
-  commission_rate?: number | null; // % ที่ใช้ (ล็อกตอนยืนยัน)
-  commission_amount?: number | null; // ค่าคอม (บาท) ล็อกตอนยืนยัน — ไม่คำนวณใหม่
+  commission_agent_id?: number | null; // ค่าคอมของการจองนี้เป็นของ agent คนไหน (ล็อกตอนจอง)
+  commission_rate?: number | null; // % ที่ใช้ (ล็อกตอนจอง — ปรับ % ทีหลังไม่กระทบ)
+  commission_amount?: number | null; // ค่าคอม (บาท) ล็อกตอนจอง · นับเมื่อยืนยันแล้วเท่านั้น
 };
 
 export type AuthResult = { user: User; token: string };
@@ -236,7 +231,7 @@ export interface DataService {
   // ---- admin ----
   listPendingUsers(): Promise<User[]>;
   setUserApproval(user_id: number, approved: boolean): Promise<void>;
-  /** พนักงาน (agent) — สร้าง/ดู/ลบ ได้เฉพาะแอดมิน (agent สมัครเองไม่ได้) */
+  /** พนักงาน (agent) — สร้าง/ดู/ปิด-เปิดใช้งาน ได้เฉพาะแอดมิน (agent สมัครเองไม่ได้ · ไม่มีการลบ) */
   /** รายชื่อ agent + สรุปค่าคอม (admin) */
   listAgents(): Promise<AgentSummary[]>;
   createAgent(input: {
@@ -246,9 +241,10 @@ export interface DataService {
     phone: string;
     commission_rate?: number;
   }): Promise<{ referral_code?: string }>;
-  deleteAgent(user_id: number): Promise<void>;
-  /** แอดมินตั้ง % ค่าคอมให้ agent — มีผลวันที่ 1 ของเดือนถัดไป (เดือนนี้ใช้ % เดิมทั้งเดือน) */
-  setCommissionRate(user_id: number, commission_rate: number): Promise<{ effective_from: string | null }>;
+  /** ไม่มีการลบ — ปิด/เปิดใช้งานพนักงานเท่านั้น (ข้อมูลและประวัติค่าคอมอยู่ครบ) */
+  setAgentActive(user_id: number, active: boolean): Promise<void>;
+  /** แอดมินตั้ง % ค่าคอม — มีผลทันทีกับการจองใหม่ · การจองเดิมใช้ % ที่ล็อกไว้ตอนจอง */
+  setCommissionRate(user_id: number, commission_rate: number): Promise<void>;
   /** รายงานค่าคอมรายเดือน (เดือนที่ผ่านไปแล้วล็อก) — month = YYYY-MM, ไม่ส่ง = เดือนปัจจุบัน */
   commissionReport(month?: string): Promise<CommissionReport>;
   // ---- agent (พนักงานดูของตัวเอง) ----

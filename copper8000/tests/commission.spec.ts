@@ -1,9 +1,10 @@
 /**
- * ค่าคอมรายเดือนแบบล็อกตัวเลข (โหมดสาธิต — กติกาเดียวกับ backend จริง)
- * - ค่าคอมล็อกตอนแอดมินยืนยันการจอง ไม่คำนวณย้อนหลัง
- * - ปรับ % มีผลวันที่ 1 ของเดือนถัดไป · เดือนที่ผ่านไปแล้ว = ปิดยอด ตัวเลขไม่เปลี่ยน
- * - ห้ามลบพนักงานภายใน 1 เดือนหลังมีค่าคอม · ลบ = ปิดใช้งาน ประวัติไม่หาย
- * ใช้ page.clock เลื่อนวันที่ เพื่อทดสอบการข้ามเดือนได้แน่นอน (ไม่ขึ้นกับวันที่รันเทส)
+ * ค่าคอมแบบล็อกตัวเลข (โหมดสาธิต — กติกาเดียวกับ backend จริง)
+ * - % ค่าคอมล็อกตั้งแต่ตอนลูกค้าจอง: ปรับ % ทีหลังไม่กระทบการจองเดิม (ทั้งขายแล้วและยังรอขาย)
+ * - ปรับ % มีผลทันทีกับการจองใหม่ · ค่าคอมนับเมื่อแอดมินยืนยัน
+ * - ไม่มีการลบ: พนักงานปิด/เปิดใช้งานได้ · การจองยกเลิกได้ → ยังแสดง (สีเทา) แต่ไม่นำมาคำนวณ
+ * - รายงานรายเดือน: เดือนที่ผ่านไปแล้ว = ปิดยอด
+ * ใช้ page.clock กำหนดวันที่ เพื่อทดสอบการข้ามเดือนได้แน่นอน (ไม่ขึ้นกับวันที่รันเทส)
  */
 import { expect, test, type Page } from '@playwright/test';
 
@@ -23,90 +24,116 @@ const logout = async (page: Page) => {
   await expect(page).toHaveURL(/\/$/);
 };
 
-const openAgentsTab = async (page: Page) => {
-  await page.goto('/admin');
-  await page.getByRole('button', { name: 'พนักงาน', exact: true }).click();
-};
-
-test('ล็อกค่าคอมตอนยืนยัน · ปรับ % มีผลเดือนหน้า · ข้ามเดือนแล้วเดือนเก่าปิดยอด ตัวเลขไม่เปลี่ยน', async ({ page }) => {
-  // 15 ต.ค. 2569 (seed: การจองทองแดงของลูกค้าเอเจนต์ ยืนยันแล้ว 2 วันก่อน = ต.ค.)
-  await page.clock.setSystemTime(new Date('2026-10-15T10:00:00+07:00'));
+const loginAdmin = async (page: Page) => {
   await login(page, 'admin@copper8000.co.th', 'admin1234');
   await expect(page).toHaveURL(/\/products/);
+};
 
-  // 1) แอดมินยืนยันการจองทองเหลือง 91,500 ของลูกค้าเอเจนต์ → ล็อก 3% = 2,745
+const adminTab = async (page: Page, tab: string) => {
   await page.goto('/admin');
-  await page.getByRole('button', { name: 'ยืนยันการจอง', exact: true }).click();
-  const brassRow = page.locator('tr', { hasText: 'ทองเหลืองหนา' });
-  await brassRow.getByRole('button', { name: 'ยืนยัน', exact: true }).click();
-  await expect(page.locator('.toast')).toBeVisible();
-  // การจองที่มีค่าคอมล็อกแล้ว → ไม่มีปุ่มยกเลิก มีป้ายล็อกแทน
-  await expect(brassRow.locator('.lock-chip')).toContainText('ค่าคอมล็อกแล้ว');
-  await expect(brassRow.getByRole('button', { name: 'ยกเลิก', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: tab, exact: true }).click();
+};
 
-  // 2) ค่าคอมสะสม 16,920 + 2,745 = 19,665 · รายงานเดือน ต.ค. ยังไม่ปิดยอด
-  await page.getByRole('button', { name: 'พนักงาน', exact: true }).click();
+test('% ล็อกตอนจอง: จองก่อนปรับ % แล้วขายทีหลัง → ใช้ % เดิม · จองหลังปรับ → % ใหม่ · ยกเลิก = สีเทา ไม่นับ', async ({ page }) => {
+  // 15 ต.ค. 2569 — seed: ลูกค้าเอเจนต์ (เดโม่) มีทองแดงขายแล้ว 564,000 และทองเหลือง 91,500 รอขาย (ทั้งคู่ล็อก 3%)
+  await page.clock.setSystemTime(new Date('2026-10-15T10:00:00+07:00'));
+  await loginAdmin(page);
+
+  // 1) ปรับ 3% → 5% (มีผลทันทีกับการจองใหม่)
+  await adminTab(page, 'พนักงาน');
   const agentRow = page.locator('.agents-table tr', { hasText: 'AGENT1' });
-  await expect(agentRow).toContainText('19,665');
-  const report = page.locator('.commission-report');
-  await expect(report.locator('.month-status')).toContainText('เดือนปัจจุบัน');
-  await expect(report.locator('tr.total')).toContainText('19,665');
-
-  // 3) ปรับเป็น 5% → มีผล 1 พ.ย. · ตัวเลขเดิมไม่เปลี่ยน · ลบยังไม่ได้ (มีค่าคอมใน 1 เดือน)
   await agentRow.locator('input[type="number"]').fill('5');
   await agentRow.getByRole('button', { name: 'บันทึก %' }).click();
-  await expect(page.locator('.toast')).toContainText('มีผลตั้งแต่');
-  await expect(agentRow).toContainText('เดือนหน้า 5%');
-  await expect(agentRow).toContainText('19,665');
-  await expect(agentRow.getByRole('button', { name: 'ลบ (ปิดใช้งาน)' })).toBeDisabled();
-  await expect(agentRow).toContainText('ลบได้หลัง');
+  await expect(page.locator('.toast')).toContainText('มีผลกับการจองใหม่ทันที');
+  await expect(agentRow).toContainText('16,920'); // รายการที่ขายแล้วไม่เปลี่ยน
 
-  // 4) ข้ามไป 3 พ.ย. → % ใหม่ (5%) มีผล · ต.ค. ปิดยอด ยัง 19,665 @ 3%
-  await page.clock.setSystemTime(new Date('2026-11-03T10:00:00+07:00'));
-  await openAgentsTab(page);
-  await expect(agentRow.locator('.rate-current')).toContainText('5');
-  await expect(agentRow).not.toContainText('เดือนหน้า');
+  // 2) ขายทองเหลืองที่จองไว้ก่อนปรับ → ใช้ 3% ตอนจอง = 2,745 (ไม่ใช่ 5% = 4,575)
+  await adminTab(page, 'ยืนยันการจอง');
+  const brassRow = page.locator('tr', { hasText: 'ทองเหลืองหนา' });
+  await brassRow.getByRole('button', { name: 'ยืนยัน', exact: true }).click();
+  await expect(brassRow).toContainText('ได้รับการยืนยันแล้ว');
+  await expect(brassRow.locator('.comm-tag')).toContainText('ค่าคอม 3%');
+  await adminTab(page, 'พนักงาน');
+  await expect(agentRow).toContainText('19,665'); // 16,920 + 2,745
+  await logout(page);
+
+  // 3) ลูกค้าจองใหม่หลังปรับ % → ล็อก 5% (100 กก. × 285 = 28,500 → ค่าคอม 1,425)
+  await login(page, 'demo@copper8000.co.th', 'demo1234');
+  await expect(page).toHaveURL(/\/products/);
+  await page.getByRole('button', { name: /ทองแดงเงา/ }).click();
+  const modal = page.locator('.modal');
+  await modal.locator('#qty').fill('100');
+  await modal.getByRole('button', { name: 'ถัดไป' }).click();
+  await modal.getByRole('button', { name: 'ยืนยันการจอง' }).click();
+  await expect(page).toHaveURL(/\/booking-report/);
+  await logout(page);
+
+  // 4) แอดมินยืนยัน → ค่าคอม 5% · รายงานเดือนนี้ใช้ 3% และ 5%
+  await loginAdmin(page);
+  await adminTab(page, 'ยืนยันการจอง');
+  const newRow = page.locator('tr', { hasText: '100 กิโลกรัม' });
+  await newRow.getByRole('button', { name: 'ยืนยัน', exact: true }).click();
+  await expect(newRow).toContainText('ได้รับการยืนยันแล้ว');
+  await expect(newRow.locator('.comm-tag')).toContainText('ค่าคอม 5%');
+  await adminTab(page, 'พนักงาน');
+  await expect(agentRow).toContainText('21,090'); // 19,665 + 1,425
+  const report = page.locator('.commission-report');
+  await expect(report.locator('tbody tr', { hasText: 'AGENT1' })).toContainText('3%, 5%');
+
+  // 5) ยกเลิกรายการ 5% → ยังแสดงอยู่ (สีเทา) แต่ไม่นำมาคำนวณ
+  await adminTab(page, 'ยืนยันการจอง');
+  page.once('dialog', (d) => d.accept());
+  await newRow.getByRole('button', { name: 'ยกเลิก', exact: true }).click();
+  await expect(newRow).toHaveClass(/row-cancelled/);
+  await expect(newRow).toContainText('ยกเลิก');
+  await adminTab(page, 'พนักงาน');
   await expect(agentRow).toContainText('19,665');
-  await expect(report).toContainText('ไม่มีค่าคอมในเดือนนี้'); // พ.ย. ยังไม่มีรายการ
+  await expect(report.locator('tr.total')).toContainText('19,665');
+
+  // 6) ข้ามไป 3 พ.ย. → ต.ค. ปิดยอด ยัง 19,665 @ 3%
+  await page.clock.setSystemTime(new Date('2026-11-03T10:00:00+07:00'));
+  await adminTab(page, 'พนักงาน');
+  await expect(report).toContainText('ไม่มีค่าคอมในเดือนนี้');
   await report.locator('#comm-month').selectOption('2026-10');
   await expect(report.locator('.month-status')).toContainText('ปิดยอดแล้ว');
   await expect(report.locator('tr.total')).toContainText('19,665');
-  await expect(report.locator('tbody tr', { hasText: 'AGENT1' })).toContainText('3%');
   await logout(page);
 
-  // 5) เอเจนต์เห็นประวัติรายเดือน: ต.ค. 19,665 ปิดยอดแล้ว · อัตราปัจจุบัน 5%
+  // 7) ลูกค้าเห็นรายการที่ยกเลิกเป็นสีเทาในประวัติการจองของตัวเอง
+  await login(page, 'demo@copper8000.co.th', 'demo1234');
+  await expect(page).toHaveURL(/\/products/);
+  await page.goto('/booking-report');
+  await expect(page.locator('tr', { hasText: '28,500' })).toHaveClass(/row-cancelled/);
+  await logout(page);
+
+  // 8) เอเจนต์: อัตราปัจจุบัน 5% · ประวัติ ต.ค. 19,665 ปิดยอดแล้ว
   await login(page, 'agent@copper8000.co.th', 'agent1234', '/agent-login');
   await expect(page).toHaveURL(/\/agent/);
   await expect(page.locator('.agent-stat-card', { hasText: 'อัตราค่าคอม' })).toContainText('5');
   const oct = page.locator('.commission-history tr', { hasText: '19,665' });
   await expect(oct).toContainText('ปิดยอดแล้ว');
-  await expect(oct).toContainText('3%');
 });
 
-test('ลบพนักงาน: ภายใน 1 เดือนลบไม่ได้ · พ้นแล้ว = ปิดใช้งาน (ล็อกอิน/รหัสแนะนำใช้ไม่ได้ ประวัติค่าคอมอยู่ครบ)', async ({ page }) => {
-  await page.clock.setSystemTime(new Date('2026-10-15T10:00:00+07:00'));
-  await login(page, 'admin@copper8000.co.th', 'admin1234');
-  await expect(page).toHaveURL(/\/products/);
-  await openAgentsTab(page);
-  const agentRow = page.locator('.agents-table tr', { hasText: 'AGENT1' });
-  await expect(agentRow.getByRole('button', { name: 'ลบ (ปิดใช้งาน)' })).toBeDisabled();
+test('ไม่มีการลบ: ปิดใช้งานพนักงาน → ล็อกอิน/รหัสแนะนำใช้ไม่ได้ · ข้อมูลอยู่ครบ (สีเทา) · เปิดกลับได้', async ({ page }) => {
+  await loginAdmin(page);
+  await adminTab(page, 'พนักงาน');
+  const table = page.locator('.agents-table');
+  const agentRow = table.locator('tr', { hasText: 'AGENT1' });
+  await expect(table.getByRole('button', { name: /ลบ/ })).toHaveCount(0); // ไม่มีปุ่มลบ
 
-  // พ้น 30 วันหลังค่าคอมล่าสุด (13 ต.ค.) → ลบได้
-  await page.clock.setSystemTime(new Date('2026-11-20T10:00:00+07:00'));
-  await openAgentsTab(page);
   page.once('dialog', (d) => d.accept());
-  await agentRow.getByRole('button', { name: 'ลบ (ปิดใช้งาน)' }).click();
+  await agentRow.getByRole('button', { name: 'ปิดใช้งาน', exact: true }).click();
   await expect(page.locator('.toast')).toContainText('ปิดใช้งานพนักงานแล้ว');
-  await expect(agentRow).toContainText('ปิดใช้งานแล้ว');
-  await expect(agentRow).toContainText('16,920'); // ประวัติค่าคอมยังอยู่
-  await expect(agentRow.getByRole('button', { name: 'บันทึก %' })).toHaveCount(0);
+  await expect(agentRow).toHaveClass(/agent-row-disabled/);
+  await expect(agentRow).toContainText('ปิดใช้งานอยู่');
+  await expect(agentRow).toContainText('16,920'); // ประวัติค่าคอมอยู่ครบ
   await logout(page);
 
-  // พนักงานที่ปิดแล้วล็อกอินไม่ได้
+  // ล็อกอินไม่ได้
   await login(page, 'agent@copper8000.co.th', 'agent1234', '/agent-login');
   await expect(page.locator('.error-box')).toContainText('ปิดใช้งาน');
 
-  // รหัสแนะนำของพนักงานที่ปิดแล้วใช้สมัครไม่ได้
+  // รหัสแนะนำใช้สมัครไม่ได้
   await page.goto('/signup');
   await page.fill('#name', 'ลูกค้าใหม่');
   await page.fill('#phone', '089-000-1111');
@@ -116,4 +143,14 @@ test('ลบพนักงาน: ภายใน 1 เดือนลบไม
   await page.fill('#confirm', 'member1234');
   await page.locator('form button[type="submit"]').click();
   await expect(page.locator('.error-box')).toContainText('ไม่ถูกต้อง');
+
+  // เปิดใช้งานกลับ → ล็อกอินได้ตามเดิม
+  await loginAdmin(page);
+  await adminTab(page, 'พนักงาน');
+  await agentRow.getByRole('button', { name: 'เปิดใช้งานอีกครั้ง' }).click();
+  await expect(page.locator('.toast')).toContainText('เปิดใช้งานพนักงานอีกครั้งแล้ว');
+  await expect(agentRow).not.toHaveClass(/agent-row-disabled/);
+  await logout(page);
+  await login(page, 'agent@copper8000.co.th', 'agent1234', '/agent-login');
+  await expect(page).toHaveURL(/\/agent/);
 });

@@ -4,7 +4,7 @@
  * สลับเป็น backend จริงได้โดยไม่ต้องแก้หน้าจอ (ผ่าน service.ts)
  */
 
-import { bkkCurrentMonth, bkkFirstOfNextMonth, bkkMonthOf, bkkToday, LOCK_DAYS } from './bkkTime';
+import { bkkCurrentMonth, bkkMonthOf } from './bkkTime';
 import { SEED_BOOKINGS, SEED_LANGUAGES, SEED_PRODUCTS, SEED_USERS, type SeedUser } from './seed';
 import {
   ApiError,
@@ -142,22 +142,36 @@ const loadDb = (): Db => {
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
-/** ล็อกค่าคอมของการจองที่ยืนยันไว้ก่อนมีระบบนี้ (ครั้งเดียว) — ใช้ % ปัจจุบันของ agent ตอนย้ายระบบ
- *  หลังจากนี้ทุกรายการล็อกตอนกดยืนยัน และไม่คำนวณใหม่อีก */
+/** ล็อก % ค่าคอมให้การจอง ณ ตอนจอง — agent ของลูกค้า (ที่ยังเปิดใช้งาน) / % / จำนวนเงิน
+ *  ปรับ % ทีหลังไม่กระทบรายการนี้ ไม่ว่าจะยังรอขายหรือขายเสร็จแล้ว */
+function lockCommission(db: Db, b: Booking): void {
+  const cust = db.users.find((u) => u.id === b.user_id);
+  const agent = cust?.agent_id ? db.users.find((u) => u.id === cust.agent_id && u.role === 'agent' && !u.disabled_at) : undefined;
+  if (agent) {
+    const rate = agent.commission_rate ?? 0;
+    b.commission_agent_id = agent.id;
+    b.commission_rate = rate;
+    b.commission_amount = round2((rate / 100) * b.total_estimate);
+  } else {
+    b.commission_agent_id = null;
+    b.commission_rate = null;
+    b.commission_amount = null;
+  }
+}
+
+/** การจองที่มีก่อนระบบนี้ (ครั้งเดียว): ล็อก % ด้วย % ปัจจุบันของ agent ตอนย้ายระบบ
+ *  commission_agent_id === undefined = ยังไม่เคยล็อก (null = ล็อกแล้วว่าไม่มีค่าคอม) */
 function backfillCommission(db: Db): boolean {
   let dirty = false;
   for (const b of db.bookings) {
-    if (b.status !== 'confirmed' || b.confirmed_at) continue;
-    b.confirmed_at = b.created_at;
-    const cust = db.users.find((u) => u.id === b.user_id);
-    const agent = cust?.agent_id ? db.users.find((u) => u.id === cust.agent_id && u.role === 'agent') : undefined;
-    if (agent) {
-      const rate = agent.commission_rate ?? 0;
-      b.commission_agent_id = agent.id;
-      b.commission_rate = rate;
-      b.commission_amount = round2((rate / 100) * b.total_estimate);
+    if (b.status === 'confirmed' && !b.confirmed_at) {
+      b.confirmed_at = b.created_at;
+      dirty = true;
     }
-    dirty = true;
+    if (b.commission_agent_id === undefined) {
+      lockCommission(db, b);
+      dirty = true;
+    }
   }
   return dirty;
 }
@@ -247,7 +261,6 @@ const commissionBookings = (db: Db, agentId: number): Booking[] =>
 const agentStats = (db: Db, agentId: number) => {
   const rows = commissionBookings(db, agentId);
   const thisMonth = bkkCurrentMonth();
-  const last = rows.reduce<string | null>((m, b) => (!m || (b.confirmed_at ?? '') > m ? b.confirmed_at ?? m : m), null);
   return {
     customer_count: db.users.filter((u) => u.agent_id === agentId && u.role === 'user').length,
     confirmed_total: round2(rows.reduce((s, b) => s + b.total_estimate, 0)),
@@ -255,7 +268,6 @@ const agentStats = (db: Db, agentId: number) => {
     month_commission: round2(
       rows.filter((b) => bkkMonthOf(b.confirmed_at ?? b.created_at) === thisMonth).reduce((s, b) => s + (b.commission_amount ?? 0), 0),
     ),
-    last_commission_at: last,
   };
 };
 
@@ -276,23 +288,6 @@ const monthsOf = (rows: Booking[]): CommissionMonth[] => {
   return [...map.values()].sort((a, b) => b.month.localeCompare(a.month));
 };
 
-/** % ใหม่ที่ตั้งไว้ล่วงหน้า → ถึงวันที่ 1 ของเดือนที่กำหนดแล้วให้มีผลจริง */
-const promoteRates = (db: Db): boolean => {
-  const today = bkkToday();
-  let dirty = false;
-  for (const u of db.users) {
-    if (u.role === 'agent' && u.pending_rate_from && u.pending_rate_from <= today && u.pending_commission_rate != null) {
-      u.commission_rate = u.pending_commission_rate;
-      u.pending_commission_rate = null;
-      u.pending_rate_from = null;
-      dirty = true;
-    }
-  }
-  return dirty;
-};
-
-const daysSince = (iso: string) => (Date.now() - new Date(iso).getTime()) / 86_400_000;
-
 export const mockAdapter: DataService = {
   setAuthToken(token) {
     authToken = token;
@@ -309,7 +304,7 @@ export const mockAdapter: DataService = {
     let agentId: number | null = null;
     const ref = (referral_code ?? '').trim().toUpperCase();
     if (ref) {
-      const agent = db.users.find((u) => u.role === 'agent' && !u.deleted_at && (u.referral_code ?? '') === ref);
+      const agent = db.users.find((u) => u.role === 'agent' && !u.disabled_at && (u.referral_code ?? '') === ref);
       if (!agent) throw new ApiError('รหัสแนะนำ (referral) ไม่ถูกต้อง', 400);
       agentId = agent.id;
     }
@@ -344,7 +339,7 @@ export const mockAdapter: DataService = {
       saveDb(db);
       throw new ApiError('อีเมลหรือรหัสผ่านไม่ถูกต้อง', 401);
     }
-    if (user.deleted_at) throw new ApiError('บัญชีนี้ถูกปิดใช้งานแล้ว', 403);
+    if (user.disabled_at) throw new ApiError('บัญชีนี้ถูกปิดใช้งานอยู่ กรุณาติดต่อแอดมิน', 403);
     recordAudit(db, 'login', { actor: user, entity: 'user', entity_id: user.id });
     const token = createSession(db, user.id);
     authToken = token;
@@ -422,6 +417,7 @@ export const mockAdapter: DataService = {
       qc_weight_kg: null,
       created_at: new Date().toISOString(),
     };
+    lockCommission(db, booking); // % ค่าคอมล็อก ณ ตอนจอง
     db.bookings.push(booking);
     recordAudit(db, 'create_booking', {
       actor: user,
@@ -473,7 +469,6 @@ export const mockAdapter: DataService = {
     await delay();
     const db = loadDb();
     requireAdmin(db);
-    if (promoteRates(db)) saveDb(db);
     return db.users
       .filter((u) => u.role === 'agent')
       .map((u) => ({ ...publicUser(u), ...agentStats(db, u.id) }));
@@ -506,40 +501,25 @@ export const mockAdapter: DataService = {
     return { referral_code: code };
   },
 
-  async setCommissionRate(user_id, commission_rate): Promise<{ effective_from: string | null }> {
+  async setCommissionRate(user_id, commission_rate): Promise<void> {
     await delay();
     const db = loadDb();
     const admin = requireAdmin(db);
     if (!(commission_rate >= 0 && commission_rate <= 100)) throw new ApiError('เปอร์เซ็นต์ค่าคอมต้องอยู่ระหว่าง 0–100', 400);
-    promoteRates(db);
     const agent = db.users.find((u) => u.id === user_id && u.role === 'agent');
     if (!agent) throw new ApiError('ไม่พบพนักงาน', 404);
-    if (agent.deleted_at) throw new ApiError('พนักงานคนนี้ถูกปิดใช้งานแล้ว', 409);
-    // % เดือนนี้ไม่เปลี่ยน — ตั้งเป็น % ใหม่ที่จะมีผลวันที่ 1 เดือนถัดไป (ใส่ % เดิม = ยกเลิกที่ตั้งไว้)
-    let effective_from: string | null = null;
-    if (commission_rate === (agent.commission_rate ?? 0)) {
-      agent.pending_commission_rate = null;
-      agent.pending_rate_from = null;
-    } else {
-      effective_from = bkkFirstOfNextMonth();
-      agent.pending_commission_rate = commission_rate;
-      agent.pending_rate_from = effective_from;
-    }
-    recordAudit(db, 'set_commission_rate', {
-      actor: admin,
-      entity: 'user',
-      entity_id: user_id,
-      detail: { current_rate: agent.commission_rate ?? 0, new_rate: commission_rate, effective_from },
-    });
+    if (agent.disabled_at) throw new ApiError('พนักงานคนนี้ถูกปิดใช้งานอยู่', 409);
+    // มีผลทันทีกับการจองใหม่ · การจองที่มีอยู่แล้วใช้ % ที่ล็อกไว้ตอนจอง (ไม่แตะ)
+    const old = agent.commission_rate ?? 0;
+    agent.commission_rate = commission_rate;
+    recordAudit(db, 'set_commission_rate', { actor: admin, entity: 'user', entity_id: user_id, detail: { old_rate: old, new_rate: commission_rate } });
     saveDb(db);
-    return { effective_from };
   },
 
   async commissionReport(month): Promise<CommissionReport> {
     await delay();
     const db = loadDb();
     requireAdmin(db);
-    if (promoteRates(db)) saveDb(db);
     const cur = bkkCurrentMonth();
     const target = month && /^\d{4}-\d{2}$/.test(month) ? month : cur;
     const withComm = db.bookings.filter((b) => b.status === 'confirmed' && b.commission_agent_id != null);
@@ -555,14 +535,14 @@ export const mockAdapter: DataService = {
           name: a.name,
           email: a.email,
           referral_code: a.referral_code ?? null,
-          deleted: !!a.deleted_at,
+          disabled: !!a.disabled_at,
           bookings: m?.bookings ?? 0,
           sales: m?.sales ?? 0,
           commission: m?.commission ?? 0,
           rates: m?.rates ?? [],
         };
       })
-      .filter((r) => r.bookings > 0 || !r.deleted);
+      .filter((r) => r.bookings > 0 || !r.disabled);
     return {
       month: target,
       current_month: cur,
@@ -577,14 +557,11 @@ export const mockAdapter: DataService = {
   async agentCommission(): Promise<AgentCommission> {
     await delay();
     const db = loadDb();
-    if (promoteRates(db)) saveDb(db);
     const me = requireAgent(db);
     const st = agentStats(db, me.id);
     return {
       referral_code: me.referral_code ?? null,
       commission_rate: me.commission_rate ?? 0,
-      pending_commission_rate: me.pending_commission_rate ?? null,
-      pending_rate_from: me.pending_rate_from ?? null,
       customer_count: st.customer_count,
       confirmed_total: st.confirmed_total,
       commission: st.commission,
@@ -610,31 +587,21 @@ export const mockAdapter: DataService = {
       }));
   },
 
-  async deleteAgent(user_id): Promise<void> {
+  async setAgentActive(user_id, active): Promise<void> {
     await delay();
     const db = loadDb();
-    requireAdmin(db);
+    const admin = requireAdmin(db);
     const agent = db.users.find((u) => u.id === user_id && u.role === 'agent');
     if (!agent) throw new ApiError('ไม่พบพนักงาน', 404);
-    if (agent.deleted_at) throw new ApiError('พนักงานคนนี้ถูกปิดใช้งานไปแล้ว', 409);
-    // ห้ามลบภายใน 1 เดือน: มีค่าคอมเกิดขึ้นใน 30 วันล่าสุด → ลบไม่ได้
-    const { last_commission_at } = agentStats(db, user_id);
-    if (last_commission_at && daysSince(last_commission_at) < LOCK_DAYS) {
-      throw new ApiError('ลบไม่ได้: พนักงานคนนี้มีค่าคอมเกิดขึ้นภายใน 1 เดือนล่าสุด', 409);
+    // ไม่มีการลบ — ปิดใช้งาน: ล็อกอิน/รหัสแนะนำใช้ไม่ได้ · ลูกค้ายังผูกอยู่ · ประวัติค่าคอมอยู่ครบ
+    // การจองใหม่ของลูกค้าระหว่างปิดใช้งาน = ไม่มีค่าคอม · เปิดกลับเมื่อไหร่ก็ได้
+    agent.disabled_at = active ? null : new Date().toISOString();
+    if (!active) {
+      for (const [token, uid] of Object.entries(db.sessions)) {
+        if (uid === user_id) delete db.sessions[token];
+      }
     }
-    // ไม่ลบจริง — ปิดใช้งาน (ล็อกอิน/รหัสแนะนำใช้ไม่ได้) แต่เก็บประวัติค่าคอมไว้ครบ
-    agent.deleted_at = new Date().toISOString();
-    agent.pending_commission_rate = null;
-    agent.pending_rate_from = null;
-    // ปลดลูกค้าที่ผูกอยู่ (การจองใหม่หลังจากนี้ไม่มีค่าคอม) — ค่าคอมเก่ายังอยู่ในรายงาน
-    db.users.forEach((u) => {
-      if (u.agent_id === user_id) u.agent_id = null;
-    });
-    recordAudit(db, 'delete_agent', { actor: requireAdmin(db), entity: 'user', entity_id: user_id, detail: { soft: true } });
-    // เคลียร์เซสชันของพนักงานที่ถูกลบ
-    for (const [token, uid] of Object.entries(db.sessions)) {
-      if (uid === user_id) delete db.sessions[token];
-    }
+    recordAudit(db, active ? 'enable_agent' : 'disable_agent', { actor: admin, entity: 'user', entity_id: user_id });
     saveDb(db);
   },
 
@@ -652,18 +619,10 @@ export const mockAdapter: DataService = {
     const booking = db.bookings.find((b) => b.id === booking_id);
     if (!booking) throw new ApiError('ไม่พบรายการจอง', 404);
     if (booking.status !== 'pending') throw new ApiError('รายการนี้ถูกยืนยันหรือยกเลิกไปแล้ว', 409);
-    promoteRates(db);
     booking.status = 'confirmed';
     booking.confirmed_at = new Date().toISOString();
-    // ล็อกค่าคอม ณ ตอนยืนยัน (agent / % / จำนวนเงิน) — หลังจากนี้ไม่คำนวณใหม่
-    const owner = db.users.find((u) => u.id === booking.user_id);
-    const agent = owner?.agent_id ? db.users.find((u) => u.id === owner.agent_id && u.role === 'agent' && !u.deleted_at) : undefined;
-    if (agent) {
-      const rate = agent.commission_rate ?? 0;
-      booking.commission_agent_id = agent.id;
-      booking.commission_rate = rate;
-      booking.commission_amount = round2((rate / 100) * booking.total_estimate);
-    }
+    // ค่าคอมใช้ % ที่ล็อกไว้ตอนจอง (ไม่อ่าน % ปัจจุบัน) — ยืนยันแล้วจึงเริ่มนับ
+    if (booking.commission_agent_id === undefined) lockCommission(db, booking);
     // คืนเครดิตมัดจำให้ลูกค้า (การซื้อขายสำเร็จ = ยืนยัน)
     const dep = booking.deposit_held ?? 0;
     if (dep > 0) {
@@ -690,9 +649,6 @@ export const mockAdapter: DataService = {
     const booking = db.bookings.find((b) => b.id === booking_id);
     if (!booking) throw new ApiError('ไม่พบรายการจอง', 404);
     if (booking.status === 'cancelled') throw new ApiError('รายการนี้ถูกยกเลิกไปแล้ว', 409);
-    if (booking.status === 'confirmed' && booking.commission_agent_id != null) {
-      throw new ApiError('ยกเลิกไม่ได้: การจองนี้มีค่าคอมพนักงานที่ล็อกไว้แล้ว', 409);
-    }
     const cust = db.users.find((u) => u.id === booking.user_id);
     const dep = booking.deposit_held ?? 0;
     // คืนเครดิตที่กันไว้ (ถ้ายังไม่ยืนยัน) · ไม่เตือนอัตโนมัติ (แอดมินกดเตือนเอง)

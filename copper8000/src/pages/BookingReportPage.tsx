@@ -52,7 +52,7 @@ const BookingReportPage = () => {
             </thead>
             <tbody>
               {bookings.map((b) => (
-                <tr key={b.id}>
+                <tr key={b.id} className={b.status === 'cancelled' ? 'row-cancelled' : undefined}>
                   <td>{bookingProductName(b, lang)}</td>
                   <td>
                     {fmtNumber(b.quantity)} {t(`unit.${b.unit}`)}

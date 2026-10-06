@@ -1,10 +1,10 @@
 /** หน้าพนักงานขาย (agent) — ดูค่าคอมของตัวเอง (สะสม + รายเดือนย้อนหลัง) + รายชื่อลูกค้าที่ผูกกับโค้ดแนะนำ
- *  ค่าคอมล็อกฝั่งเซิร์ฟเวอร์ตอนยืนยันการจอง (กันปลอมแปลง/ไม่เปลี่ยนย้อนหลัง) — หน้านี้แสดงผลอย่างเดียว */
+ *  % ค่าคอมล็อกฝั่งเซิร์ฟเวอร์ตั้งแต่ตอนจอง (กันปลอมแปลง/ไม่เปลี่ยนย้อนหลัง) — หน้านี้แสดงผลอย่างเดียว */
 
 import { useEffect, useState } from 'react';
 import { dataService } from '../data/service';
 import type { AgentCommission, AgentMember } from '../data/types';
-import { fmtBaht, fmtMonth, fmtNumber, fmtYmd } from '../format';
+import { fmtBaht, fmtMonth, fmtNumber } from '../format';
 import { useI18n } from '../i18n';
 
 const AgentPage = () => {
@@ -46,15 +46,7 @@ const AgentPage = () => {
             <div className="agent-stat-card">
               <span className="label">{t('agent.commissionRate')}</span>
               <span className="value">{fmtNumber(summary.commission_rate, 2)}%</span>
-              {summary.pending_commission_rate != null && summary.pending_rate_from && (
-                <span className="hint">
-                  ⏳{' '}
-                  {t('agent.pendingRate', {
-                    rate: fmtNumber(summary.pending_commission_rate, 0),
-                    date: fmtYmd(summary.pending_rate_from),
-                  })}
-                </span>
-              )}
+              <span className="hint">{t('agent.rateHint')}</span>
             </div>
             <div className="agent-stat-card">
               <span className="label">{t('agent.customerCount')}</span>

@@ -12,10 +12,8 @@ CREATE TABLE IF NOT EXISTS users (
   -- ระบบค่าคอมมิชชั่น: ลูกค้าผูกกับ agent ผ่าน referral · agent มี rate% ที่แอดมินตั้ง
   agent_id INT NULL,                                  -- (ลูกค้า) สังกัด agent คนไหน
   referral_code VARCHAR(20) NULL UNIQUE,              -- (agent) โค้ดแนะนำของ agent
-  commission_rate DECIMAL(5,2) NOT NULL DEFAULT 0,    -- (agent) % ค่าคอม (ที่ใช้อยู่ตอนนี้)
-  pending_commission_rate DECIMAL(5,2) NULL,          -- (agent) % ใหม่ — มีผลวันที่ pending_rate_from
-  pending_rate_from DATE NULL,                        -- (agent) วันที่ 1 ของเดือนถัดไปจากวันที่ตั้ง
-  deleted_at DATETIME NULL,                           -- (agent) ปิดใช้งาน (เก็บประวัติค่าคอม ไม่ลบจริง)
+  commission_rate DECIMAL(5,2) NOT NULL DEFAULT 0,    -- (agent) % ค่าคอมปัจจุบัน (ใช้กับการจองใหม่)
+  disabled_at DATETIME NULL,                          -- (agent) ปิดใช้งาน — ไม่มีการลบ เปิดกลับได้
   -- ระบบเครดิต/มัดจำ: แอดมินเติมเครดิตให้ลูกค้า · จองแล้วกันมัดจำ · คืนเมื่อยืนยัน · ยกเลิก=ตักเตือน
   credit_balance DECIMAL(12,2) NOT NULL DEFAULT 0,    -- เครดิตคงเหลือที่ใช้ได้
   credit_held DECIMAL(12,2) NOT NULL DEFAULT 0,       -- เครดิตที่ถูกกันไว้ (มัดจำการจองที่ค้าง)
@@ -59,11 +57,12 @@ CREATE TABLE IF NOT EXISTS bookings (
   actual_weight_kg DECIMAL(12,3) NULL,
   qc_weight_kg DECIMAL(12,3) NULL,
   created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  -- ค่าคอมล็อก ณ ตอนยืนยัน (ไม่คำนวณใหม่) · confirmed_at เป็นเวลาไทย ใช้ตัดรอบเดือน
+  -- ค่าคอมล็อก ณ ตอนจอง (ปรับ % ทีหลังไม่กระทบ) · นับเมื่อยืนยัน · confirmed_at เป็นเวลาไทย ใช้ตัดรอบเดือน
   confirmed_at DATETIME NULL,
   commission_agent_id INT NULL,
   commission_rate DECIMAL(5,2) NULL,
   commission_amount DECIMAL(14,2) NULL,
+  commission_locked TINYINT(1) NOT NULL DEFAULT 0,
   INDEX idx_commission (commission_agent_id, confirmed_at),
   CONSTRAINT fk_bookings_user FOREIGN KEY (user_id) REFERENCES users(id),
   CONSTRAINT fk_bookings_product FOREIGN KEY (product_id) REFERENCES products(id),

@@ -70,40 +70,26 @@ const PendingUsersTab = ({ onToast }: { onToast: (m: string) => void }) => {
   );
 };
 
-// ---------- แถวพนักงาน 1 คน — ตั้ง % ค่าคอม (มีผลเดือนถัดไป) + สรุปค่าคอมที่ล็อกไว้ ----------
-const LOCK_DAYS = 30;
-
-/** วันที่ลบได้ = ค่าคอมรายการล่าสุด + 30 วัน (null = ลบได้แล้ว) */
-const removableFrom = (last: string | null): string | null => {
-  if (!last) return null;
-  const d = new Date(last);
-  d.setDate(d.getDate() + LOCK_DAYS);
-  if (d.getTime() <= Date.now()) return null;
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-};
-
+// ---------- แถวพนักงาน 1 คน — ตั้ง % ค่าคอม (มีผลกับการจองใหม่ทันที) + ปิด/เปิดใช้งาน (ไม่มีการลบ) ----------
 const AgentRow = ({
   a,
   onReload,
   onToast,
-  onRemove,
+  onSetActive,
 }: {
   a: AgentSummary;
   onReload: () => void;
   onToast: (m: string) => void;
-  onRemove: (a: AgentSummary) => void;
+  onSetActive: (a: AgentSummary, active: boolean) => void;
 }) => {
   const { t } = useI18n();
-  // ช่องกรอกตั้งต้นที่ % ที่รอมีผล (ถ้ามี) — กดบันทึกซ้ำจะได้ไม่ยกเลิกโดยไม่ตั้งใจ
-  const initial = String(a.pending_commission_rate ?? a.commission_rate ?? 0);
-  const [rate, setRate] = useState(initial);
+  const [rate, setRate] = useState(String(a.commission_rate ?? 0));
   const [busy, setBusy] = useState(false);
-  const deleted = !!a.deleted_at;
-  const lockedUntil = removableFrom(a.last_commission_at);
+  const disabled = !!a.disabled_at;
 
   useEffect(() => {
-    setRate(initial);
-  }, [initial]);
+    setRate(String(a.commission_rate ?? 0));
+  }, [a.commission_rate]);
 
   const saveRate = async () => {
     const num = Number(rate);
@@ -113,12 +99,8 @@ const AgentRow = ({
     }
     setBusy(true);
     try {
-      const res = await dataService.setCommissionRate(a.id, num);
-      onToast(
-        res.effective_from
-          ? t('adminAgent.toastRateScheduled', { rate: fmtNumber(num, 0), date: fmtYmd(res.effective_from) })
-          : t('adminAgent.toastRateUnchanged', { rate: fmtNumber(a.commission_rate ?? 0, 0) }),
-      );
+      await dataService.setCommissionRate(a.id, num);
+      onToast(t('adminAgent.toastRateSaved', { rate: fmtNumber(num, 0) }));
       onReload();
     } catch (e) {
       onToast((e as Error).message);
@@ -128,13 +110,13 @@ const AgentRow = ({
   };
 
   return (
-    <tr className={deleted ? 'agent-row-deleted' : undefined}>
+    <tr className={disabled ? 'agent-row-disabled' : undefined}>
       <td>
         <strong>{a.name}</strong>
-        {deleted && (
+        {disabled && (
           <>
             {' '}
-            <span className="badge badge-cancelled">{t('adminAgent.deletedBadge')}</span>
+            <span className="badge badge-cancelled">{t('adminAgent.disabledBadge')}</span>
           </>
         )}
         <div className="agent-email">{a.email}</div>
@@ -143,11 +125,10 @@ const AgentRow = ({
         <span className="referral-chip">{a.referral_code ?? '—'}</span>
       </td>
       <td style={{ whiteSpace: 'nowrap' }}>
-        {deleted ? (
+        {disabled ? (
           <>{fmtNumber(a.commission_rate ?? 0, 0)} %</>
         ) : (
           <>
-            <div className="rate-current">{fmtNumber(a.commission_rate ?? 0, 0)} %</div>
             <input
               className="w-input"
               type="number"
@@ -160,11 +141,6 @@ const AgentRow = ({
               style={{ width: 70 }}
             />{' '}
             %
-            {a.pending_commission_rate != null && a.pending_rate_from && (
-              <div className="rate-pending">
-                ⏳ {t('adminAgent.pendingRate', { rate: fmtNumber(a.pending_commission_rate, 0), date: fmtYmd(a.pending_rate_from) })}
-              </div>
-            )}
           </>
         )}
       </td>
@@ -175,23 +151,22 @@ const AgentRow = ({
         <strong>{fmtBaht(a.commission)}</strong>
       </td>
       <td className="manage">
-        {!deleted && (
-          <div className="manage-stack">
-            <button type="button" className="btn btn-primary btn-small" onClick={saveRate} disabled={busy}>
-              {t('adminAgent.saveRate')}
+        <div className="manage-stack">
+          {disabled ? (
+            <button type="button" className="btn btn-outline btn-small" onClick={() => onSetActive(a, true)}>
+              {t('adminAgent.enable')}
             </button>
-            <button
-              type="button"
-              className="btn btn-outline btn-small"
-              onClick={() => onRemove(a)}
-              disabled={!!lockedUntil}
-              title={lockedUntil ? t('adminAgent.deleteLockedHint') : undefined}
-            >
-              {t('adminAgent.remove')}
-            </button>
-            {lockedUntil && <div className="rate-pending">🔒 {t('adminAgent.deleteLockedUntil', { date: fmtYmd(lockedUntil) })}</div>}
-          </div>
-        )}
+          ) : (
+            <>
+              <button type="button" className="btn btn-primary btn-small" onClick={saveRate} disabled={busy}>
+                {t('adminAgent.saveRate')}
+              </button>
+              <button type="button" className="btn btn-outline btn-small" onClick={() => onSetActive(a, false)}>
+                {t('adminAgent.disable')}
+              </button>
+            </>
+          )}
+        </div>
       </td>
     </tr>
   );
@@ -252,10 +227,10 @@ const CommissionReportCard = ({ refreshKey, onToast }: { refreshKey: number; onT
                 <tr key={r.agent_id}>
                   <td>
                     {r.name}
-                    {r.deleted && (
+                    {r.disabled && (
                       <>
                         {' '}
-                        <span className="badge badge-cancelled">{t('adminAgent.deletedBadge')}</span>
+                        <span className="badge badge-cancelled">{t('adminAgent.disabledBadge')}</span>
                       </>
                     )}
                   </td>
@@ -341,11 +316,12 @@ const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
     }
   };
 
-  const remove = async (a: AgentSummary) => {
-    if (!window.confirm(t('adminAgent.confirmDelete', { name: a.name }))) return;
+  // ไม่มีการลบ — ปิด/เปิดใช้งานเท่านั้น (ข้อมูลและประวัติค่าคอมอยู่ครบ)
+  const setActive = async (a: AgentSummary, active: boolean) => {
+    if (!active && !window.confirm(t('adminAgent.confirmDisable', { name: a.name }))) return;
     try {
-      await dataService.deleteAgent(a.id);
-      onToast(t('adminAgent.toastDeleted'));
+      await dataService.setAgentActive(a.id, active);
+      onToast(active ? t('adminAgent.toastEnabled') : t('adminAgent.toastDisabled'));
       reload();
     } catch (e) {
       onToast((e as Error).message);
@@ -384,7 +360,7 @@ const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
             </thead>
             <tbody>
               {agents.map((a) => (
-                <AgentRow key={a.id} a={a} onReload={reload} onToast={onToast} onRemove={remove} />
+                <AgentRow key={a.id} a={a} onReload={reload} onToast={onToast} onSetActive={setActive} />
               ))}
             </tbody>
           </table>
@@ -682,7 +658,7 @@ const BookingRow = ({
   };
 
   return (
-    <tr>
+    <tr className={b.status === 'cancelled' ? 'row-cancelled' : undefined}>
       <td>{b.user_name ?? `#${b.user_id}`}</td>
       <td>{bookingProductName(b, lang)}</td>
       <td>
@@ -691,6 +667,9 @@ const BookingRow = ({
       <td>{b.delivery_date ? fmtDate(b.delivery_date) : '—'}</td>
       <td>
         <StatusBadge status={b.status} />
+        {b.commission_rate != null && (
+          <div className="comm-tag">{t('admin.commissionTag', { rate: fmtNumber(b.commission_rate, 0) })}</div>
+        )}
       </td>
       <td>
         <input
@@ -725,16 +704,10 @@ const BookingRow = ({
         <button type="button" className="btn btn-outline btn-small" onClick={saveWeights} disabled={busy}>
           {t('admin.saveWeights')}
         </button>
-        {b.status === 'confirmed' && b.commission_agent_id != null ? (
-          <span className="lock-chip" title={t('admin.commissionLockedHint')}>
-            {t('admin.commissionLocked')}
-          </span>
-        ) : (
-          b.status !== 'cancelled' && (
-            <button type="button" className="btn btn-outline btn-small btn-danger" onClick={cancel}>
-              {t('adminCredit.cancelBtn')}
-            </button>
-          )
+        {b.status !== 'cancelled' && (
+          <button type="button" className="btn btn-outline btn-small btn-danger" onClick={cancel}>
+            {t('adminCredit.cancelBtn')}
+          </button>
         )}
       </td>
     </tr>
@@ -932,7 +905,7 @@ const ReportTab = ({ onToast }: { onToast: (m: string) => void }) => {
 
   const rows = data.products
     .map((p) => {
-      const bs = data.bookings.filter((b) => b.product_id === p.id);
+      const bs = data.bookings.filter((b) => b.product_id === p.id && b.status !== 'cancelled'); // ยกเลิก = ไม่นับ
       return {
         p,
         count: bs.length,

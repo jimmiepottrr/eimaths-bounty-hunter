@@ -156,16 +156,15 @@ export const httpAdapter: DataService = {
     return { referral_code: res.referral_code };
   },
 
-  async deleteAgent(user_id): Promise<void> {
-    await request('/admin.php', { method: 'POST', body: { action: 'delete_agent', user_id } });
+  async setAgentActive(user_id, active): Promise<void> {
+    await request('/admin.php', { method: 'POST', body: { action: 'set_agent_active', user_id, active } });
   },
 
-  async setCommissionRate(user_id, commission_rate): Promise<{ effective_from: string | null }> {
-    const res = await request<{ effective_from?: string | null }>('/admin.php', {
+  async setCommissionRate(user_id, commission_rate): Promise<void> {
+    await request('/admin.php', {
       method: 'POST',
       body: { action: 'set_commission_rate', user_id, commission_rate },
     });
-    return { effective_from: res.effective_from ?? null };
   },
 
   async commissionReport(month): Promise<CommissionReport> {

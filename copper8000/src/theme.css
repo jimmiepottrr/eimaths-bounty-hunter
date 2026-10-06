@@ -2193,7 +2193,7 @@ a.userbox:hover .name {
   font-size: calc(13px * var(--fs));
 }
 
-/* ---------- ค่าคอมรายเดือน (ล็อกตัวเลข) ---------- */
+/* ---------- ค่าคอม (% ล็อกตอนจอง) · ไม่มีการลบ: ปิดใช้งาน/ยกเลิก = สีเทา ---------- */
 .commission-rules ul {
   margin: 6px 0 0;
   padding-left: 20px;
@@ -2203,22 +2203,23 @@ a.userbox:hover .name {
   margin: 2px 0;
 }
 
-.rate-current {
-  font-weight: 700;
-  margin-bottom: 4px;
+/* รายการที่ยกเลิก / พนักงานที่ปิดใช้งาน: ยังแสดงตามปกติแต่เป็นสีเทา (ไม่นำมาคำนวณ) */
+.row-cancelled td,
+.agent-row-disabled td {
+  color: #9a968c;
+  background: #f4f2ee !important;
 }
 
-.rate-pending {
+.row-cancelled td .badge,
+.row-cancelled td input {
+  opacity: 0.7;
+}
+
+.comm-tag {
   margin-top: 4px;
   font-size: calc(12px * var(--fs));
   color: var(--copper-dark);
-  white-space: normal;
-  max-width: 220px;
-}
-
-.agent-row-deleted td {
-  color: var(--ink-soft);
-  background: #f7f5f0;
+  white-space: nowrap;
 }
 
 .month-status {
@@ -2240,19 +2241,6 @@ a.userbox:hover .name {
   background: #fff6e0;
   color: #8a6d1a;
   border: 1px solid #e8cf8a;
-}
-
-.lock-chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 10px;
-  border-radius: 999px;
-  background: #eef4ee;
-  color: #2f6b3a;
-  border: 1px solid #b9d6bf;
-  font-size: calc(12px * var(--fs));
-  font-weight: 600;
-  white-space: nowrap;
 }
 
 .report-table tr.total td {

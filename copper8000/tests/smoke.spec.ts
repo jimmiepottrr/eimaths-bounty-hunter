@@ -178,17 +178,16 @@ test('พนักงาน (agent) เห็นค่าคอมของต�
   await expect(page.locator('tr', { hasText: 'คุณเดโม่' })).toBeVisible();
 });
 
-test('แอดมินปรับ % ค่าคอม → มีผลเดือนหน้า · ค่าคอมที่ล็อกแล้วไม่เปลี่ยน (ยัง 16,920)', async ({ page }) => {
+test('แอดมินปรับ % ค่าคอม → มีผลกับการจองใหม่ทันที · การจองเดิมไม่เปลี่ยน (ยัง 16,920)', async ({ page }) => {
   await login(page, 'admin@copper8000.co.th', 'admin1234');
   await page.goto('/admin');
   await page.getByRole('button', { name: 'พนักงาน', exact: true }).click();
   const agentRow = page.locator('.agents-table tr', { hasText: 'AGENT1' });
-  await expect(agentRow).toContainText('16,920'); // ค่าคอมเริ่มต้น 3% × 564,000
-  // ปรับเป็น 5% → ไม่คำนวณย้อนหลัง · มีผลวันที่ 1 เดือนถัดไป
+  await expect(agentRow).toContainText('16,920'); // 3% × 564,000 (ล็อกตอนจอง)
   await agentRow.locator('input[type="number"]').fill('5');
   await agentRow.getByRole('button', { name: 'บันทึก %' }).click();
-  await expect(page.locator('.toast')).toContainText('มีผลตั้งแต่');
-  await expect(agentRow).toContainText('เดือนหน้า 5%');
+  await expect(page.locator('.toast')).toContainText('มีผลกับการจองใหม่ทันที');
+  await expect(agentRow.locator('input[type="number"]')).toHaveValue('5');
   await expect(agentRow).toContainText('16,920');
   await expect(agentRow).not.toContainText('28,200');
 });

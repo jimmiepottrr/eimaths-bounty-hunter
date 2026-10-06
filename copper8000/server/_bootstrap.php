@@ -87,7 +87,7 @@ function require_auth(): array {
   if ($token === '') json_err('กรุณาเข้าสู่ระบบ', 401);
   $st = pdo()->prepare(
     'SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id
-     WHERE s.token = ? AND s.expires_at > NOW() AND u.deleted_at IS NULL'
+     WHERE s.token = ? AND s.expires_at > NOW() AND u.disabled_at IS NULL'
   );
   $st->execute([$token]);
   $user = $st->fetch();
@@ -170,9 +170,7 @@ function user_public(array $u): array {
     'credit_held'     => isset($u['credit_held']) ? (float) $u['credit_held'] : 0,
     'warnings'        => isset($u['warnings']) ? (int) $u['warnings'] : 0,
     'booking_suspended' => (bool) ($u['booking_suspended'] ?? false),
-    'pending_commission_rate' => isset($u['pending_commission_rate']) && $u['pending_commission_rate'] !== null ? (float) $u['pending_commission_rate'] : null,
-    'pending_rate_from' => $u['pending_rate_from'] ?? null,
-    'deleted_at'      => isset($u['deleted_at']) && $u['deleted_at'] !== null ? str_replace(' ', 'T', $u['deleted_at']) : null,
+    'disabled_at'     => isset($u['disabled_at']) && $u['disabled_at'] !== null ? str_replace(' ', 'T', $u['disabled_at']) : null,
   ];
 }
 
@@ -217,11 +215,8 @@ function booking_public(array $b): array {
   ];
 }
 
-// ---------- ค่าคอมรายเดือน: เวลาไทย + ล็อกตัวเลข ----------
+// ---------- ค่าคอม: % ล็อกตอนจอง · นับเมื่อยืนยัน · ตัดรอบเดือนตามเวลาไทย ----------
 // confirmed_at เก็บเป็นเวลาไทย (DB/PHP เป็น UTC) เพื่อตัดรอบเดือนตามเวลาไทยจริง
-
-/** ห้ามแก้/ลบภายใน 1 เดือนหลังเกิดค่าคอม */
-const COMMISSION_LOCK_DAYS = 30;
 
 function bkk_now(): DateTimeImmutable {
   return new DateTimeImmutable('now', new DateTimeZone('Asia/Bangkok'));
@@ -235,17 +230,19 @@ function bkk_current_month(): string {
   return bkk_now()->format('Y-m');
 }
 
-/** วันที่ 1 ของเดือนถัดไป (เวลาไทย) — วันที่ % ค่าคอมใหม่เริ่มมีผล */
-function bkk_first_of_next_month(): string {
-  return bkk_now()->modify('first day of next month')->format('Y-m-d');
-}
-
-/** % ใหม่ที่ตั้งไว้ล่วงหน้า → ถึงวันมีผลแล้วให้กลายเป็น % ปัจจุบัน */
-function promote_due_commission_rates(): void {
-  pdo()->prepare(
-    "UPDATE users SET commission_rate = pending_commission_rate, pending_commission_rate = NULL, pending_rate_from = NULL
-     WHERE role = 'agent' AND pending_rate_from IS NOT NULL AND pending_commission_rate IS NOT NULL AND pending_rate_from <= ?"
-  )->execute([bkk_now()->format('Y-m-d')]);
+/** ค่าคอมของการจองใหม่ ณ ตอนนี้: agent ของลูกค้า (ที่เปิดใช้งานอยู่) + % ปัจจุบัน → ล็อกไว้กับการจอง
+ *  ปรับ % ทีหลังไม่กระทบการจองนี้ ไม่ว่าจะยังรอขายหรือขายเสร็จแล้ว */
+function commission_lock_for(int $customerId, float $total): array {
+  $st = pdo()->prepare(
+    "SELECT a.id, a.commission_rate FROM users c
+     JOIN users a ON a.id = c.agent_id AND a.role = 'agent' AND a.disabled_at IS NULL
+     WHERE c.id = ?"
+  );
+  $st->execute([$customerId]);
+  $a = $st->fetch();
+  if (!$a) return ['agent_id' => null, 'rate' => null, 'amount' => null];
+  $rate = (float) $a['commission_rate'];
+  return ['agent_id' => (int) $a['id'], 'rate' => $rate, 'amount' => round($rate / 100 * $total, 2)];
 }
 
 /** "3.00,5.00" (GROUP_CONCAT) → [3.0, 5.0] */

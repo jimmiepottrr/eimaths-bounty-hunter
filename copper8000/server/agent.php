@@ -1,7 +1,7 @@
 <?php
 /**
  * agent.php — เฉพาะ role=agent (พนักงานขาย) ดูข้อมูลของตัวเอง
- * GET ?view=commission (ค่าเริ่มต้น) → {referral_code, commission_rate, pending_*, customer_count, confirmed_total, commission, months[]}
+ * GET ?view=commission (ค่าเริ่มต้น) → {referral_code, commission_rate, customer_count, confirmed_total, commission, months[]}
  * GET ?view=members → รายชื่อลูกค้าที่ผูกกับ agent + ยอด confirmed ของแต่ละคน
  * คำนวณค่าคอมฝั่งเซิร์ฟเวอร์เสมอ (กันปลอมแปลง) — agent เห็นเฉพาะข้อมูลของตัวเอง
  */
@@ -37,8 +37,7 @@ if ($view === 'members') {
   json_out(['members' => $members]);
 }
 
-// ---- สรุปค่าคอมของตัวเอง (จากค่าคอมที่ล็อกไว้ตอนยืนยันแต่ละการจอง — ไม่คำนวณย้อนหลัง) ----
-promote_due_commission_rates();
+// ---- สรุปค่าคอมของตัวเอง — % ล็อกตอนจอง · นับเฉพาะการจองที่ยืนยันแล้ว (ยกเลิก = ไม่นับ) ----
 $me = pdo()->prepare('SELECT * FROM users WHERE id = ?');
 $me->execute([$agentId]);
 $user = $me->fetch() ?: $user;
@@ -76,8 +75,6 @@ foreach ($ms->fetchAll() as $r) {
 json_out(['commission' => [
   'referral_code'           => $user['referral_code'] ?? null,
   'commission_rate'         => (float) ($user['commission_rate'] ?? 0),
-  'pending_commission_rate' => isset($user['pending_commission_rate']) && $user['pending_commission_rate'] !== null ? (float) $user['pending_commission_rate'] : null,
-  'pending_rate_from'       => $user['pending_rate_from'] ?? null,
   'customer_count'          => $customerCount,
   'confirmed_total'         => round($confirmedTotal, 2),
   'commission'              => round($commissionTotal, 2),
