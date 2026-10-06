@@ -23,4 +23,4 @@ export const LINE_ID = '@copper8000';
 /** ลิงก์เพิ่มเพื่อน LINE (กดแล้วเปิดแอป LINE) */
 export const LINE_URL = 'https://line.me/R/ti/p/@copper8000';
 
-export const EMAIL = 'contact@copper8000.co.th';
+export const EMAIL = 'contact@copper8000.com';
