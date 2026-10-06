@@ -87,7 +87,7 @@ function require_auth(): array {
   if ($token === '') json_err('กรุณาเข้าสู่ระบบ', 401);
   $st = pdo()->prepare(
     'SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id
-     WHERE s.token = ? AND s.expires_at > NOW()'
+     WHERE s.token = ? AND s.expires_at > NOW() AND u.deleted_at IS NULL'
   );
   $st->execute([$token]);
   $user = $st->fetch();
@@ -170,6 +170,9 @@ function user_public(array $u): array {
     'credit_held'     => isset($u['credit_held']) ? (float) $u['credit_held'] : 0,
     'warnings'        => isset($u['warnings']) ? (int) $u['warnings'] : 0,
     'booking_suspended' => (bool) ($u['booking_suspended'] ?? false),
+    'pending_commission_rate' => isset($u['pending_commission_rate']) && $u['pending_commission_rate'] !== null ? (float) $u['pending_commission_rate'] : null,
+    'pending_rate_from' => $u['pending_rate_from'] ?? null,
+    'deleted_at'      => isset($u['deleted_at']) && $u['deleted_at'] !== null ? str_replace(' ', 'T', $u['deleted_at']) : null,
   ];
 }
 
@@ -207,5 +210,46 @@ function booking_public(array $b): array {
     'actual_weight_kg' => isset($b['actual_weight_kg']) ? (float) $b['actual_weight_kg'] : null,
     'qc_weight_kg'     => isset($b['qc_weight_kg']) ? (float) $b['qc_weight_kg'] : null,
     'created_at'       => str_replace(' ', 'T', $b['created_at']),
+    'confirmed_at'     => isset($b['confirmed_at']) && $b['confirmed_at'] !== null ? str_replace(' ', 'T', $b['confirmed_at']) : null,
+    'commission_agent_id' => isset($b['commission_agent_id']) && $b['commission_agent_id'] !== null ? (int) $b['commission_agent_id'] : null,
+    'commission_rate'  => isset($b['commission_rate']) && $b['commission_rate'] !== null ? (float) $b['commission_rate'] : null,
+    'commission_amount' => isset($b['commission_amount']) && $b['commission_amount'] !== null ? (float) $b['commission_amount'] : null,
   ];
+}
+
+// ---------- ค่าคอมรายเดือน: เวลาไทย + ล็อกตัวเลข ----------
+// confirmed_at เก็บเป็นเวลาไทย (DB/PHP เป็น UTC) เพื่อตัดรอบเดือนตามเวลาไทยจริง
+
+/** ห้ามแก้/ลบภายใน 1 เดือนหลังเกิดค่าคอม */
+const COMMISSION_LOCK_DAYS = 30;
+
+function bkk_now(): DateTimeImmutable {
+  return new DateTimeImmutable('now', new DateTimeZone('Asia/Bangkok'));
+}
+
+function bkk_now_str(): string {
+  return bkk_now()->format('Y-m-d H:i:s');
+}
+
+function bkk_current_month(): string {
+  return bkk_now()->format('Y-m');
+}
+
+/** วันที่ 1 ของเดือนถัดไป (เวลาไทย) — วันที่ % ค่าคอมใหม่เริ่มมีผล */
+function bkk_first_of_next_month(): string {
+  return bkk_now()->modify('first day of next month')->format('Y-m-d');
+}
+
+/** % ใหม่ที่ตั้งไว้ล่วงหน้า → ถึงวันมีผลแล้วให้กลายเป็น % ปัจจุบัน */
+function promote_due_commission_rates(): void {
+  pdo()->prepare(
+    "UPDATE users SET commission_rate = pending_commission_rate, pending_commission_rate = NULL, pending_rate_from = NULL
+     WHERE role = 'agent' AND pending_rate_from IS NOT NULL AND pending_commission_rate IS NOT NULL AND pending_rate_from <= ?"
+  )->execute([bkk_now()->format('Y-m-d')]);
+}
+
+/** "3.00,5.00" (GROUP_CONCAT) → [3.0, 5.0] */
+function rates_list(?string $csv): array {
+  if ($csv === null || $csv === '') return [];
+  return array_values(array_map('floatval', explode(',', $csv)));
 }

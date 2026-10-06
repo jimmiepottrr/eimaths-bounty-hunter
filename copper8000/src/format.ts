@@ -43,3 +43,15 @@ export const fmtToday = () =>
     month: 'long',
     day: 'numeric',
   });
+
+/** 'YYYY-MM' → ชื่อเดือนตามภาษา เช่น "ตุลาคม 2569" / "October 2026" */
+export const fmtMonth = (ym: string) => {
+  const [y, m] = ym.split('-').map(Number);
+  return new Date(y, m - 1, 1).toLocaleDateString(safeLocale(), { year: 'numeric', month: 'long' });
+};
+
+/** 'YYYY-MM-DD' → วันที่ตามภาษา (อ่านเป็นวันที่ตรงๆ ไม่เลื่อนตาม timezone ของเครื่อง) */
+export const fmtYmd = (ymd: string) => {
+  const [y, m, d] = ymd.slice(0, 10).split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(safeLocale(), { year: 'numeric', month: 'short', day: 'numeric' });
+};

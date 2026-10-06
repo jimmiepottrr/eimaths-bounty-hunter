@@ -1170,9 +1170,15 @@ button {
 
 .agent-stat-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  grid-template-columns: repeat(3, 1fr); /* 6 การ์ด = 3×2 สมดุล */
   gap: 12px;
   margin-bottom: 12px;
+}
+
+@media (max-width: 720px) {
+  .agent-stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .agent-stat-card {
@@ -2185,4 +2191,105 @@ a.userbox:hover .name {
   justify-content: center;
   margin-top: 14px;
   font-size: calc(13px * var(--fs));
+}
+
+/* ---------- ค่าคอมรายเดือน (ล็อกตัวเลข) ---------- */
+.commission-rules ul {
+  margin: 6px 0 0;
+  padding-left: 20px;
+}
+
+.commission-rules li {
+  margin: 2px 0;
+}
+
+.rate-current {
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.rate-pending {
+  margin-top: 4px;
+  font-size: calc(12px * var(--fs));
+  color: var(--copper-dark);
+  white-space: normal;
+  max-width: 220px;
+}
+
+.agent-row-deleted td {
+  color: var(--ink-soft);
+  background: #f7f5f0;
+}
+
+.month-status {
+  display: inline-block;
+  margin-bottom: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: calc(13px * var(--fs));
+  font-weight: 600;
+}
+
+.month-status.locked {
+  background: #eef4ee;
+  color: #2f6b3a;
+  border: 1px solid #b9d6bf;
+}
+
+.month-status.open {
+  background: #fff6e0;
+  color: #8a6d1a;
+  border: 1px solid #e8cf8a;
+}
+
+.lock-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #eef4ee;
+  color: #2f6b3a;
+  border: 1px solid #b9d6bf;
+  font-size: calc(12px * var(--fs));
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.report-table tr.total td {
+  border-top: 2px solid var(--line);
+  background: #fbf8f1;
+}
+
+.commission-report select {
+  border: 1.5px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: calc(14px * var(--fs));
+  background: #fff;
+}
+
+.agents-table .agent-email {
+  font-size: calc(12px * var(--fs));
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.agents-table td.money,
+.commission-report td {
+  white-space: nowrap;
+}
+
+.agents-table td.manage {
+  min-width: 150px;
+}
+
+.agents-table .manage-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.agents-table .manage-stack .btn {
+  white-space: nowrap;
 }

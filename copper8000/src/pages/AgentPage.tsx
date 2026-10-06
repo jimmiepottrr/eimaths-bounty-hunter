@@ -1,10 +1,10 @@
-/** หน้าพนักงานขาย (agent) — ดูค่าคอมของตัวเอง + รายชื่อลูกค้าที่ผูกกับโค้ดแนะนำของตัวเอง
- *  ค่าคอมคำนวณฝั่งเซิร์ฟเวอร์เสมอ (กันปลอมแปลง) — หน้านี้แสดงผลอย่างเดียว */
+/** หน้าพนักงานขาย (agent) — ดูค่าคอมของตัวเอง (สะสม + รายเดือนย้อนหลัง) + รายชื่อลูกค้าที่ผูกกับโค้ดแนะนำ
+ *  ค่าคอมล็อกฝั่งเซิร์ฟเวอร์ตอนยืนยันการจอง (กันปลอมแปลง/ไม่เปลี่ยนย้อนหลัง) — หน้านี้แสดงผลอย่างเดียว */
 
 import { useEffect, useState } from 'react';
 import { dataService } from '../data/service';
 import type { AgentCommission, AgentMember } from '../data/types';
-import { fmtBaht, fmtNumber } from '../format';
+import { fmtBaht, fmtMonth, fmtNumber, fmtYmd } from '../format';
 import { useI18n } from '../i18n';
 
 const AgentPage = () => {
@@ -46,6 +46,15 @@ const AgentPage = () => {
             <div className="agent-stat-card">
               <span className="label">{t('agent.commissionRate')}</span>
               <span className="value">{fmtNumber(summary.commission_rate, 2)}%</span>
+              {summary.pending_commission_rate != null && summary.pending_rate_from && (
+                <span className="hint">
+                  ⏳{' '}
+                  {t('agent.pendingRate', {
+                    rate: fmtNumber(summary.pending_commission_rate, 0),
+                    date: fmtYmd(summary.pending_rate_from),
+                  })}
+                </span>
+              )}
             </div>
             <div className="agent-stat-card">
               <span className="label">{t('agent.customerCount')}</span>
@@ -55,6 +64,10 @@ const AgentPage = () => {
               <span className="label">{t('agent.confirmedTotal')}</span>
               <span className="value">{fmtBaht(summary.confirmed_total)}</span>
             </div>
+            <div className="agent-stat-card">
+              <span className="label">{t('agent.monthCommission')}</span>
+              <span className="value">{fmtBaht(summary.months.find((m) => !m.locked)?.commission ?? 0)}</span>
+            </div>
             <div className="agent-stat-card highlight">
               <span className="label">{t('agent.myCommission')}</span>
               <span className="value">{fmtBaht(summary.commission)}</span>
@@ -63,6 +76,44 @@ const AgentPage = () => {
           <p style={{ fontSize: 'calc(13px * var(--fs))', color: 'var(--ink-soft)' }}>
             {t('agent.commissionNote')}
           </p>
+
+          <h3 style={{ margin: '24px 0 10px' }}>{t('agent.historyTitle')}</h3>
+          {summary.months.length === 0 ? (
+            <div className="empty-state">{t('agent.noHistory')}</div>
+          ) : (
+            <div className="table-wrap">
+              <table className="report-table commission-history">
+                <thead>
+                  <tr>
+                    <th>{t('agent.colMonth')}</th>
+                    <th>{t('agent.colBookings')}</th>
+                    <th>{t('agent.colSales')}</th>
+                    <th>{t('agent.colRate')}</th>
+                    <th>{t('agent.colCommission')}</th>
+                    <th>{t('agent.colMonthStatus')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {summary.months.map((m) => (
+                    <tr key={m.month}>
+                      <td>{fmtMonth(m.month)}</td>
+                      <td>{fmtNumber(m.bookings)}</td>
+                      <td>{fmtBaht(m.sales)}</td>
+                      <td>{m.rates.map((x) => `${fmtNumber(x, 0)}%`).join(', ') || '—'}</td>
+                      <td>
+                        <strong>{fmtBaht(m.commission)}</strong>
+                      </td>
+                      <td>
+                        <span className={`badge ${m.locked ? 'badge-confirmed' : 'badge-pending'}`}>
+                          {m.locked ? t('agent.monthLocked') : t('agent.monthOpen')}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
       ) : null}
 

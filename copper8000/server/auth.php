@@ -32,7 +32,7 @@ if ($action === 'signup') {
   $referral = strtoupper(trim((string) ($body['referral_code'] ?? '')));
   $agentId = null;
   if ($referral !== '') {
-    $st = pdo()->prepare("SELECT id FROM users WHERE referral_code = ? AND role = 'agent'");
+    $st = pdo()->prepare("SELECT id FROM users WHERE referral_code = ? AND role = 'agent' AND deleted_at IS NULL");
     $st->execute([$referral]);
     $agentRow = $st->fetch();
     if (!$agentRow) json_err('รหัสแนะนำ (referral) ไม่ถูกต้อง');
@@ -70,6 +70,7 @@ if ($action === 'login') {
     audit_log('login_failed', ['actor_role' => 'guest', 'entity' => 'user', 'detail' => ['email' => $email]]);
     json_err('อีเมลหรือรหัสผ่านไม่ถูกต้อง', 401);
   }
+  if (!empty($user['deleted_at'])) json_err('บัญชีนี้ถูกปิดใช้งานแล้ว', 403);
   audit_log('login', ['user' => $user, 'entity' => 'user', 'entity_id' => (int) $user['id']]);
   json_out(['token' => new_session((int) $user['id']), 'user' => user_public($user)]);
 }

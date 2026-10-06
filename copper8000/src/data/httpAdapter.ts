@@ -16,6 +16,7 @@ import {
   type AuditResult,
   type AuthResult,
   type Booking,
+  type CommissionReport,
   type DataService,
   type LanguageInfo,
   type Product,
@@ -159,11 +160,18 @@ export const httpAdapter: DataService = {
     await request('/admin.php', { method: 'POST', body: { action: 'delete_agent', user_id } });
   },
 
-  async setCommissionRate(user_id, commission_rate): Promise<void> {
-    await request('/admin.php', {
+  async setCommissionRate(user_id, commission_rate): Promise<{ effective_from: string | null }> {
+    const res = await request<{ effective_from?: string | null }>('/admin.php', {
       method: 'POST',
       body: { action: 'set_commission_rate', user_id, commission_rate },
     });
+    return { effective_from: res.effective_from ?? null };
+  },
+
+  async commissionReport(month): Promise<CommissionReport> {
+    const q = month ? `&month=${encodeURIComponent(month)}` : '';
+    const res = await request<{ report: CommissionReport }>(`/admin.php?view=commission_report${q}`);
+    return res.report;
   },
 
   async agentCommission(): Promise<AgentCommission> {

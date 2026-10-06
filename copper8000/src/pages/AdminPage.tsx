@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import StatusBadge from '../components/StatusBadge';
 import { dataService } from '../data/service';
-import type { AgentSummary, AnnounceMode, AuditResult, Booking, LanguageInfo, Material, Product, User } from '../data/types';
-import { fmtBaht, fmtDate, fmtNumber } from '../format';
+import type { AgentSummary, AnnounceMode, AuditResult, Booking, CommissionReport, LanguageInfo, Material, Product, User } from '../data/types';
+import { fmtBaht, fmtDate, fmtMonth, fmtNumber, fmtYmd } from '../format';
 import { DICT_TEMPLATE } from '../i18n/core';
 import { bookingProductName, productName, productSubName, useI18n } from '../i18n';
 import { applyTheme, currentTheme, type ThemeCode } from '../themeManager';
@@ -70,7 +70,18 @@ const PendingUsersTab = ({ onToast }: { onToast: (m: string) => void }) => {
   );
 };
 
-// ---------- แถวพนักงาน 1 คน — ตั้ง % ค่าคอม + ดูสรุปยอด/ค่าคอมได้ในตัว ----------
+// ---------- แถวพนักงาน 1 คน — ตั้ง % ค่าคอม (มีผลเดือนถัดไป) + สรุปค่าคอมที่ล็อกไว้ ----------
+const LOCK_DAYS = 30;
+
+/** วันที่ลบได้ = ค่าคอมรายการล่าสุด + 30 วัน (null = ลบได้แล้ว) */
+const removableFrom = (last: string | null): string | null => {
+  if (!last) return null;
+  const d = new Date(last);
+  d.setDate(d.getDate() + LOCK_DAYS);
+  if (d.getTime() <= Date.now()) return null;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
 const AgentRow = ({
   a,
   onReload,
@@ -83,23 +94,31 @@ const AgentRow = ({
   onRemove: (a: AgentSummary) => void;
 }) => {
   const { t } = useI18n();
-  const [rate, setRate] = useState(String(a.commission_rate ?? 0));
+  // ช่องกรอกตั้งต้นที่ % ที่รอมีผล (ถ้ามี) — กดบันทึกซ้ำจะได้ไม่ยกเลิกโดยไม่ตั้งใจ
+  const initial = String(a.pending_commission_rate ?? a.commission_rate ?? 0);
+  const [rate, setRate] = useState(initial);
   const [busy, setBusy] = useState(false);
+  const deleted = !!a.deleted_at;
+  const lockedUntil = removableFrom(a.last_commission_at);
 
   useEffect(() => {
-    setRate(String(a.commission_rate ?? 0));
-  }, [a.commission_rate]);
+    setRate(initial);
+  }, [initial]);
 
   const saveRate = async () => {
     const num = Number(rate);
-    if (!(num >= 0 && num <= 100)) {
+    if (rate.trim() === '' || !(num >= 0 && num <= 100)) {
       onToast(t('adminAgent.rateRange'));
       return;
     }
     setBusy(true);
     try {
-      await dataService.setCommissionRate(a.id, num);
-      onToast(t('adminAgent.toastRateSaved'));
+      const res = await dataService.setCommissionRate(a.id, num);
+      onToast(
+        res.effective_from
+          ? t('adminAgent.toastRateScheduled', { rate: fmtNumber(num, 0), date: fmtYmd(res.effective_from) })
+          : t('adminAgent.toastRateUnchanged', { rate: fmtNumber(a.commission_rate ?? 0, 0) }),
+      );
       onReload();
     } catch (e) {
       onToast((e as Error).message);
@@ -109,40 +128,165 @@ const AgentRow = ({
   };
 
   return (
-    <tr>
-      <td>{a.name}</td>
-      <td>{a.email}</td>
+    <tr className={deleted ? 'agent-row-deleted' : undefined}>
+      <td>
+        <strong>{a.name}</strong>
+        {deleted && (
+          <>
+            {' '}
+            <span className="badge badge-cancelled">{t('adminAgent.deletedBadge')}</span>
+          </>
+        )}
+        <div className="agent-email">{a.email}</div>
+      </td>
       <td>
         <span className="referral-chip">{a.referral_code ?? '—'}</span>
       </td>
       <td style={{ whiteSpace: 'nowrap' }}>
-        <input
-          className="w-input"
-          type="number"
-          step="any"
-          min="0"
-          max="100"
-          aria-label={t('adminAgent.colRate')}
-          value={rate}
-          onChange={(e) => setRate(e.target.value)}
-          style={{ width: 70 }}
-        />{' '}
-        %
+        {deleted ? (
+          <>{fmtNumber(a.commission_rate ?? 0, 0)} %</>
+        ) : (
+          <>
+            <div className="rate-current">{fmtNumber(a.commission_rate ?? 0, 0)} %</div>
+            <input
+              className="w-input"
+              type="number"
+              step="any"
+              min="0"
+              max="100"
+              aria-label={t('adminAgent.colRate')}
+              value={rate}
+              onChange={(e) => setRate(e.target.value)}
+              style={{ width: 70 }}
+            />{' '}
+            %
+            {a.pending_commission_rate != null && a.pending_rate_from && (
+              <div className="rate-pending">
+                ⏳ {t('adminAgent.pendingRate', { rate: fmtNumber(a.pending_commission_rate, 0), date: fmtYmd(a.pending_rate_from) })}
+              </div>
+            )}
+          </>
+        )}
       </td>
       <td>{fmtNumber(a.customer_count)}</td>
-      <td>{fmtBaht(a.confirmed_total)}</td>
-      <td>
+      <td className="money">{fmtBaht(a.confirmed_total)}</td>
+      <td className="money">{fmtBaht(a.month_commission)}</td>
+      <td className="money">
         <strong>{fmtBaht(a.commission)}</strong>
       </td>
-      <td style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button type="button" className="btn btn-primary btn-small" onClick={saveRate} disabled={busy}>
-          {t('adminAgent.saveRate')}
-        </button>
-        <button type="button" className="btn btn-outline btn-small" onClick={() => onRemove(a)}>
-          {t('adminAgent.remove')}
-        </button>
+      <td className="manage">
+        {!deleted && (
+          <div className="manage-stack">
+            <button type="button" className="btn btn-primary btn-small" onClick={saveRate} disabled={busy}>
+              {t('adminAgent.saveRate')}
+            </button>
+            <button
+              type="button"
+              className="btn btn-outline btn-small"
+              onClick={() => onRemove(a)}
+              disabled={!!lockedUntil}
+              title={lockedUntil ? t('adminAgent.deleteLockedHint') : undefined}
+            >
+              {t('adminAgent.remove')}
+            </button>
+            {lockedUntil && <div className="rate-pending">🔒 {t('adminAgent.deleteLockedUntil', { date: fmtYmd(lockedUntil) })}</div>}
+          </div>
+        )}
       </td>
     </tr>
+  );
+};
+
+// ---------- รายงานค่าคอมรายเดือน — เดือนที่ผ่านไปแล้ว = ปิดยอด ตัวเลขล็อก ----------
+const CommissionReportCard = ({ refreshKey, onToast }: { refreshKey: number; onToast: (m: string) => void }) => {
+  const { t } = useI18n();
+  const [month, setMonth] = useState<string | undefined>(undefined);
+  const [report, setReport] = useState<CommissionReport | null>(null);
+
+  useEffect(() => {
+    dataService
+      .commissionReport(month)
+      .then(setReport)
+      .catch((e) => onToast((e as Error).message));
+  }, [month, refreshKey, onToast]);
+
+  if (!report) return <div className="empty-state">{t('admin.loading')}</div>;
+
+  const withData = report.rows.filter((r) => r.bookings > 0);
+
+  return (
+    <div className="card commission-report" style={{ marginBottom: 20 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
+        <h3 style={{ margin: 0 }}>{t('commReport.title')}</h3>
+        <label htmlFor="comm-month" style={{ fontSize: 'calc(13px * var(--fs))', color: 'var(--ink-soft)' }}>
+          {t('commReport.monthLabel')}
+        </label>
+        <select id="comm-month" value={report.month} onChange={(e) => setMonth(e.target.value)}>
+          {report.months.map((m) => (
+            <option key={m} value={m}>
+              {fmtMonth(m)}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className={report.locked ? 'month-status locked' : 'month-status open'}>
+        {report.locked ? t('commReport.locked') : t('commReport.open')}
+      </div>
+      {withData.length === 0 ? (
+        <div className="empty-state">{t('commReport.empty')}</div>
+      ) : (
+        <div className="table-wrap">
+          <table className="report-table">
+            <thead>
+              <tr>
+                <th>{t('commReport.colAgent')}</th>
+                <th>{t('adminAgent.colReferral')}</th>
+                <th>{t('commReport.colBookings')}</th>
+                <th>{t('commReport.colSales')}</th>
+                <th>{t('commReport.colRate')}</th>
+                <th>{t('commReport.colCommission')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {withData.map((r) => (
+                <tr key={r.agent_id}>
+                  <td>
+                    {r.name}
+                    {r.deleted && (
+                      <>
+                        {' '}
+                        <span className="badge badge-cancelled">{t('adminAgent.deletedBadge')}</span>
+                      </>
+                    )}
+                  </td>
+                  <td>
+                    <span className="referral-chip">{r.referral_code ?? '—'}</span>
+                  </td>
+                  <td>{fmtNumber(r.bookings)}</td>
+                  <td>{fmtBaht(r.sales)}</td>
+                  <td>{r.rates.map((x) => `${fmtNumber(x, 0)}%`).join(', ') || '—'}</td>
+                  <td>
+                    <strong>{fmtBaht(r.commission)}</strong>
+                  </td>
+                </tr>
+              ))}
+              <tr className="total">
+                <td colSpan={3}>
+                  <strong>{t('commReport.total')}</strong>
+                </td>
+                <td>
+                  <strong>{fmtBaht(report.total_sales)}</strong>
+                </td>
+                <td />
+                <td>
+                  <strong>{fmtBaht(report.total_commission)}</strong>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -157,12 +301,14 @@ const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
   const [rate, setRate] = useState('0');
   const [busy, setBusy] = useState(false);
   const [newCode, setNewCode] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const reload = useCallback(() => {
     dataService
       .listAgents()
       .then(setAgents)
       .catch((e) => onToast((e as Error).message));
+    setRefreshKey((k) => k + 1);
   }, [onToast]);
 
   useEffect(reload, [reload]);
@@ -208,21 +354,30 @@ const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
 
   return (
     <>
+      <div className="info-box commission-rules" style={{ marginBottom: 16 }}>
+        <strong>{t('adminAgent.rulesTitle')}</strong>
+        <ul>
+          <li>{t('adminAgent.rule1')}</li>
+          <li>{t('adminAgent.rule2')}</li>
+          <li>{t('adminAgent.rule3')}</li>
+          <li>{t('adminAgent.rule4')}</li>
+        </ul>
+      </div>
       <div className="table-wrap" style={{ marginBottom: 20 }}>
         {!agents ? (
           <div className="empty-state">{t('admin.loading')}</div>
         ) : agents.length === 0 ? (
           <div className="empty-state">{t('adminAgent.none')}</div>
         ) : (
-          <table className="report-table">
+          <table className="report-table agents-table">
             <thead>
               <tr>
-                <th>{t('admin.colName')}</th>
-                <th>{t('login.email')}</th>
+                <th>{t('commReport.colAgent')}</th>
                 <th>{t('adminAgent.colReferral')}</th>
                 <th>{t('adminAgent.colRate')}</th>
                 <th>{t('adminAgent.colCustomers')}</th>
                 <th>{t('adminAgent.colConfirmedTotal')}</th>
+                <th>{t('adminAgent.colMonthCommission')}</th>
                 <th>{t('adminAgent.colCommission')}</th>
                 <th>{t('admin.colManage')}</th>
               </tr>
@@ -235,6 +390,8 @@ const AgentsTab = ({ onToast }: { onToast: (m: string) => void }) => {
           </table>
         )}
       </div>
+
+      <CommissionReportCard refreshKey={refreshKey} onToast={onToast} />
 
       <div className="card">
         <h3 style={{ marginTop: 0 }}>{t('adminAgent.addTitle')}</h3>
@@ -568,10 +725,16 @@ const BookingRow = ({
         <button type="button" className="btn btn-outline btn-small" onClick={saveWeights} disabled={busy}>
           {t('admin.saveWeights')}
         </button>
-        {b.status !== 'cancelled' && (
-          <button type="button" className="btn btn-outline btn-small btn-danger" onClick={cancel}>
-            {t('adminCredit.cancelBtn')}
-          </button>
+        {b.status === 'confirmed' && b.commission_agent_id != null ? (
+          <span className="lock-chip" title={t('admin.commissionLockedHint')}>
+            {t('admin.commissionLocked')}
+          </span>
+        ) : (
+          b.status !== 'cancelled' && (
+            <button type="button" className="btn btn-outline btn-small btn-danger" onClick={cancel}>
+              {t('adminCredit.cancelBtn')}
+            </button>
+          )
         )}
       </td>
     </tr>
